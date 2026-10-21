@@ -1,0 +1,13 @@
+name = "wind-watch"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+[observability]
+enabled = true
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+[[kv_namespaces]]
+binding = "WIND"
+id = "REPLACE_ON_DEPLOY"
