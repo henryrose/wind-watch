@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B, C, E, D1, D2 complete; D3 running; then D4, D5, F1, F2)
+Last updated: 2026-10-21 (A, B, C, E, D1–D3 complete; D4 running; then D5, F1, F2)
 
 
 ## Tasks
@@ -27,8 +27,8 @@ Last updated: 2026-10-21 (A, B, C, E, D1, D2 complete; D3 running; then D4, D5, 
 | C5 | core | Glyphs, Tokens, TrustLine, WindChart, MiniStrip, previews | C4 | done | `swift build && swift test` |  99 tests, zero warnings |
 | D1 | apps | project.yml, xcconfig, entitlements, generated .xcodeproj, build script | A2, C5 | done | iOS sim build + watchOS generic build |  iOS + watchOS sim builds succeed (re-run by orchestrator); both apps launch in simulators with WW_FIXTURE=1 |
 | D2 | apps | iPhone app: Main, Location settings, About; fixture/state env; screenshots | D1 | done | build + screenshots reviewed |  iOS build clean, 105 Swift tests; 11 screenshots reviewed (fresh/stale/old/offline/horizon/firstrun/updating dark, fresh light, location, about, AX reflow); shading direction pixel-verified |
-| D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | in-progress (agent core) | watchOS sim build + screenshots reviewed | |
-| D4 | apps | Complications: provider + 4 families + previews | D3 | todo | watchOS sim build; complication on a face screenshotted | |
+| D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | done | watchOS sim build + screenshots reviewed |  watch + iOS builds clean, 111 Swift tests; 12 screenshots reviewed on 46 mm and 42 mm |
+| D4 | apps | Complications: provider + 4 families + previews | D3 | in-progress (agent core) | watchOS sim build; complication on a face screenshotted | |
 | D5 | apps | Custom-location sync (WatchConnectivity) + watch toggle | D4 | todo | both compiles + WindCore test | |
 | E1 | web | Page in fixture mode: chart, table, states, light/dark; node tests; screenshots | A3 | done | `node --test`; screenshots reviewed |  18 node tests; 13 screenshots in docs/screenshots (web-*); 375 px verified via iframe (headless Chrome clamps window width to 500) |
 | E2 | web | Live mode against wrangler dev; offline-with-cache | E1, B4 | done | manual curl/reload sequence |  22 tests; live + offline-cached screenshots in docs/screenshots |
@@ -70,6 +70,7 @@ Last updated: 2026-10-21 (A, B, C, E, D1, D2 complete; D3 running; then D4, D5, 
 | 2026-10-21 | `pnpm dev --test-scheduled` (no `--`): pnpm 12 passes a literal `--` through to wrangler, which then treats the flag as a positional script | server agent (B5) | tripped a probe run |
 | 2026-10-21 | Watch app is a single-target watchOS app (no WatchKit extension), embedded by XcodeGen from a plain target dependency; `Local.xcconfig` is included at the end of Shared so it overrides; `WindCore.TimelineEntry` to be renamed `WindTimelineEntry` in D4 to avoid the WidgetKit clash; always address simulators by UDID (two booted sims make `booted` ambiguous) | core agent (D1) | |
 | 2026-10-21 | iPhone: arrows drawn in a chartOverlay band under the axis labels; default card shows the sea-cell coords 48.09, −122.78; table rows start at the hero hour; peak chip dot = Beaufort of the peak gust; `WW_TYPE_SIZE` env replaces the content-size launch arg (ignored under simctl); Map tiles don't load in headless screenshots, MKLocalSearch/geocoding need an interactive run | core agent (D2) | |
+| 2026-10-21 | Watch: Settings is page 3 of the vertical TabView (no long-press); `Next N h` uses whole hours left; summary fixed at 2 lines; shared `@Observable ForecastSession` in WindCore replaces the app-local model, takes `bundleInfo:` for testability, returns Bool from refresh so each app calls WidgetCenter itself; pages size from GeometryReader ignoring the bottom safe area | core agent (D3) | TabView vertical pages squeezed multi-line text otherwise |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
@@ -87,4 +88,5 @@ Last updated: 2026-10-21 (A, B, C, E, D1, D2 complete; D3 running; then D4, D5, 
 - `docs/screenshots/web-<state>-<scheme>-1180.png` for fresh, stale, old, offline, horizon, firstrun × dark, light; `web-fresh-dark-375.png` (true 375 px via iframe). Captured 2026-10-21 from E1.
 - `docs/screenshots/d1-iphone-placeholder.png`, `d1-watch-placeholder.png`: D1 pipeline proof (placeholder UIs, real WindChart on the phone). Chart arrows overlap tick labels here; fixed in D2.
 - `docs/screenshots/d2-iphone-<state>-<scheme>.png`: iPhone app states plus location, about, and AX reflow. From D2.
+- `docs/screenshots/d3-watch-<page>-<state>.png` (46 mm) and `d3-watch42-<page>-fresh.png` (42 mm): watch app pages. From D3.
 - `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.
