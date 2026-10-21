@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B, C, E complete; D1 running; then D2–D5, F1, F2)
+Last updated: 2026-10-21 (A, B, C, E, D1 complete; D2 running; then D3–D5, F1, F2)
 
 ## Tasks
 
@@ -24,8 +24,8 @@ Last updated: 2026-10-21 (A, B, C, E complete; D1 running; then D2–D5, F1, F2)
 | C3 | core | WindClient + AppGroupStore + tests | C2 | done | `swift test` |  e4beb88; 74 tests |
 | C4 | core | TimelineBuilder + tests | C3 | done | `swift test` |  84 tests |
 | C5 | core | Glyphs, Tokens, TrustLine, WindChart, MiniStrip, previews | C4 | done | `swift build && swift test` |  99 tests, zero warnings |
-| D1 | apps | project.yml, xcconfig, entitlements, generated .xcodeproj, build script | A2, C5 | in-progress (agent core) | iOS sim build + watchOS generic build | |
-| D2 | apps | iPhone app: Main, Location settings, About; fixture/state env; screenshots | D1 | todo | build + screenshots reviewed | |
+| D1 | apps | project.yml, xcconfig, entitlements, generated .xcodeproj, build script | A2, C5 | done | iOS sim build + watchOS generic build |  iOS + watchOS sim builds succeed (re-run by orchestrator); both apps launch in simulators with WW_FIXTURE=1 |
+| D2 | apps | iPhone app: Main, Location settings, About; fixture/state env; screenshots | D1 | in-progress (agent core) | build + screenshots reviewed | |
 | D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | todo | watchOS sim build + screenshots reviewed | |
 | D4 | apps | Complications: provider + 4 families + previews | D3 | todo | watchOS sim build; complication on a face screenshotted | |
 | D5 | apps | Custom-location sync (WatchConnectivity) + watch toggle | D4 | todo | both compiles + WindCore test | |
@@ -67,6 +67,7 @@ Last updated: 2026-10-21 (A, B, C, E complete; D1 running; then D2–D5, F1, F2)
 | 2026-10-21 | Worker tests mock upstream with `vi.stubGlobal("fetch")` (no `fetchMock` in pool-workers 0.23 or vitest-plugin 1.4); stayed on pool-workers. Custom cache key rounds to 2 dp; cached copy max-age 600, client sees no-cache; non-GET → 404 | server agent (B4) | brief's codemod fallback would not have helped |
 | 2026-10-21 | Web live mode: 304 keeps the derived forecast; 503 `no_data` → first-run wording; other 5xx/4xx/network → offline-with-cache or first-run; checks coalesced; `?state=` still works in live mode | web agent (E2) | |
 | 2026-10-21 | `pnpm dev --test-scheduled` (no `--`): pnpm 12 passes a literal `--` through to wrangler, which then treats the flag as a positional script | server agent (B5) | tripped a probe run |
+| 2026-10-21 | Watch app is a single-target watchOS app (no WatchKit extension), embedded by XcodeGen from a plain target dependency; `Local.xcconfig` is included at the end of Shared so it overrides; `WindCore.TimelineEntry` to be renamed `WindTimelineEntry` in D4 to avoid the WidgetKit clash; always address simulators by UDID (two booted sims make `booted` ambiguous) | core agent (D1) | |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
@@ -82,4 +83,5 @@ Last updated: 2026-10-21 (A, B, C, E complete; D1 running; then D2–D5, F1, F2)
 ## Screenshots index
 
 - `docs/screenshots/web-<state>-<scheme>-1180.png` for fresh, stale, old, offline, horizon, firstrun × dark, light; `web-fresh-dark-375.png` (true 375 px via iframe). Captured 2026-10-21 from E1.
+- `docs/screenshots/d1-iphone-placeholder.png`, `d1-watch-placeholder.png`: D1 pipeline proof (placeholder UIs, real WindChart on the phone). Chart arrows overlap tick labels here; fixed in D2.
 - `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.
