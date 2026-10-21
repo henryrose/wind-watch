@@ -1,0 +1,367 @@
+# Wind Watch — design handoff for implementation
+
+Scope: Apple Watch (watchOS 26, complications + app), iPhone (iOS 26), and a single-page web refresh. All three consume the same JSON payload. This document is the implementation contract; the design canvas ("Wind Watch" in Claude Design) is the visual reference. Where this doc and the canvas disagree, this doc wins.
+
+Target stack: SwiftUI + Swift Charts for watch and phone; plain HTML/CSS/JS with inline SVG (or Canvas) for web. Every element below is a bar, line, rule, point, rectangle, or system text.
+
+---
+
+## 1. The one job
+
+On wrist raise, in under two seconds: sustained wind now, gust now, direction (where it blows TO), and whether the number can be trusted. Nothing may compete with these four.
+
+Hard rules (non-negotiable, from the brief):
+
+- Knots only. Sustained and gust are integers. No decimals anywhere in the UI.
+- Beaufort-stepped colour on sustained bars. Discrete steps. One ramp everywhere.
+- Gusts: a line joining per-hour gust values, with a short horizontal tick cap over each bar.
+- Arrows point TO. `rotation = fromDegrees + 180`. Text says "from W".
+- Day/night shading behind every chart, twilight ramped linearly, sun dot at sunrise/sunset.
+- Stale data is always labelled. A confident old number is a bug.
+- Chart ends where the forecast ends. Never pad, never fade.
+- Legible outdoors: no weight lighter than Semibold on any wind number; colour never carries meaning alone.
+- No sun/cloud icons, no temperature, no "feels like", no maps on watch, no tabs, no login, no onboarding, nothing on a complication that needs a tap.
+
+---
+
+## 2. Data contract (what the UI assumes)
+
+```
+payload {
+  location: { name: String, lat: Double, lon: Double, isDefault: Bool }
+  run:      String          // e.g. "HRRR 15Z"
+  fetched:  Date            // when the SERVER last got new model data
+  start:    Date            // hour index 0, local time
+  horizon:  Date            // last forecast hour (inclusive)
+  hours:    [ { kn: Int, gust: Int, dirFrom: Int } ]   // 1-hour steps from `start`
+  sun:      [ { date: LocalDate, civilDawn, sunrise, sunset, civilDusk: Time } ]
+  summary:  String          // one sentence, ≤ 110 chars
+  peakGust: { kn: Int, at: Date }
+}
+device-side: lastCheckSucceeded: Bool, lastCheckAt: Date, cachedAt: Date
+```
+
+Derived on device:
+
+- `nowIndex` = fractional hours between `start` and now (may be negative before `start`; clamp to 0 for the hero, never for the chart).
+- `hero` = `hours[floor(nowIndex)]`; if `nowIndex > horizon` → **Past horizon** state.
+- `age` = now − `fetched`.
+
+### Beaufort (sustained knots → step)
+
+```
+B0–1: kn <= 3       B2: 4–6       B3: 7–10      B4: 11–16     B5: 17–21
+B6: 22–27           B7: 28–33     B8: 34–40     B9: 41–47     B10+: 48+
+```
+
+B0 and B1 share a colour (`bft.calm`); B10, B11, B12 share `bft.10`.
+
+### Compass label (8-point)
+
+`["N","NE","E","SE","S","SW","W","NW"][Int((dirFrom + 22.5) / 45) % 8]`. Label text is always `"from \(label)"`. Inline complication arrow uses the same 8 points (it cannot rotate an image).
+
+### Twilight / shading fraction
+
+For each hour-axis position `t` (fractional hours since `start`):
+
+```
+day(t) = 1 inside [sunrise, sunset]
+       = 0 inside [civilDusk, nextCivilDawn]
+       = linear 0→1 across [civilDawn, sunrise]
+       = linear 1→0 across [sunset, civilDusk]
+```
+
+Emit gradient stops at exactly those four times per day, as fractions of the plotted hour range; hold the value flat outside. Sun dots at `sunrise` and `sunset` only (not dawn/dusk).
+
+---
+
+## 3. Trust states (shared by every surface)
+
+| State | Condition | Treatment |
+|---|---|---|
+| Fresh | age < 90 min, last check OK | Trust line in `ink.secondary`: `as of HH:MM · HRRR 15Z` |
+| Stale | 90 min ≤ age < 6 h | Trust line in `trust.amber`, Semibold. Numbers untouched. |
+| Old | age ≥ 6 h | Trust line amber with day name: `as of Tue 13:05 · HRRR 15Z`. All wind numbers and arrows drop to `ink.old` (72 %). Charts: `saturation 0.35, opacity 0.7`. |
+| Past horizon | now > horizon | No numbers. Hero shows `—`. Text: `No forecast — open app` (complications) / `No forecast · last run HRRR 15Z Tue` (app). |
+| Offline, cached | last check failed, cache exists | Trust line amber with `wifi.slash` glyph: `Couldn't reach server · showing data from 13:05`. The reason replaces the run label. Age rules above still apply to the numbers. |
+| First run | no cache | Hero `—`, body: `No data yet. Needs cellular or Wi-Fi once.` Footer: spinner + `trying…`. The only screen allowed a spinner. |
+| Updating | refresh in flight over a cache | Trust line gets a 14 px activity ring + `updating · as of 09:00`. Never a spinner over numbers. First paint always from cache. |
+| Short horizon | horizon − now < 12 h | Chart edge label; watch strip keeps 12 slots and leaves the tail empty; phone/web plot stops at the edge. |
+| Custom location | `isDefault == false` | Only the location name changes. Nothing else. |
+
+Small-slot rule (circular, corner): no room for text, so the Beaufort ring/gauge turns **amber and dashed** (`dash 7/6`) for Stale and Old. Dashing is what survives tinted rendering.
+
+Inline rule: single colour on most faces, so the words carry it: `15 G25 kn · 13:05` (stale), `15 G25 kn · Tue 13:05` (old), `Wind — open app` (past horizon).
+
+---
+
+## 4. Tokens
+
+### 4.1 Beaufort ramp (Asset Catalog colour set names in `code`)
+
+| Step | Dark / Watch | Light | Name |
+|---|---|---|---|
+| 0–1 | `#5C6B7A` | `#8A97A6` | `bft.calm` |
+| 2 | `#4FA3D8` | `#2A86C4` | `bft.2` |
+| 3 | `#3FC2A0` | `#1E9E80` | `bft.3` |
+| 4 | `#8DD44A` | `#5FA82E` | `bft.4` |
+| 5 | `#F2D13D` | `#C9A800` | `bft.5` |
+| 6 | `#F59A2B` | `#E07F12` | `bft.6` |
+| 7 | `#EC5A2A` | `#D6451A` | `bft.7` |
+| 8 | `#E0245E` | `#C7154B` | `bft.8` |
+| 9 | `#A32CD1` | `#8C1FB3` | `bft.9` |
+| 10+ | `#F5F5F7` + 2 pt inset stroke `bft.8` | `#1B1B1F` + 2 pt inset stroke `bft.8` | `bft.10` |
+
+Watch uses the dark column. Lightness rises with step so the ramp survives greyscale; 8+ changes hue family on purpose. Tinted complications drop the ramp entirely.
+
+### 4.2 Ground and ink
+
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `ground.watch` | `#000000` | — | watch app background |
+| `ground` | `#0B0E12` | `#F4F5F7` | phone/web page |
+| `card` | `#171C23` | `#FFFFFF` | chart card, settings cards, chips |
+| `hairline` | `#2A2F36` | `#D9DDE3` | table rules |
+| `ink.primary` | `#FFFFFF` | `#0B0E12` | numbers, titles |
+| `ink.body` | `#C7CED8` | `#3A414B` | summary text |
+| `ink.secondary` | `#9AA4B1` | `#5F6975` | labels, fresh trust line |
+| `ink.old` | `#B8BEC7` | `#7A8390` | numbers in Old state |
+| `ink.disabled` | `#5C6B7A` | `#A0A8B2` | `—` placeholder |
+| `trust.amber` | `#FFB340` | `#B86E00` | stale/old/offline trust line, sun dots use dark value on both |
+| `sun` | `#FFB340` | `#E08A00` | sun markers |
+| `complication.plate` | `rgba(255,255,255,0.10)` | — | rectangular/circular background |
+
+Contrast: every text/ground pair above meets 4.5:1 (secondary on dark ground = 7.1:1; amber on dark = 9.9:1; `#B86E00` on `#F4F5F7` = 4.6:1).
+
+### 4.3 Type
+
+Numerals: **SF Pro Rounded**, `.monospacedDigit()`, never below Semibold. Words: SF Pro Text. Web: `-apple-system, system-ui, "Segoe UI", Roboto, sans-serif` with `font-variant-numeric: tabular-nums`.
+
+| Role | Watch (pt) | iPhone (pt) | Web (px) |
+|---|---|---|---|
+| Hero sustained | Rounded Heavy 84, tracking −3 % | Rounded Heavy 72 | 72 |
+| Hero unit "kn" | Semibold 18, secondary | Semibold 20 | 20 |
+| Gust `G 25` | Rounded Bold 27 ("G" Semibold 16 secondary) | Rounded Bold 26 ("G" 17) | 26 |
+| Direction `from W` | Text Semibold 18 | Semibold 17 | 17 |
+| Summary | Text Regular 13, `ink.body`, 2 lines max on watch | 15 | 16 |
+| Trust line | Text Medium 12 (Semibold when amber) | 13 | 14 |
+| Location name | Text Semibold 11, secondary | Bold 28 | 32 |
+| Axis ticks | Rounded Semibold 11 | 11 | 12 |
+| Table row | — | 17 body, 12 header | 15 / 12 |
+| Complication primary | Rounded Heavy 30 (rect) / 18 (circular) | — | — |
+| Complication gust | Rounded Bold 15 (rect) / 8 (circular) | — | — |
+
+Watch values above are points; the canvas draws watch at 2× pixels (46 mm = 416×496 px).
+
+Dynamic Type: phone table supports up to AX5. From AX1 the row reflows to two lines: line 1 `Thu 00:00` + Beaufort chip; line 2 `15 kn  G 25  ▸ W`. The chart clamps at 152 pt height and its text does not scale.
+
+### 4.4 Spacing
+
+4-pt grid. Watch edge inset 10 pt; phone 16 pt; web gutter 24 pt, content max-width 1180. Card radius 14 (phone), 10 (web), 13 (complication plates, i.e. 26 px). Hit targets ≥ 44 pt.
+
+Hero stack rhythm (watch Now, top to bottom): location → 2 → number row (number, "kn" baseline-aligned; gust + Beaufort pill right-aligned) → 5 → direction row → 9 → summary → flexible space → trust line.
+
+---
+
+## 5. Glyphs (geometry, all drawable as paths)
+
+**Arrow (direction, points TO).** Kite in a unit box: `M0,-0.5 L0.38,0.5 L0,0.2 L-0.38,0.5 Z`, scaled to size `s` and rotated `dirFrom + 180` about its centre. Fill = current ink. Sizes: chart 9 pt (phone/web), 14 px watch strip, 18 pt hero row (phone), 18 pt watch hero, 11 pt rectangular text row, 7 px circular.
+
+**Tick cap (gust).** Horizontal line, width = bar width + 2, stroke = gust-line stroke, round caps, centred on the bar at the gust value. The gust line is a polyline through cap centres, 75 % ink; caps are 100 % ink.
+
+**Sun marker.** Circle r = 3 pt (5 px watch), `sun`, centre on the plot's top edge (`y = plotTop − 1`) at `sunrise` and `sunset`.
+
+**Now marker.** Rule 1.5 pt, 100 % ink, from `plotTop − 6` to `plotBottom`, at `x(nowIndex)`. Label `now` Semibold, left-aligned 4 pt right of the rule at `plotTop − 8`.
+
+**Horizon edge.** Rule 1 pt, dash 3/3, 70 % ink, at `x(lastHour + 1)`. Label `HRRR ends 05:00` Semibold 70 %, right-aligned 4 pt left of the rule at `plotTop − 8`. If the edge is within 12 slots of the now marker, drop "HRRR " to avoid collision.
+
+**Beaufort pill (hero).** 48×6 pt (phone/web), 36×5 pt watch, radius = half height, filled with the hero's step colour. Sits under the gust number, right-aligned. In Old state apply the chart desaturation.
+
+**Beaufort chip (table).** 24-wide min, 2 pt vertical padding, radius 6, step colour fill, black Semibold 13 label with the step number.
+
+**wifi.slash.** Use the SF Symbol on Apple platforms; the web uses the inline path drawn in the canvas (two arcs, dot, diagonal).
+
+---
+
+## 6. Chart spec
+
+Swift Charts marks: `RectangleMark` (day shading, full plot height, x-range per gradient segment or one mark with a horizontal gradient), `BarMark` (sustained), `LineMark` + `RuleMark` per hour (gust line + caps), `PointMark` (sun), `RuleMark` (now, horizon), annotations for arrows (a rotated `Image` or `Path` in `.annotation(position: .bottom)`), and `AxisMarks` for ticks.
+
+### 6.1 Shared geometry
+
+| Property | Watch 12-h strip (px @2×) | iPhone (pt) | Web (px) |
+|---|---|---|---|
+| Hours plotted | 12-slot window from `floor(nowIndex)` | all remaining (≤ 48) | all |
+| Plot width | 396 | 370 | fluid, ≤ 1120 |
+| Plot height | 184 | 152 | 230 (≥ 900 px wide) / 162 |
+| Inset top / bottom | 24 / 22 | 22 / 16 | 28 / 22 |
+| Slot = plotWidth ÷ slots | 33 | 8.2 | 24.9 at 1120 |
+| Bar width | 0.72 × slot, min 3 | same | same |
+| Bar corner radius | 2 | 1.5 | 1.5 |
+| Gust line stroke / opacity | 2.5 / 75 % | 1.5 / 75 % | 1.5 / 75 % |
+| Tick cap | (bar + 2) × 2.5 | (bar + 2) × 1.5 | (bar + 2) × 1.5 |
+| Arrow size / cadence | 14 / every hour | 9 / every 3 h | 10 / every hour ≥ 900 px, else every 3 h |
+| Arrow row centre y | plotBottom + bottomInset ÷ 2 | same | same |
+| Time ticks | every 3 h, 1 px 50 %, 3 tall | every 6 h | every 3 h |
+| Tick labels | `HH` Rounded Semibold 22 px 60 %, no day | `HH` 11 pt | `HH` 12 px + day name at 00:00 |
+| Y domain | `0 … max(20, ceil((maxGust + 3) / 10) × 10)` | same | same |
+| Gridlines | every 10 kn, 1 px 12 % ink; label right-aligned 10–11 pt 45 % | same | same |
+| Day shade (dark) | white 7 % day, 0 % night | same | same |
+| Day shade (light) | — | black 0 % day, 8 % night | same |
+| Sun dot | r 5 | r 3 | r 3 |
+| Now marker | 1.5 px | 1.5 pt | 1.5 px |
+| Horizon edge | 1 px dash 3/3 70 % | same | same |
+
+Y domain is computed over the hours actually plotted. Bars sit on the plot baseline; nothing is drawn at 0 kn beyond a 1 pt stub.
+
+### 6.2 Twilight stops for the reference payload
+
+Hour index 0 = Wed 21 Oct 09:00 PDT, 45 points, horizon index 44 (Fri 05:00).
+
+| Event | Index | Fraction of 45-h range |
+|---|---|---|
+| sunset Wed 18:12 | 9.20 | 0.2044 |
+| civil dusk 18:44 | 9.73 | 0.2163 |
+| civil dawn Thu 07:08 | 22.13 | 0.4918 |
+| sunrise 07:40 | 22.67 | 0.5037 |
+| sunset Thu 18:10 | 33.17 | 0.7370 |
+| civil dusk 18:42 | 33.70 | 0.7489 |
+
+Chart starts in day (1.0) and ends in night (0.0). Fri dawn (index ~46.1) is past the horizon and is not drawn.
+
+### 6.3 Complication mini strip (rectangular, Smart Stack)
+
+Next 6 hours from `floor(nowIndex)`. Plot 150×62 px (rect) / 360×62 (Smart Stack). Y domain = window max gust rounded up to 5 (relative height only; colour carries absolute magnitude). Bars 0.72 slot, gust line 2 px, caps bar + 2; **no arrows, no ticks, no gridlines**; sun dot kept; past-horizon slots empty. In Old state: `saturation 0.35, opacity 0.7`.
+
+### 6.4 Web implementation notes
+
+One `<svg viewBox="0 0 W H">` scaled to 100 % width; recompute `W` at two breakpoints (≥ 900 px: 1120×280, else 358×200) so stroke weights stay in CSS px. Shading is a single `<rect>` with a horizontal `<linearGradient>` whose stops come from §2. `prefers-color-scheme` swaps the token columns in §4; nothing else changes.
+
+---
+
+## 7. Apple Watch
+
+Design at 46 mm (208×248 pt), verify at 42 mm (187×223 pt). Dark only. Liquid Glass may be used for the settings buttons and page indicator; never behind the hero number (keep the hero on solid `ground.watch`).
+
+### 7.1 Complications (WidgetKit accessory families)
+
+**accessoryRectangular** — the primary target. 184×72 pt. Plate `complication.plate`, radius 13.
+
+- Left column (88 pt): row 1 = sustained (Rounded Heavy 30) + `G25` (Rounded Bold 15, 90 % ink) baseline-aligned, 5 pt gap. Row 2 (bottom-aligned) = arrow 11 pt + `from W` (Semibold 12) + `kn` (Medium 12 secondary).
+- Right column: mini strip 75×31 pt top-right; trust line bottom-right, Medium 10 secondary (`as of 23:30`), Semibold amber when stale/old.
+- Past horizon: `—` in `ink.disabled` + `No forecast` (Bold 14 secondary); bottom row `Open app to refresh` / `last run 15Z Tue`. Strip hidden. The dash keeps the layout from reflowing.
+- No location name. Never.
+
+**accessoryCircular** — 52×52 pt.
+
+- Beaufort ring: track `rgba(255,255,255,0.18)`, 3 pt; value arc = step colour, 3 pt, round caps, from 12 o'clock, length = `B / 12` of the circumference.
+- Arrow 7 pt at (centre, 10.5 pt from top), ink.
+- Sustained Rounded Heavy 18, centred in a **fixed 22×17 pt frame** (two tabular digits). The frame, not the glyphs, positions everything; `8` and `15` never move the arrow or gust. Cap at 99.
+- Gust `G25` Rounded Bold 8, 85 % ink, 3.5 pt from bottom. No `kn`.
+- Stale/Old: ring becomes amber, dash 7/6; Old also 72 % ink. Past horizon: no ring value, `—` + `open app` (Bold 6.5).
+- `widgetAccentable()` the ring and arrow; numbers stay primary so tint can't hide them. Tinted Old = 60 % tint ink.
+
+**accessoryInline** — `Image(systemName: arrow8) + Text`. Text Rounded Semibold: `15 G25 kn`; stale `15 G25 kn · 13:05`; old `15 G25 kn · Tue 13:05`; past horizon `Wind — open app` with `wind` symbol. Snap arrow to 8 points (`arrow.up`, `arrow.up.right`, … ) using the TO bearing.
+
+**accessoryCorner** — nice-to-have. Inner label: sustained Rounded Heavy 20 over arrow 8 pt over `G25` Bold 9. Outer gauge (`widgetLabel` with a `Gauge`): 8 equal stepped segments for B0–7 in ramp colours, 3.5 pt; white 3 pt dot at the current value. B8+ pins the dot at the end — that is the alarm. Stale/Old: gauge becomes a single amber dashed arc. Past horizon: empty track, `—`, `open app`.
+
+**Smart Stack widget** (optional, `accessoryRectangular`-sized system widget): same content as rectangular; strip full width; adds `Port Townsend Bay` left and `as of 23:30 · HRRR 05Z` right in the footer. Relevance: `sustained ≥ 10 || next6hMaxGust ≥ 18`.
+
+Timeline: one entry per hour boundary plus entries at `fetched + 90 min` and `fetched + 6 h` to flip trust state without a refresh.
+
+### 7.2 App — Now (launch screen)
+
+Vertical stack, insets 22 pt top (clock), 12 pt sides, 14 pt bottom:
+
+1. Location — Semibold 11 secondary.
+2. Hero row — sustained Rounded Heavy 84 (tracking −3 %) with `kn` Semibold 18 secondary baseline-aligned 5 pt right; right-aligned column: `G 25` Rounded Bold 27 and the Beaufort pill 36×5 under it.
+3. Direction row — arrow 18 + `from W` Semibold 18, 5 pt gap.
+4. Summary — Regular 13 `ink.body`, 2 lines, truncate tail (3 lines on 46 mm if room).
+5. Spacer.
+6. Trust line — Medium 12 secondary / Semibold amber per §3. Offline: `wifi.slash` + two-line reason; summary is dropped to make room.
+
+First paint from cache, synchronously. No spinner except First run. Digital Crown / swipe left → 12-h strip. Long-press or Crown-scroll past the strip → Settings. Vertical page style with 2 dots.
+
+### 7.3 App — 12-hour strip
+
+Header: `Next 12 h` Rounded Bold 13 left; `gusts to 15` Semibold 11 secondary right (window max gust). Chart per §6.1, 198×115 pt. Footer: trust line left, page dots right. Short horizon: header says `Next 6 h`; axis keeps 12 slots; edge label `ends 05:00`.
+
+### 7.4 App — Settings
+
+Title `Location`. Two full-width buttons (44 pt min, radius 12, plates 14 % / 8 % white): default `Port Townsend Bay · default` with filled check; custom `<name> · set on iPhone` with empty ring. Footer `Weather data by Open-Meteo.com` Regular 10 secondary. Nothing else.
+
+---
+
+## 8. iPhone (402×874 pt reference)
+
+### 8.1 Main
+
+Top inset 62 (large-title region not used; custom header). Vertical stack, gap 14, side inset 16:
+
+1. Header — `Port Townsend Bay` Bold 28; trust line 13 under it (`as of 09:00 · HRRR 15Z · ends Fri 05:00`); 44 pt gear button right → Location settings.
+2. Now block — hero 72 + `kn` 20; right of it `G 4` Rounded Bold 26 over arrow 18 + `from W` Semibold 17; far right a peak-gust chip (`card` fill, radius 999, 13 Semibold, leading 10 pt dot in the peak's Beaufort colour: `25 kn gusts around midnight`) over the Beaufort pill 48×6.
+3. Summary — Regular 15 `ink.body`.
+4. Chart card — `card`, radius 14, padding 10/0/12; chart 370×190 incl. insets per §6.1.
+5. Table — columns `56 | 56 | 56 | 1fr | 36`: hour (secondary), sustained (Rounded Bold 17), gust (`ink.body`), arrow 14 + compass, Beaufort chip. Row height 44, hairline `card`. Header row 12 Semibold secondary with the day name in the first column; day changes get a sticky day header. Scrolls with the page.
+
+Peak-gust chip text: `"\(peak.kn) kn gusts \(relativeTimePhrase)"` where phrase ∈ {`this morning`, `this afternoon`, `this evening`, `around midnight`, `overnight`, `tomorrow morning`, …}.
+
+### 8.2 Trust-line variants (same header, see canvas "iPhone · header trust-line states")
+
+Stale → amber Semibold; Old → amber + day name, numbers `ink.old`, pill desaturated; Offline → `wifi.slash` + `Couldn't reach server · showing data from 13:05`; Custom location → name only.
+
+### 8.3 Location settings
+
+Back chevron + `Location` Bold 28. Default card (`card`, radius 14, 72 pt min): `Port Townsend Bay` Semibold 17, sub `Default · 48.117, −122.760 · HRRR point`, filled check right. **Selecting the default is always exactly one tap and the card never moves.** Caption 13 secondary. Custom card: name + coords, selection ring button 44 pt; search field (44 pt, `ground` fill, radius 10, `Search a place or paste lat, lon`); map 300 pt tall, radius 10, with `Long-press to pin` pill bottom-left; legend dots (blue default, amber custom). Caption: snapped to nearest HRRR cell on save.
+
+### 8.4 About
+
+Three cards: model explanation (three sentences, text in canvas), Beaufort legend (step, swatch, knots range + gust/arrow caption), attribution `Weather data by Open-Meteo.com · CC BY 4.0` + version line.
+
+---
+
+## 9. Web
+
+One page, no navigation. `max-width: 1180px`, gutters 24 px (16 px under 600 px). Header: h1 32 + trust line 14; right cluster = hero 72 + gust/direction + peak chip + pill (wraps under 700 px). Summary 16. Chart card `card` radius 10, padding 16/28/20, plus a legend row (ramp swatches 12 px, gust glyph, arrow "blowing to", sun dot). Table: semantic `<table>`, `overflow-x: auto` wrapper, 15 px body, same five columns, Beaufort chips. Footer: attribution + `times in PDT`. Light/dark via `prefers-color-scheme` using §4 columns; amber is `#B86E00` in light.
+
+---
+
+## 10. Reference payload (for previews and tests)
+
+```
+start   2026-10-21T09:00-07:00    horizon 2026-10-23T05:00-07:00   run "HRRR 15Z"
+kn   [3,4,2,3,4,3,3,4,4,4,5,8,9,11,13,15,14,14,12,12,11,10,9,8,7,7,6,9,8,6,8,7,8,7,9,11,10,11,10,10,9,9,10,11,11]
+gust [4,5,3,3,4,2,4,5,6,9,13,15,18,19,24,25,24,24,22,21,18,15,14,12,12,12,11,16,16,15,15,14,16,13,15,22,19,20,20,20,18,18,20,21,21]
+dir  [290,289,313,51,74,66,11,339,325,323,301,295,287,284,282,283,286,288,288,290,292,298,297,307,318,331,346,344,341,329,328,311,307,301,283,292,294,296,294,289,289,289,292,293,296]
+peak 25 kn at 2026-10-22T00:00-07:00
+sun  Oct 21: dawn 07:08 rise 07:40 set 18:12 dusk 18:44 · Oct 22: 07:09 07:41 18:10 18:42
+summary "Light and variable this morning, building to 15 kn W by late afternoon, gusts to 25 overnight. Easing by dawn."
+```
+
+Expected derived values: hour 0 → `3 kn G4 from W`, B1, arrow rotation 110°. Hour 15 → `15 kn G25 from W`, B4, rotation 103°. Y domain 0–30. Horizon label `HRRR ends 05:00`.
+
+---
+
+## 11. Acceptance checklist
+
+- [ ] Hero shows sustained, gust, arrow, "from X" and a trust line on first paint from cache, with no spinner.
+- [ ] Every wind number is an integer in knots; no decimals anywhere, including VoiceOver strings.
+- [ ] Bars use exactly the ramp colours in §4.1; no interpolation between steps.
+- [ ] Gust line passes through tick-cap centres; caps are bar + 2 wide.
+- [ ] Arrows rotate `dirFrom + 180`; labels say "from"; inline snaps to 8 points.
+- [ ] Day shading ramps linearly across dawn→rise and set→dusk; sun dots only at rise/set.
+- [ ] Chart's last bar is the last forecast hour; dashed edge + label present; no padding.
+- [ ] Trust state flips at 90 min and 6 h without a network refresh (timeline entries / timers).
+- [ ] Offline with cache shows the reason and the cached time; never a blank.
+- [ ] Circular: `8` and `15` render without moving the arrow or gust; ring survives tint; stale ring is dashed.
+- [ ] Rectangular never shows the location name; Smart Stack does.
+- [ ] Default location is selectable in one tap and its card never changes position.
+- [ ] Phone table reflows to two lines at AX sizes; chart clamps at 152 pt.
+- [ ] Web page reads correctly in both colour schemes and at 375 px width with a horizontally scrolling table.
+- [ ] VoiceOver label for a chart: `"45-hour wind chart: … ends Friday 05:00"`; for hero: `"15 knots, gusting 25, from the west, as of 23:30"`.
+
+## 12. Open decisions (owner: Henry)
+
+1. Keep the six-bar strip on the rectangular, or replace with `→ 25 by 00:00` in the same slot. Design keeps the strip; the slot geometry is identical either way.
+2. Ship the Smart Stack widget in 1.0 or hold it.
+3. Whether "G" reads as gust to a non-sailor on the phone/web; the watch keeps the letter regardless.

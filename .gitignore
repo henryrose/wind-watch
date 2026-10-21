@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Node / Cloudflare
+node_modules/
+.wrangler/
+dist/
+*.log
+
+# Xcode
+DerivedData/
+build/
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+.swiftpm/
+apple/WindCore/.build/
+
+# Local, machine-specific (team id, bundle prefix)
+apple/Config/Local.xcconfig
+
+# Secrets
+.dev.vars
+.env
