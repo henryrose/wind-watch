@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B1–B3, C1–C4, E1 done; B4, C5 running; E2 waits for B4)
+Last updated: 2026-10-21 (A, B1–B3, C1–C5, E1 done; B4, D1 running; E2 waits for B4)
 
 ## Tasks
 
@@ -23,8 +23,8 @@ Last updated: 2026-10-21 (A, B1–B3, C1–C4, E1 done; B4, C5 running; E2 waits
 | C2 | core | Twilight stops + tests | C1 | done | `swift test` |  51 tests total |
 | C3 | core | WindClient + AppGroupStore + tests | C2 | done | `swift test` |  e4beb88; 74 tests |
 | C4 | core | TimelineBuilder + tests | C3 | done | `swift test` |  84 tests |
-| C5 | core | Glyphs, Tokens, TrustLine, WindChart, MiniStrip, previews | C4 | in-progress (agent core) | `swift build && swift test` | |
-| D1 | apps | project.yml, xcconfig, entitlements, generated .xcodeproj, build script | A2, C5 | todo | iOS sim build + watchOS generic build | |
+| C5 | core | Glyphs, Tokens, TrustLine, WindChart, MiniStrip, previews | C4 | done | `swift build && swift test` |  99 tests, zero warnings |
+| D1 | apps | project.yml, xcconfig, entitlements, generated .xcodeproj, build script | A2, C5 | in-progress (agent core) | iOS sim build + watchOS generic build | |
 | D2 | apps | iPhone app: Main, Location settings, About; fixture/state env; screenshots | D1 | todo | build + screenshots reviewed | |
 | D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | todo | watchOS sim build + screenshots reviewed | |
 | D4 | apps | Complications: provider + 4 families + previews | D3 | todo | watchOS sim build; complication on a face screenshotted | |
@@ -63,6 +63,7 @@ Last updated: 2026-10-21 (A, B1–B3, C1–C4, E1 done; B4, C5 running; E2 waits
 | 2026-10-21 | Web: tick labels sit inside the plot bottom with a halo; narrow breakpoint uses 22/16 insets; gridline labels live in the card padding; past-horizon boundary = `start + hours·3600`; peak chip dot = Beaufort of the peak gust; `?scheme=` and `?now=` are verification aids | web agent (E1) | §6.1 web insets leave no room below the arrow row |
 | 2026-10-21 | Timeline: single past-horizon entry once `now > horizon` (not only after the +1 h boundary); cap drops furthest-out hours first; `lastCheckOK` applies to every entry | core agent (C4) | HANDOFF §3 defines past horizon as `now > horizon` |
 | 2026-10-21 | Summary: aligned non-overlapping 6-h windows; whole-forecast calm short-circuits to `Calm through …`; no compass under 4 kn; daytime periods take "by", night periods don't; trims whole clauses easing → gusts → building | server agent (B3) | sliding windows failed the briefed "building to 15 kn W" |
+| 2026-10-21 | Chart: `.all` plots every hour from `start` (not from now); arrow cadence/ticks derive from the window; bars use hour-interval x with `.ratio(0.72)`; Old desaturation applied to the whole Chart view; `ChartStyle.watch` in points (198×92 plot); past-horizon trust line is amber; `PreviewData` is `static let` | core agent (C5) | pixel tuning deferred to D2/D3 screenshots |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
