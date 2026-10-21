@@ -1,7 +1,7 @@
 import Foundation
 
 /// One WidgetKit timeline entry: a date plus an index into the shared forecast (DESIGN §5.2).
-public struct TimelineEntry: Sendable, Hashable {
+public struct WindTimelineEntry: Sendable, Hashable {
     public var date: Date
     /// Index into `forecast.hours`, nil once past the horizon.
     public var hourIndex: Int?
@@ -29,9 +29,9 @@ public enum TimelineBuilder {
     /// - a final past-horizon entry at `horizon + 1 h` (`hourIndex == nil`).
     /// If `now` is already past the horizon the result is exactly one past-horizon entry at `now`.
     /// Capped at `maxEntries`, dropping from the end but never the past-horizon entry.
-    public static func entries(forecast: Forecast, now: Date, lastCheckOK: Bool = true) -> [TimelineEntry] {
-        func entry(at date: Date) -> TimelineEntry {
-            TimelineEntry(
+    public static func entries(forecast: Forecast, now: Date, lastCheckOK: Bool = true) -> [WindTimelineEntry] {
+        func entry(at date: Date) -> WindTimelineEntry {
+            WindTimelineEntry(
                 date: date,
                 hourIndex: Derivations.heroIndex(forecast: forecast, now: date),
                 trust: TrustState.compute(forecast: forecast, now: date, lastCheckOK: lastCheckOK, isUpdating: false)
@@ -39,7 +39,7 @@ public enum TimelineBuilder {
         }
 
         guard now <= forecast.horizon, !forecast.hours.isEmpty else {
-            return [TimelineEntry(date: now, hourIndex: nil, trust: .pastHorizon)]
+            return [WindTimelineEntry(date: now, hourIndex: nil, trust: .pastHorizon)]
         }
 
         let boundary = forecast.horizon.addingTimeInterval(pastHorizonGrace)
@@ -58,12 +58,12 @@ public enum TimelineBuilder {
         }
 
         dates.sort()
-        var entries: [TimelineEntry] = []
+        var entries: [WindTimelineEntry] = []
         for date in dates where entries.last?.date != date {
             entries.append(entry(at: date))
         }
 
-        let final = TimelineEntry(date: boundary, hourIndex: nil, trust: .pastHorizon)
+        let final = WindTimelineEntry(date: boundary, hourIndex: nil, trust: .pastHorizon)
         if entries.count > maxEntries - 1 {
             entries.removeSubrange((maxEntries - 1)...)
         }

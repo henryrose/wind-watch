@@ -10,7 +10,7 @@ struct TimelineTests {
         let entries = TimelineBuilder.entries(forecast: f, now: now)
 
         #expect(entries.count == 47)
-        #expect(entries.first == TimelineEntry(date: now, hourIndex: 0, trust: .fresh))
+        #expect(entries.first == WindTimelineEntry(date: now, hourIndex: 0, trust: .fresh))
 
         // Strictly increasing dates.
         #expect(zip(entries, entries.dropFirst()).allSatisfy { $0.date < $1.date })
@@ -38,7 +38,7 @@ struct TimelineTests {
 
         // Final past-horizon entry.
         let last = try #require(entries.last)
-        #expect(last == TimelineEntry(date: Fixture.la(2026, 10, 23, 6), hourIndex: nil, trust: .pastHorizon))
+        #expect(last == WindTimelineEntry(date: Fixture.la(2026, 10, 23, 6), hourIndex: nil, trust: .pastHorizon))
         #expect(entries.dropLast().allSatisfy { $0.hourIndex != nil })
 
         // Every non-final index is the hero index for its date.
@@ -57,7 +57,7 @@ struct TimelineTests {
         #expect(entries.first?.hourIndex == 35)
         #expect(entries.dropLast().allSatisfy { $0.trust == .old })
         #expect(entries.dropLast().map(\.hourIndex) == [35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
-        #expect(entries.last == TimelineEntry(date: Fixture.la(2026, 10, 23, 6), hourIndex: nil, trust: .pastHorizon))
+        #expect(entries.last == WindTimelineEntry(date: Fixture.la(2026, 10, 23, 6), hourIndex: nil, trust: .pastHorizon))
         // The old flips are in the past and not re-emitted.
         #expect(!entries.contains { $0.date == Fixture.la(2026, 10, 21, 10, 30) })
     }
@@ -75,7 +75,7 @@ struct TimelineTests {
         let f = try Fixture.forecast()
         let entries = TimelineBuilder.entries(forecast: f, now: f.horizon)
         #expect(entries.count == 2)
-        #expect(entries.first == TimelineEntry(date: f.horizon, hourIndex: 44, trust: .old))
+        #expect(entries.first == WindTimelineEntry(date: f.horizon, hourIndex: 44, trust: .old))
         #expect(entries.last?.trust == .pastHorizon)
     }
 
@@ -83,7 +83,7 @@ struct TimelineTests {
         let f = try Fixture.forecast()
         for now in [Fixture.la(2026, 10, 23, 6, 30), Fixture.la(2026, 10, 23, 5, 0, 1), Fixture.la(2026, 10, 25, 12)] {
             let entries = TimelineBuilder.entries(forecast: f, now: now)
-            #expect(entries == [TimelineEntry(date: now, hourIndex: nil, trust: .pastHorizon)])
+            #expect(entries == [WindTimelineEntry(date: now, hourIndex: nil, trust: .pastHorizon)])
         }
     }
 
@@ -91,7 +91,7 @@ struct TimelineTests {
         let f = try Fixture.forecast()
         let now = f.start.addingTimeInterval(-20 * 60)
         let entries = TimelineBuilder.entries(forecast: f, now: now)
-        #expect(entries.first == TimelineEntry(date: now, hourIndex: 0, trust: .fresh))
+        #expect(entries.first == WindTimelineEntry(date: now, hourIndex: 0, trust: .fresh))
         #expect(entries[1].date == f.start)
         #expect(entries[1].hourIndex == 0)
         #expect(entries.count == 1 + 45 + 1 + 1)
@@ -121,7 +121,7 @@ struct TimelineTests {
         let entries = TimelineBuilder.entries(forecast: f, now: f.start)
         #expect(entries.count == 1 + 47 + 1 + 1) // now, 47 boundaries, 10:30 flip (15:00 dedups), past-horizon
         #expect(entries.count <= TimelineBuilder.maxEntries)
-        #expect(entries.last == TimelineEntry(date: f.horizon.addingTimeInterval(3600), hourIndex: nil, trust: .pastHorizon))
+        #expect(entries.last == WindTimelineEntry(date: f.horizon.addingTimeInterval(3600), hourIndex: nil, trust: .pastHorizon))
     }
 
     @Test func capKeepsPastHorizonEntry() throws {

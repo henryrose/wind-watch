@@ -21,6 +21,18 @@ struct RootView: View {
     }
 
     var body: some View {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["WW_PAGE"] == "complications" {
+            ComplicationsDebugView()
+        } else {
+            pages
+        }
+        #else
+        pages
+        #endif
+    }
+
+    private var pages: some View {
         TabView(selection: $page) {
             NowView().tag(Page.now)
             StripView().tag(Page.strip)

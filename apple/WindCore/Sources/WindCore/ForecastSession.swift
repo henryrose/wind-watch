@@ -37,7 +37,10 @@ public final class ForecastSession {
     /// - Parameters:
     ///   - bundleInfo: the app's `Bundle.main.infoDictionary` (`WWAPIBase`, `WWBundlePrefix`).
     ///   - environment: the process environment.
-    public init(bundleInfo: [String: Any], environment: [String: String] = ProcessInfo.processInfo.environment) {
+    ///   - mirrorFixtureToGroup: in fixture mode, also write the fixture cache and the
+    ///     `FixtureFlag` into the real App Group store/defaults so the widget extension (which
+    ///     cannot see the app's environment) renders the same data. Tests pass false.
+    public init(bundleInfo: [String: Any], environment: [String: String] = ProcessInfo.processInfo.environment, mirrorFixtureToGroup: Bool = true) {
         self.environment = environment
         let prefix = (bundleInfo["WWBundlePrefix"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "com.example"
         groupID = AppGroupStore.groupID(bundlePrefix: prefix)
@@ -64,10 +67,23 @@ public final class ForecastSession {
 
         if isFixture {
             applyFixture(state: environment["WW_STATE"])
+            if mirrorFixtureToGroup { mirrorFixtureToGroupStore() }
         } else {
             setCached(store.load())
+            if mirrorFixtureToGroup { FixtureFlag.set(false, in: defaults) }
         }
         if let pinnedNow { now = pinnedNow }
+    }
+
+    /// Copies the fixture cache (payload + meta) into the real group store and raises the flag.
+    private func mirrorFixtureToGroupStore() {
+        let real = AppGroupStore(groupID: groupID)
+        try? real.clear()
+        if let data = store.loadPayloadData(), let meta = store.loadMeta() {
+            try? real.save(payloadData: data, etag: meta.etag, at: meta.savedAt)
+            try? real.recordCheck(ok: meta.lastCheckOK, at: meta.lastChecked ?? meta.savedAt)
+        }
+        FixtureFlag.set(true, in: defaults)
     }
 
     // MARK: - Derived
@@ -214,5 +230,20 @@ public final class ForecastSession {
         case "ax5": .accessibility5
         default: nil
         }
+    }
+}
+
+/// `ww.fixture` in the group defaults: set by an app launched with `WW_FIXTURE=1` so the widget
+/// extension, which has no access to that environment, knows to treat the group store as fixture
+/// data. Cleared on any non-fixture launch.
+public enum FixtureFlag {
+    public static let key = "ww.fixture"
+
+    public static func isSet(in defaults: UserDefaults) -> Bool {
+        defaults.bool(forKey: key)
+    }
+
+    public static func set(_ value: Bool, in defaults: UserDefaults) {
+        defaults.set(value, forKey: key)
     }
 }

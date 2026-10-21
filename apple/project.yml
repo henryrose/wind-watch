@@ -65,6 +65,7 @@ targets:
     platform: watchOS
     sources:
       - WindWatchWatch
+      - Shared/Complications
     dependencies:
       - package: WindCore
       - target: WindWatchComplications
@@ -91,6 +92,7 @@ targets:
     platform: watchOS
     sources:
       - WindWatchComplications
+      - Shared/Complications
     dependencies:
       - package: WindCore
     settings:

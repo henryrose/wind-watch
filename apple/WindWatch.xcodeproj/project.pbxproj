@@ -10,10 +10,16 @@
 		03CEB699D8F557A6550B095A /* WindWatchComplications.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */; };
 		08B5E3C768FFC6BEB4282436 /* NowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEBA269A7EC279F059FBC8C /* NowView.swift */; };
 		0A81E984588B6A974D5E84C1 /* WindWatchWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFD42382AB1221E5CA4B55FB /* WindWatchWatchApp.swift */; };
+		0DF141079018B28E39693E3B /* InlineComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */; };
+		0EB61BA49340075D6D4CF7E9 /* WindEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3080A509D70312CE6DCFE398 /* WindEntry.swift */; };
 		12D35C50B70B02A2FFFEB7A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 88B8947766E1C2627C56D88D /* Assets.xcassets */; };
+		2B4EEBFE809271677224442B /* CircularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */; };
 		30D7A52C482358091BCC2644 /* WindWatchWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		32B4F0E801FFA91016188508 /* CornerComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291C8EEB6BFF99649425D463 /* CornerComplicationView.swift */; };
 		3BB1979C3D4C84FD9774A534 /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = D118EB126FC6404CFFB2840E /* WindCore */; };
+		3E1E559B46DE0DFE1B01D159 /* InlineComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */; };
 		3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B968EE644A9F48069E6AD893 /* WindWatchApp.swift */; };
+		44F8654B0A788DD79C5E5E1B /* RectangularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */; };
 		489A22C83A7CA9794A022654 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDEBA8472F1941D436D61CB4 /* AboutView.swift */; };
 		511B228A64B8B935F87BE831 /* HourTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BC4826A662A28196C080F90 /* HourTable.swift */; };
 		519D6E660E8B5007C90178CE /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5BBA5569E5CE275A4A381608 /* WindCore */; };
@@ -22,11 +28,16 @@
 		73B96DE1EA8356B696B6A71A /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E90582FC4E07F44513EF7A /* MainView.swift */; };
 		840E18B7166F6D1A238D2195 /* StripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4343CAF9F8A29B107D6A3259 /* StripView.swift */; };
 		94D7E968996A233B600B9B1F /* WindWatchComplications.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F37C31BBB679B9188BF2ECC5 /* WindWatchComplications.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9C146623008B202C721ABE71 /* CornerComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291C8EEB6BFF99649425D463 /* CornerComplicationView.swift */; };
 		B19DFB68BD943E2B9F8CAAE0 /* NowBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */; };
 		B43579891702CA7D0145B38D /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19FB8ABF9DBA6ED958ABFEB5 /* HeaderView.swift */; };
 		B466169D722E9711CEF2599D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 865CC0FED12CA8C718A55AC7 /* SettingsView.swift */; };
+		B8306C8D45C5605DF91F7058 /* ComplicationsDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA2B74083CD5079D262BBAD /* ComplicationsDebugView.swift */; };
+		CC06D82569E978FD7657CF65 /* WindEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3080A509D70312CE6DCFE398 /* WindEntry.swift */; };
 		CC1F63308295E0255808820B /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 000CADC025E3E5FA5D702086 /* WindCore */; };
+		E2C4CB2F8686BDA23195A78F /* CircularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */; };
 		E89AB377FED9C9186DFAA7DA /* LocationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */; };
+		EB23BF4BA21F5D58CBB6D66F /* RectangularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,10 +85,16 @@
 /* Begin PBXFileReference section */
 		02607DDEE138EA8A5D0F038E /* WindWatchComplications.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindWatchComplications.entitlements; sourceTree = "<group>"; };
 		19FB8ABF9DBA6ED958ABFEB5 /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+		291C8EEB6BFF99649425D463 /* CornerComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerComplicationView.swift; sourceTree = "<group>"; };
+		2AA2B74083CD5079D262BBAD /* ComplicationsDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationsDebugView.swift; sourceTree = "<group>"; };
 		2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
+		3080A509D70312CE6DCFE398 /* WindEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindEntry.swift; sourceTree = "<group>"; };
 		3BC4826A662A28196C080F90 /* HourTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HourTable.swift; sourceTree = "<group>"; };
 		4343CAF9F8A29B107D6A3259 /* StripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripView.swift; sourceTree = "<group>"; };
+		4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularComplicationView.swift; sourceTree = "<group>"; };
 		5A731493680C28DF215DADD4 /* WindCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WindCore; path = WindCore; sourceTree = SOURCE_ROOT; };
+		5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangularComplicationView.swift; sourceTree = "<group>"; };
+		6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineComplicationView.swift; sourceTree = "<group>"; };
 		6824B339471D125681F8D7FC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		725A4B9D252F50A7C1A8A47F /* WindWatch.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WindWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		865CC0FED12CA8C718A55AC7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -144,6 +161,7 @@
 			children = (
 				1BF73C922603917690C29B59 /* Config */,
 				021CF5DBD21BBB954BE7424D /* Packages */,
+				AC505A98F372A2510E5E79E6 /* Shared */,
 				866B070A27A329B54C53FE80 /* WindWatch */,
 				6CE415DAC538DD816B9100FE /* WindWatchComplications */,
 				B7777D4ABC8F840ADAA770EF /* WindWatchWatch */,
@@ -160,6 +178,18 @@
 				2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */,
 			);
 			path = Config;
+			sourceTree = "<group>";
+		};
+		1C3DC43E622277C4B42512C6 /* Complications */ = {
+			isa = PBXGroup;
+			children = (
+				4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */,
+				291C8EEB6BFF99649425D463 /* CornerComplicationView.swift */,
+				6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */,
+				5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */,
+				3080A509D70312CE6DCFE398 /* WindEntry.swift */,
+			);
+			path = Complications;
 			sourceTree = "<group>";
 		};
 		5B9EAC78FF55E914728793BE /* Products */ = {
@@ -199,10 +229,19 @@
 			path = WindWatch;
 			sourceTree = "<group>";
 		};
+		AC505A98F372A2510E5E79E6 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				1C3DC43E622277C4B42512C6 /* Complications */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		B7777D4ABC8F840ADAA770EF /* WindWatchWatch */ = {
 			isa = PBXGroup;
 			children = (
 				88B8947766E1C2627C56D88D /* Assets.xcassets */,
+				2AA2B74083CD5079D262BBAD /* ComplicationsDebugView.swift */,
 				E0F02E132C949642493A89C0 /* Info.plist */,
 				8BEBA269A7EC279F059FBC8C /* NowView.swift */,
 				9912859D54146B54B9E84827 /* RootView.swift */,
@@ -351,10 +390,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2B4EEBFE809271677224442B /* CircularComplicationView.swift in Sources */,
+				B8306C8D45C5605DF91F7058 /* ComplicationsDebugView.swift in Sources */,
+				9C146623008B202C721ABE71 /* CornerComplicationView.swift in Sources */,
+				3E1E559B46DE0DFE1B01D159 /* InlineComplicationView.swift in Sources */,
 				08B5E3C768FFC6BEB4282436 /* NowView.swift in Sources */,
+				EB23BF4BA21F5D58CBB6D66F /* RectangularComplicationView.swift in Sources */,
 				726DC8D942D5F1E9C5FB2B8A /* RootView.swift in Sources */,
 				B466169D722E9711CEF2599D /* SettingsView.swift in Sources */,
 				840E18B7166F6D1A238D2195 /* StripView.swift in Sources */,
+				CC06D82569E978FD7657CF65 /* WindEntry.swift in Sources */,
 				0A81E984588B6A974D5E84C1 /* WindWatchWatchApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -363,6 +408,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2C4CB2F8686BDA23195A78F /* CircularComplicationView.swift in Sources */,
+				32B4F0E801FFA91016188508 /* CornerComplicationView.swift in Sources */,
+				0DF141079018B28E39693E3B /* InlineComplicationView.swift in Sources */,
+				44F8654B0A788DD79C5E5E1B /* RectangularComplicationView.swift in Sources */,
+				0EB61BA49340075D6D4CF7E9 /* WindEntry.swift in Sources */,
 				03CEB699D8F557A6550B095A /* WindWatchComplications.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

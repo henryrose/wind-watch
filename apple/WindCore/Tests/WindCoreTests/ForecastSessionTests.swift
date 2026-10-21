@@ -11,7 +11,7 @@ struct ForecastSessionTests {
         var env = ["WW_FIXTURE": "1"]
         if let state { env["WW_STATE"] = state }
         env.merge(extra) { _, new in new }
-        return ForecastSession(bundleInfo: info, environment: env)
+        return ForecastSession(bundleInfo: info, environment: env, mirrorFixtureToGroup: false)
     }
 
     @Test func fixtureStates() {
@@ -56,13 +56,24 @@ struct ForecastSessionTests {
     }
 
     @Test func groupAndClientFromBundleInfo() {
-        let s = ForecastSession(bundleInfo: info, environment: [:])
+        let s = ForecastSession(bundleInfo: info, environment: [:], mirrorFixtureToGroup: false)
         #expect(s.groupID == "group.com.example.windwatch")
         #expect(s.client?.baseURL.absoluteString == "https://example.test")
         #expect(!s.isFixture)
-        let placeholder = ForecastSession(bundleInfo: ["WWAPIBase": "https:/REPLACE"], environment: [:])
+        let placeholder = ForecastSession(bundleInfo: ["WWAPIBase": "https:/REPLACE"], environment: [:], mirrorFixtureToGroup: false)
         #expect(placeholder.client == nil)
         #expect(placeholder.groupID == "group.com.example.windwatch")
+    }
+
+    @Test func fixtureFlag() throws {
+        let suite = "WindCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        #expect(!FixtureFlag.isSet(in: defaults))
+        FixtureFlag.set(true, in: defaults)
+        #expect(FixtureFlag.isSet(in: defaults))
+        FixtureFlag.set(false, in: defaults)
+        #expect(!FixtureFlag.isSet(in: defaults))
     }
 
     @Test func locationSelectionInFixtureMode() {
