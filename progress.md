@@ -5,21 +5,21 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (created, nothing started)
+Last updated: 2026-10-21 (A done; B1, C1, E1 dispatched)
 
 ## Tasks
 
 | ID | Workstream | Task | Depends on | Status | Verification | Commit / notes |
 |---|---|---|---|---|---|---|
-| A1 | foundation | Repo hygiene: .gitignore, Local.xcconfig.example, CLAUDE.md skeleton, commit docs | — | todo | `git status` clean | |
-| A2 | foundation | Toolchain: xcodegen, node PATH; confirm watchOS runtime | A1 | todo | `xcodegen --version`; `simctl list runtimes` shows watchOS 27.0 | runtime installed 2026-10-21 |
-| A3 | foundation | Fixtures: Open-Meteo forecast + meta captures, payload-reference.json | A2 | todo | python loads all three, 45 hours | |
-| B1 | server | Scaffold + transform.ts + tests | A3 | todo | `cd server && pnpm test` | |
+| A1 | foundation | Repo hygiene: .gitignore, Local.xcconfig.example, CLAUDE.md skeleton, commit docs | — | done | `git status` clean | 9d4b3db |
+| A2 | foundation | Toolchain: xcodegen, node PATH; confirm watchOS runtime | A1 | done | `xcodegen --version`; `simctl list runtimes` shows watchOS 27.0 | xcodegen 2.46.0, node 24.13.0, watchOS 27.0 runtime; c812af9 |
+| A3 | foundation | Fixtures: Open-Meteo forecast + meta captures, payload-reference.json | A2 | done | python loads all three, 45 hours | c812af9; live forecast fixture has 43 non-null hours (16Z run), reference payload has 45 |
+| B1 | server | Scaffold + transform.ts + tests | A3 | in-progress (agent server) | `cd server && pnpm test` | |
 | B2 | server | sun.ts civil twilight + tests | B1 | todo | `pnpm test` | |
 | B3 | server | summary.ts rules + tests | B2 | todo | `pnpm test` | |
 | B4 | server | index.ts fetch + scheduled, ETag/304, custom path; wrangler dev curl sequence | B3 | todo | `pnpm test`; curl 200 then 304 | |
 | B5 | server | server/README.md deploy runbook | B4 | todo | commands exist in package.json | |
-| C1 | core | Package.swift, Payload, Forecast, Beaufort, Compass, TrustState, derivations + tests | A3 | todo | `cd apple/WindCore && swift test` | |
+| C1 | core | Package.swift, Payload, Forecast, Beaufort, Compass, TrustState, derivations + tests | A3 | in-progress (agent core) | `cd apple/WindCore && swift test` | |
 | C2 | core | Twilight stops + tests | C1 | todo | `swift test` | |
 | C3 | core | WindClient + AppGroupStore + tests | C2 | todo | `swift test` | |
 | C4 | core | TimelineBuilder + tests | C3 | todo | `swift test` | |
@@ -29,7 +29,7 @@ Last updated: 2026-10-21 (created, nothing started)
 | D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | todo | watchOS sim build + screenshots reviewed | |
 | D4 | apps | Complications: provider + 4 families + previews | D3 | todo | watchOS sim build; complication on a face screenshotted | |
 | D5 | apps | Custom-location sync (WatchConnectivity) + watch toggle | D4 | todo | both compiles + WindCore test | |
-| E1 | web | Page in fixture mode: chart, table, states, light/dark; node tests; screenshots | A3 | todo | `node --test`; screenshots reviewed | |
+| E1 | web | Page in fixture mode: chart, table, states, light/dark; node tests; screenshots | A3 | in-progress (agent web) | `node --test`; screenshots reviewed | |
 | E2 | web | Live mode against wrangler dev; offline-with-cache | E1, B4 | todo | manual curl/reload sequence | |
 | F1 | handoff | docs/HANDOFF-OTHER-MACHINE.md checklist | B5, D5, E2 | todo | orchestrator review | |
 | F2 | handoff | CLAUDE.md complete, README.md | F1 | todo | orchestrator review | |
