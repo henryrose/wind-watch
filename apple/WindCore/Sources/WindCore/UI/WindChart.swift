@@ -13,9 +13,16 @@ public struct ChartStyle: Sendable, Equatable {
     public var sunRadius: CGFloat
     public var tickLabelOpacity: Double
     public var isWatch: Bool
+    /// Height reserved under the plot for the tick + `HH` label row.
+    public var axisBand: CGFloat
+    /// Height of the arrow row drawn under the axis labels (arrows centred in it).
+    public var arrowBand: CGFloat
 
     public init(plotHeight: CGFloat, plotWidth: CGFloat, topInset: CGFloat, bottomInset: CGFloat, barCornerRadius: CGFloat,
-                gustLineWidth: CGFloat, arrowSize: CGFloat, sunRadius: CGFloat, tickLabelOpacity: Double, isWatch: Bool) {
+                gustLineWidth: CGFloat, arrowSize: CGFloat, sunRadius: CGFloat, tickLabelOpacity: Double, isWatch: Bool,
+                axisBand: CGFloat = 18, arrowBand: CGFloat = 14) {
+        self.axisBand = axisBand
+        self.arrowBand = arrowBand
         self.plotHeight = plotHeight
         self.plotWidth = plotWidth
         self.topInset = topInset
@@ -29,11 +36,13 @@ public struct ChartStyle: Sendable, Equatable {
     }
 
     /// Watch 12-h strip in the app (§7.3: 198×115 pt plot).
-    public static let watch = ChartStyle(plotHeight: 92, plotWidth: 198, topInset: 12, bottomInset: 11, barCornerRadius: 2,
-                                         gustLineWidth: 1.25, arrowSize: 7, sunRadius: 2.5, tickLabelOpacity: 0.6, isWatch: true)
+    public static let watch = ChartStyle(plotHeight: 80, plotWidth: 198, topInset: 12, bottomInset: 11, barCornerRadius: 2,
+                                         gustLineWidth: 1.25, arrowSize: 7, sunRadius: 2.5, tickLabelOpacity: 0.6, isWatch: true,
+                                         axisBand: 15, arrowBand: 11)
     /// iPhone chart card (§6.1 / §8.1: 370 wide, 152 tall plot).
     public static let phone = ChartStyle(plotHeight: 152, plotWidth: 370, topInset: 22, bottomInset: 16, barCornerRadius: 1.5,
-                                         gustLineWidth: 1.5, arrowSize: 9, sunRadius: 3, tickLabelOpacity: 0.6, isWatch: false)
+                                         gustLineWidth: 1.5, arrowSize: 9, sunRadius: 3, tickLabelOpacity: 0.6, isWatch: false,
+                                         axisBand: 18, arrowBand: 14)
 
     /// Bar width as a fraction of the slot.
     public static let barRatio: Double = 0.72
@@ -66,6 +75,7 @@ public struct WindChart: View {
     private var numberInk: Color { Tokens.numberInk(model.scheme, tier: model.ageTier) }
     private var capHalf: TimeInterval { style.capHalfWidthSeconds(slots: model.slotCount) }
     private var yTicks: [Int] { Array(stride(from: 0, through: model.yMax, by: 10)) }
+    private var arrowPoints: [HourPoint] { model.points.filter { $0.index % model.arrowCadence == 0 } }
 
     public var body: some View {
         Chart {
@@ -87,11 +97,6 @@ public struct WindChart: View {
                 )
                 .foregroundStyle(Beaufort.color(step: p.step, scheme: model.scheme))
                 .cornerRadius(style.barCornerRadius)
-                .annotation(position: .bottom, spacing: style.bottomInset / 2 - style.arrowSize / 2) {
-                    if p.index % model.arrowCadence == 0 {
-                        ArrowView(dirFrom: p.dirFrom, size: style.arrowSize, color: numberInk)
-                    }
-                }
             }
 
             // Gust polyline through the cap centres, 75 % ink.
@@ -126,7 +131,7 @@ public struct WindChart: View {
                 RuleMark(x: .value("Now", model.nowDate))
                     .lineStyle(StrokeStyle(lineWidth: 1.5))
                     .foregroundStyle(ink)
-                    .annotation(position: .top, alignment: .leading, spacing: 2) {
+                    .annotation(position: .top, alignment: .leading, spacing: 2, overflowResolution: .init(x: .fit(to: .plot), y: .disabled)) {
                         Text("now")
                             .font(.system(size: style.isWatch ? 10 : 11, weight: .semibold))
                             .foregroundStyle(ink)
@@ -139,7 +144,7 @@ public struct WindChart: View {
                 RuleMark(x: .value("Horizon", edge))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .foregroundStyle(ink.opacity(0.7))
-                    .annotation(position: .top, alignment: .trailing, spacing: 2) {
+                    .annotation(position: .top, alignment: .trailing, spacing: 2, overflowResolution: .init(x: .fit(to: .plot), y: .disabled)) {
                         if let label = model.horizonLabel {
                             Text(label)
                                 .font(.system(size: style.isWatch ? 10 : 11, weight: .semibold))
@@ -179,7 +184,22 @@ public struct WindChart: View {
         .chartPlotStyle { plot in
             plot.frame(height: style.plotHeight)
         }
+        .chartOverlay { proxy in
+            // Direction arrows in their own band under the axis labels (§6.1 arrow row).
+            GeometryReader { geo in
+                if let anchor = proxy.plotFrame {
+                    let plot = geo[anchor]
+                    ForEach(arrowPoints) { p in
+                        if let x = proxy.position(forX: p.centre) {
+                            ArrowView(dirFrom: p.dirFrom, size: style.arrowSize, color: numberInk)
+                                .position(x: plot.minX + x, y: plot.maxY + style.axisBand + style.arrowBand / 2)
+                        }
+                    }
+                }
+            }
+        }
         .padding(.top, style.topInset)
+        .padding(.bottom, style.arrowBand)
         .environment(\.timeZone, model.timeZone)
         .oldStateDesaturation(model.ageTier)
         .accessibilityLabel(Text(accessibilityText))
@@ -187,7 +207,7 @@ public struct WindChart: View {
 
     private var accessibilityText: String {
         let hours = model.points.count
-        let ends = model.points.last.map { TimeFormat.weekdayHHMM($0.date, tz: model.timeZone) } ?? ""
+        let ends = model.points.last.map { TimeFormat.weekdayLong($0.date, tz: model.timeZone) + " " + TimeFormat.hhmm($0.date, tz: model.timeZone) } ?? ""
         return "\(hours)-hour wind chart: gusts to \(model.maxGust) knots, ends \(ends)"
     }
 }

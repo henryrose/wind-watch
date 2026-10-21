@@ -191,3 +191,16 @@ struct ViewSmokeTests {
         #expect(Tokens.heroTracking(watch: true) < 0)
     }
 }
+
+@Suite("TrustLineView suffix")
+struct TrustLineSuffixTests {
+    @Test func suffixOnlyOnAsOfLines() throws {
+        let f = try Fixture.forecast()
+        let now = f.start.addingTimeInterval(1800)
+        let ends = Derivations.horizonWeekdayLabel(forecast: f)
+        #expect(TrustLineView(state: .fresh, forecast: f, now: now, suffix: ends).text == "as of 09:00 · HRRR 15Z · ends Fri 05:00")
+        #expect(TrustLineView(state: .offlineCached, forecast: f, now: now, suffix: ends).text == "Couldn't reach server · showing data from 09:00")
+        #expect(TrustLineView(state: .pastHorizon, forecast: f, now: f.horizon.addingTimeInterval(60), suffix: ends).text == "No forecast · last run HRRR 15Z Wed")
+        #expect(TrustLineView(state: .firstRun, forecast: nil, now: now, suffix: ends).text == "No data yet. Needs cellular or Wi-Fi once.")
+    }
+}

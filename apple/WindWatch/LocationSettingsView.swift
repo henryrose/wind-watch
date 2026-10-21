@@ -1,0 +1,275 @@
+import MapKit
+import SwiftUI
+import WindCore
+
+/// HANDOFF §8.3. The default card is always one tap and never moves.
+struct LocationSettingsView: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.colorScheme) private var scheme
+
+    @State private var query = ""
+    @State private var candidate: SavedLocation?
+    @State private var searchError: String?
+    @State private var isSearching = false
+    @State private var camera: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: SavedLocation.portTownsendBay.lat, longitude: SavedLocation.portTownsendBay.lon),
+            span: MKCoordinateSpan(latitudeDelta: 0.6, longitudeDelta: 0.6)
+        )
+    )
+
+    private static let defaultBlue = Color(hex: "#4FA3D8")
+
+    private var custom: SavedLocation? { candidate ?? model.preferences.custom }
+    private var customIsSelected: Bool { model.preferences.effectiveUseCustom && candidate == nil }
+    private var hasUnsavedCandidate: Bool { candidate != nil && candidate != model.preferences.custom }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Location")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(Tokens.inkPrimary(scheme))
+                defaultCard
+                Text("The default is the HRRR grid point over Port Townsend Bay, chosen so the forecast is for water, not the shore.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Tokens.inkSecondary(scheme))
+                customCard
+                searchField
+                if let searchError {
+                    Text(searchError)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Tokens.trustAmber(scheme))
+                }
+                map
+                legend
+                Text("Snapped to the nearest HRRR cell on save.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Tokens.inkSecondary(scheme))
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+        }
+        .background(Tokens.ground(scheme))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Tokens.ground(scheme), for: .navigationBar)
+        .onAppear {
+            if let custom = model.preferences.custom {
+                camera = .region(MKCoordinateRegion(
+                    center: CLLocationCoordinate2D(latitude: custom.lat, longitude: custom.lon),
+                    span: MKCoordinateSpan(latitudeDelta: 0.6, longitudeDelta: 0.6)))
+            }
+        }
+    }
+
+    // MARK: Cards
+
+    private var defaultCard: some View {
+        Button {
+            model.selectDefault()
+            candidate = nil
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(SavedLocation.portTownsendBay.name)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Tokens.inkPrimary(scheme))
+                    Text("Default · \(SavedLocation.portTownsendBay.coordinateText) · HRRR point")
+                        .font(.system(size: 13).monospacedDigit())
+                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                }
+                Spacer()
+                selectionMark(selected: !model.preferences.effectiveUseCustom)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Default location, \(SavedLocation.portTownsendBay.name)")
+        .accessibilityAddTraits(model.preferences.effectiveUseCustom ? [] : .isSelected)
+    }
+
+    private var customCard: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                if let custom {
+                    Text(custom.name)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Tokens.inkPrimary(scheme))
+                        .lineLimit(1)
+                    Text("Custom · \(custom.coordinateText)")
+                        .font(.system(size: 13).monospacedDigit())
+                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                } else {
+                    Text("Custom location")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Tokens.inkDisabled(scheme))
+                    Text("Search below or long-press the map")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                }
+            }
+            Spacer()
+            if hasUnsavedCandidate, let candidate {
+                Button("Save") { model.saveCustom(candidate); self.candidate = nil }
+                    .font(.system(size: 15, weight: .semibold))
+                    .buttonStyle(.borderedProminent)
+                    .tint(Tokens.trustAmber(scheme))
+                    .foregroundStyle(Color.black)
+                    .frame(minHeight: 44)
+            } else {
+                Button {
+                    model.selectCustom()
+                } label: {
+                    selectionMark(selected: customIsSelected)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(model.preferences.custom == nil)
+                .accessibilityLabel("Use custom location")
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+        .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func selectionMark(selected: Bool) -> some View {
+        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+            .font(.system(size: 24, weight: .semibold))
+            .foregroundStyle(selected ? Tokens.trustAmber(scheme) : Tokens.inkDisabled(scheme))
+    }
+
+    // MARK: Search
+
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Tokens.inkSecondary(scheme))
+            TextField("Search a place or paste lat, lon", text: $query)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .onSubmit { Task { await search() } }
+                .foregroundStyle(Tokens.inkPrimary(scheme))
+            if isSearching { ProgressView().controlSize(.small) }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 44)
+        .background(Tokens.ground(scheme), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Tokens.hairline(scheme), lineWidth: 1))
+    }
+
+    private func search() async {
+        searchError = nil
+        let text = query.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else { return }
+        if let coords = SavedLocation.parseCoordinates(text) {
+            propose(SavedLocation(name: "Custom point", lat: coords.lat, lon: coords.lon, tz: TimeZone.current.identifier))
+            return
+        }
+        isSearching = true
+        defer { isSearching = false }
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = text
+        request.resultTypes = [.address, .pointOfInterest]
+        do {
+            let response = try await MKLocalSearch(request: request).start()
+            guard let item = response.mapItems.first else {
+                searchError = "No place found for “\(text)”."
+                return
+            }
+            let coordinate = item.location.coordinate
+            propose(SavedLocation(
+                name: item.name ?? text,
+                lat: coordinate.latitude, lon: coordinate.longitude,
+                tz: item.timeZone?.identifier ?? TimeZone.current.identifier))
+        } catch {
+            searchError = "Search failed. Check the connection and try again."
+        }
+    }
+
+    private func propose(_ location: SavedLocation) {
+        candidate = location
+        camera = .region(MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lon),
+            span: MKCoordinateSpan(latitudeDelta: 0.4, longitudeDelta: 0.4)))
+    }
+
+    private func pin(at coordinate: CLLocationCoordinate2D) async {
+        var name = "Dropped pin"
+        var tz = TimeZone.current.identifier
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        if let request = MKReverseGeocodingRequest(location: location),
+           let item = try? await request.mapItems.first {
+            name = item.name ?? item.address?.shortAddress ?? name
+            tz = item.timeZone?.identifier ?? tz
+        }
+        propose(SavedLocation(name: name, lat: coordinate.latitude, lon: coordinate.longitude, tz: tz))
+    }
+
+    // MARK: Map
+
+    private var map: some View {
+        MapReader { proxy in
+            Map(position: $camera, interactionModes: [.pan, .zoom]) {
+                Annotation(SavedLocation.portTownsendBay.name,
+                           coordinate: CLLocationCoordinate2D(latitude: SavedLocation.portTownsendBay.lat, longitude: SavedLocation.portTownsendBay.lon)) {
+                    dot(Self.defaultBlue)
+                }
+                if let custom {
+                    Annotation(custom.name, coordinate: CLLocationCoordinate2D(latitude: custom.lat, longitude: custom.lon)) {
+                        dot(Tokens.trustAmber(.dark))
+                    }
+                }
+            }
+            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+            .gesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
+                    .onEnded { value in
+                        if case .second(true, let drag?) = value, let coordinate = proxy.convert(drag.location, from: .local) {
+                            Task { await pin(at: coordinate) }
+                        }
+                    }
+            )
+        }
+        .frame(height: 300)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(alignment: .bottomLeading) {
+            Text("Long-press to pin")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.black.opacity(0.6), in: Capsule())
+                .padding(10)
+        }
+        .accessibilityLabel("Map. Long-press to drop a custom pin.")
+    }
+
+    private func dot(_ color: Color) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: 14, height: 14)
+            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+            .shadow(radius: 2)
+    }
+
+    private var legend: some View {
+        HStack(spacing: 16) {
+            HStack(spacing: 6) {
+                Circle().fill(Self.defaultBlue).frame(width: 10, height: 10)
+                Text("Default")
+            }
+            HStack(spacing: 6) {
+                Circle().fill(Tokens.trustAmber(.dark)).frame(width: 10, height: 10)
+                Text("Custom")
+            }
+        }
+        .font(.system(size: 13))
+        .foregroundStyle(Tokens.inkSecondary(scheme))
+    }
+}

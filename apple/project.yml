@@ -53,6 +53,8 @@ targets:
       path: WindWatch/Info.plist
       properties:
         CFBundleDisplayName: Wind Watch
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         WWAPIBase: $(WW_API_BASE)
@@ -76,6 +78,8 @@ targets:
       path: WindWatchWatch/Info.plist
       properties:
         CFBundleDisplayName: Wind Watch
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         WKApplication: true
         WKCompanionAppBundleIdentifier: $(WW_BUNDLE_PREFIX).windwatch
         WKRunsIndependentlyOfCompanionApp: true
@@ -98,6 +102,8 @@ targets:
       path: WindWatchComplications/Info.plist
       properties:
         CFBundleDisplayName: Wind Watch
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         WWAPIBase: $(WW_API_BASE)

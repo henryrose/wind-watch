@@ -9,19 +9,30 @@ public struct TrustLineView: View {
     public var now: Date
     public var tz: TimeZone?
     public var compact: Bool
+    /// Appended as ` · suffix` when the line is an "as of" line (fresh, stale, old, updating),
+    /// e.g. the phone header's `ends Fri 05:00`.
+    public var suffix: String?
 
     @Environment(\.colorScheme) private var scheme
 
-    public init(state: TrustState, forecast: Forecast?, now: Date, tz: TimeZone? = nil, compact: Bool = false) {
+    public init(state: TrustState, forecast: Forecast?, now: Date, tz: TimeZone? = nil, compact: Bool = false, suffix: String? = nil) {
         self.state = state
         self.forecast = forecast
         self.now = now
         self.tz = tz
         self.compact = compact
+        self.suffix = suffix
     }
 
     public var text: String {
-        TrustLine.text(state: state, forecast: forecast, now: now, tz: tz)
+        let base = TrustLine.text(state: state, forecast: forecast, now: now, tz: tz)
+        switch state {
+        case .fresh, .stale, .old, .updating:
+            if let suffix, forecast != nil { return base + " · " + suffix }
+            return base
+        default:
+            return base
+        }
     }
 
     /// Amber for stale / old / offline / past horizon; secondary otherwise.
