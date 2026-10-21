@@ -14,6 +14,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20261019.1
         version: 5.20261019.1
+      suncalc:
+        specifier: ^2.1.1
+        version: 2.1.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -1140,6 +1143,9 @@ packages:
   std-env@4.3.0:
     resolution: {integrity: sha512-OtU/EgQ1kIm5KwqQpBC6ZEMXrZRui11w8zgfTWp8cdO9B8OaPsbA8bTHO2P+HNo1VlUTGMVBwPhydu6poeXiag==}
 
+  suncalc@2.1.1:
+    resolution: {integrity: sha512-ufMOPzYRk5aomEs3g+qeJGdCPZWC3TL94E0HQagoSusFnNXCvfuewWBroY3lxRHqA7IA8UGvgg7dcrSSDJsuEg==}
+
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
     engines: {node: '>=18'}
@@ -2163,6 +2169,8 @@ snapshots:
   stackback@0.0.2: {}
 
   std-env@4.3.0: {}
+
+  suncalc@2.1.1: {}
 
   supports-color@10.2.2: {}
 

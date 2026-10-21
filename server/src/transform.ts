@@ -1,7 +1,10 @@
 // Open-Meteo HRRR response + meta.json → wire payload (docs/DESIGN.md §4.2).
 // Pure function: no I/O, no clock. `fetched` and `loc` come from the caller.
+// Sun events are derived here too (sunDays is pure), so the payload is complete
+// bar `summary` (B3).
 
 import type { Location, OpenMeteoForecast, OpenMeteoMeta, Payload } from "./types.js";
+import { sunDays } from "./sun.js";
 
 const HOUR = 3600;
 const SIX_HOURS = 6 * HOUR;
@@ -59,7 +62,7 @@ export function transform(
     dir,
     peak: { gust: gust[peakIndex] as number, at: start + peakIndex * HOUR },
     summary: "",
-    sun: [],
+    sun: sunDays({ lat: opts.loc.lat, lon: opts.loc.lon, tz: opts.loc.tz, start, hours }),
   };
 }
 

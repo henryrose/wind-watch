@@ -60,7 +60,8 @@ describe("transform on the 2026-10-21 fixture", () => {
     expect(payload.loc).toEqual(DEFAULT_LOC);
     expect(payload.fetched).toBe(FETCHED);
     expect(payload.summary).toBe("");
-    expect(payload.sun).toEqual([]);
+    // sun is populated by B2; its content is covered in sun.test.ts.
+    expect(payload.sun).toHaveLength(3);
   });
 
   it("hours equals the number of non-null entries in the fixture (43)", () => {
