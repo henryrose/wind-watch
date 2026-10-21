@@ -5,7 +5,9 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B, C, E, D1 complete; D2 running; then D3–D5, F1, F2)
+Last updated: 2026-10-21 (A, B, C, E, D1 complete and committed; D2 was in progress when the session hit its usage limit; then D3–D5, F1, F2)
+
+**Resume note (2026-10-21):** the orchestrator session stopped on a usage limit while the core agent was mid-D2 (iPhone app). Its output may exist as **uncommitted files under `apple/WindWatch/`** (and possibly `apple/WindCore/` for `SavedLocation`) with screenshots under `apple/build/d2-*.png`. Next session: run `cd apple && ./build.sh ios` and `cd apple/WindCore && swift test`, review the screenshots against HANDOFF §8/§11, then commit as D2 or re-dispatch with the D2 brief from `docs/IMPLEMENTATION_PLAN.md` §3. Then continue with D3, D4, D5, F1, F2 per `docs/LOOP_PROMPT.md`.
 
 ## Tasks
 
