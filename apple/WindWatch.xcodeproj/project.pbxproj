@@ -23,6 +23,8 @@
 		489A22C83A7CA9794A022654 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDEBA8472F1941D436D61CB4 /* AboutView.swift */; };
 		511B228A64B8B935F87BE831 /* HourTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BC4826A662A28196C080F90 /* HourTable.swift */; };
 		519D6E660E8B5007C90178CE /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5BBA5569E5CE275A4A381608 /* WindCore */; };
+		61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
+		716B8BAB0159431760EAA5FF /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
 		722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */; };
 		726DC8D942D5F1E9C5FB2B8A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9912859D54146B54B9E84827 /* RootView.swift */; };
 		73B96DE1EA8356B696B6A71A /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E90582FC4E07F44513EF7A /* MainView.swift */; };
@@ -106,6 +108,7 @@
 		8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowBlock.swift; sourceTree = "<group>"; };
 		9912859D54146B54B9E84827 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A99C960818A399362EF9E02F /* LocationSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSync.swift; sourceTree = "<group>"; };
 		B968EE644A9F48069E6AD893 /* WindWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindWatchApp.swift; sourceTree = "<group>"; };
 		CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindWatchComplications.swift; sourceTree = "<group>"; };
 		CDEBA8472F1941D436D61CB4 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
@@ -233,6 +236,7 @@
 			isa = PBXGroup;
 			children = (
 				1C3DC43E622277C4B42512C6 /* Complications */,
+				A99C960818A399362EF9E02F /* LocationSync.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -394,6 +398,7 @@
 				B8306C8D45C5605DF91F7058 /* ComplicationsDebugView.swift in Sources */,
 				9C146623008B202C721ABE71 /* CornerComplicationView.swift in Sources */,
 				3E1E559B46DE0DFE1B01D159 /* InlineComplicationView.swift in Sources */,
+				716B8BAB0159431760EAA5FF /* LocationSync.swift in Sources */,
 				08B5E3C768FFC6BEB4282436 /* NowView.swift in Sources */,
 				EB23BF4BA21F5D58CBB6D66F /* RectangularComplicationView.swift in Sources */,
 				726DC8D942D5F1E9C5FB2B8A /* RootView.swift in Sources */,
@@ -425,6 +430,7 @@
 				B43579891702CA7D0145B38D /* HeaderView.swift in Sources */,
 				511B228A64B8B935F87BE831 /* HourTable.swift in Sources */,
 				E89AB377FED9C9186DFAA7DA /* LocationSettingsView.swift in Sources */,
+				61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */,
 				73B96DE1EA8356B696B6A71A /* MainView.swift in Sources */,
 				B19DFB68BD943E2B9F8CAAE0 /* NowBlock.swift in Sources */,
 				3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */,

@@ -54,6 +54,16 @@ struct SavedLocationTests {
         #expect(ctx["customLocation"] is Data)
         #expect(LocationSettings.preferences(fromApplicationContext: ctx) == prefs)
         #expect(LocationSettings.preferences(fromApplicationContext: [:]) == .default)
+        // useCustom false with a custom location, and useCustom true with none.
+        let off = Preferences(custom: custom, useCustom: false)
+        #expect(LocationSettings.preferences(fromApplicationContext: LocationSettings.applicationContext(off)) == off)
+        let orphan = Preferences(custom: nil, useCustom: true)
+        let orphanCtx = LocationSettings.applicationContext(orphan)
+        #expect(orphanCtx["customLocation"] == nil)
+        #expect(LocationSettings.preferences(fromApplicationContext: orphanCtx) == orphan)
+        #expect(!LocationSettings.preferences(fromApplicationContext: orphanCtx).effectiveUseCustom)
+        // Plist-safe: only Bool and Data values.
+        #expect(ctx.values.allSatisfy { $0 is Bool || $0 is Data })
     }
 
     typealias Preferences = LocationSettings.Preferences

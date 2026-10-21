@@ -4,8 +4,25 @@ import WindCore
 
 @main
 struct WindWatchApp: App {
-    @State private var model = ForecastSession(bundleInfo: Bundle.main.infoDictionary ?? [:])
+    @State private var model: ForecastSession
+    @State private var sync: LocationSync
     @Environment(\.scenePhase) private var scenePhase
+
+    init() {
+        let session = ForecastSession(bundleInfo: Bundle.main.infoDictionary ?? [:])
+        let sync = LocationSync(session: session)
+        #if DEBUG
+        // `WW_SAVE_CUSTOM="Name,lat,lon"`: save and select a custom location at launch (sync tests).
+        if let spec = ProcessInfo.processInfo.environment["WW_SAVE_CUSTOM"] {
+            let parts = spec.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if parts.count == 3, let lat = Double(parts[1]), let lon = Double(parts[2]) {
+                session.saveCustom(SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier))
+            }
+        }
+        #endif
+        _model = State(initialValue: session)
+        _sync = State(initialValue: sync)
+    }
 
     var body: some Scene {
         WindowGroup {

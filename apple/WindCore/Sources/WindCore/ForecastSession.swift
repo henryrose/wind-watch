@@ -21,6 +21,9 @@ public final class ForecastSession {
     public private(set) var isUpdating = false
     public private(set) var preferences: LocationSettings.Preferences
     public private(set) var typeSizeOverride: DynamicTypeSize?
+    /// Called after a local preference edit (`saveCustom`, `selectDefault`, `selectCustom`); the
+    /// iPhone app uses it to push the context to the watch. WindCore stays free of WatchConnectivity.
+    @ObservationIgnored public var onPreferencesChanged: (@MainActor (LocationSettings.Preferences) -> Void)?
 
     public let store: AppGroupStore
     public let client: WindClient?
@@ -40,7 +43,10 @@ public final class ForecastSession {
     ///   - mirrorFixtureToGroup: in fixture mode, also write the fixture cache and the
     ///     `FixtureFlag` into the real App Group store/defaults so the widget extension (which
     ///     cannot see the app's environment) renders the same data. Tests pass false.
-    public init(bundleInfo: [String: Any], environment: [String: String] = ProcessInfo.processInfo.environment, mirrorFixtureToGroup: Bool = true) {
+    ///   - store: overrides the cache store (tests); nil uses the App Group store, or a temp
+    ///     directory in fixture mode.
+    public init(bundleInfo: [String: Any], environment: [String: String] = ProcessInfo.processInfo.environment,
+                mirrorFixtureToGroup: Bool = true, store: AppGroupStore? = nil) {
         self.environment = environment
         let prefix = (bundleInfo["WWBundlePrefix"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "com.example"
         groupID = AppGroupStore.groupID(bundlePrefix: prefix)
@@ -54,10 +60,10 @@ public final class ForecastSession {
         if isFixture {
             let dir = FileManager.default.temporaryDirectory
                 .appendingPathComponent("WindWatchFixture-\(UUID().uuidString)", isDirectory: true)
-            store = AppGroupStore(directory: dir)
+            self.store = store ?? AppGroupStore(directory: dir)
             client = nil
         } else {
-            store = AppGroupStore(groupID: groupID)
+            self.store = store ?? AppGroupStore(groupID: groupID)
             if let base = bundleInfo["WWAPIBase"] as? String, let url = URL(string: base), url.host() != nil {
                 client = WindClient(baseURL: url)
             } else {
@@ -69,7 +75,7 @@ public final class ForecastSession {
             applyFixture(state: environment["WW_STATE"])
             if mirrorFixtureToGroup { mirrorFixtureToGroupStore() }
         } else {
-            setCached(store.load())
+            setCached(self.store.load())
             if mirrorFixtureToGroup { FixtureFlag.set(false, in: defaults) }
         }
         if let pinnedNow { now = pinnedNow }
@@ -156,17 +162,23 @@ public final class ForecastSession {
         locationChanged()
     }
 
-    /// Re-reads the preference from the group defaults (after a `WCSession` update, D5).
-    public func reloadPreferences() {
+    /// Re-reads the preference from the group defaults after an external write (the watch's
+    /// `WCSession` handler, D5). Returns true when the *active* location changed; only then is the
+    /// cache dropped (a different location is a different payload). Fixture mode keeps its data and
+    /// just rebuilds `forecast` with the new `isDefault` flag.
+    @discardableResult
+    public func reloadPreferences() -> Bool {
         let fresh = LocationSettings.load(from: defaults)
-        guard fresh != preferences else { return }
+        guard fresh != preferences else { return false }
+        let activeChanged = fresh.activeCustom != preferences.activeCustom
         preferences = fresh
-        if isFixture {
+        if isFixture || !activeChanged {
             setCached(cached)
         } else {
             try? store.clear()
             setCached(nil)
         }
+        return activeChanged
     }
 
     private func locationChanged() {
@@ -178,6 +190,7 @@ public final class ForecastSession {
             setCached(nil)
             Task { await refreshIfNeeded(force: true) }
         }
+        onPreferencesChanged?(preferences)
     }
 
     // MARK: - Private

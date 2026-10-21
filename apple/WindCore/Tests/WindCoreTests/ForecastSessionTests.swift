@@ -93,3 +93,77 @@ struct ForecastSessionTests {
         #expect(s.preferences.effectiveUseCustom)
     }
 }
+
+@Suite("ForecastSession preference sync (D5)")
+@MainActor
+struct ForecastSessionSyncTests {
+    /// A session with its own defaults suite and (non-fixture) temp store, cleaned up after.
+    @MainActor struct Harness {
+        let session: ForecastSession
+        let suite: String
+        init(fixture: Bool, seeded: Bool = true) throws {
+            let prefix = "test.\(UUID().uuidString.lowercased())"
+            suite = AppGroupStore.groupID(bundlePrefix: prefix)
+            let store = AppGroupStore(directory: FileManager.default.temporaryDirectory.appendingPathComponent("WindCoreSync-\(UUID().uuidString)", isDirectory: true))
+            if seeded, !fixture { try store.save(payloadData: try PreviewData.payload.encoded(), etag: "\"e\"", at: .now) }
+            session = ForecastSession(bundleInfo: ["WWBundlePrefix": prefix, "WWAPIBase": "https://example.test"],
+                                      environment: fixture ? ["WW_FIXTURE": "1"] : [:],
+                                      mirrorFixtureToGroup: false, store: store)
+        }
+        func cleanup() { session.defaults.removePersistentDomain(forName: suite); try? session.store.clear() }
+    }
+
+    let custom = SavedLocation(name: "Seattle", lat: 47.6, lon: -122.3, tz: "America/Los_Angeles")
+
+    @Test func reloadFlipsIsDefaultInFixtureMode() throws {
+        let h = try Harness(fixture: true); defer { h.cleanup() }
+        #expect(h.session.forecast?.location.isDefault == true)
+        LocationSettings.save(.init(custom: custom, useCustom: true), to: h.session.defaults)
+        #expect(h.session.reloadPreferences() == true)
+        #expect(h.session.preferences == .init(custom: custom, useCustom: true))
+        #expect(h.session.forecast != nil)
+        #expect(h.session.forecast?.location.isDefault == false)
+        #expect(h.session.locationName == "Seattle")
+        #expect(h.session.reloadPreferences() == false) // nothing changed
+    }
+
+    @Test func reloadClearsCacheOnlyWhenActiveLocationChanges() throws {
+        let h = try Harness(fixture: false); defer { h.cleanup() }
+        #expect(h.session.forecast != nil)
+        // A custom location saved but not selected: preferences change, cache stays.
+        LocationSettings.save(.init(custom: custom, useCustom: false), to: h.session.defaults)
+        #expect(h.session.reloadPreferences() == false)
+        #expect(h.session.preferences.custom == custom)
+        #expect(h.session.forecast != nil)
+        #expect(h.session.store.load() != nil)
+        // Now selected: active location changed → cache dropped.
+        LocationSettings.save(.init(custom: custom, useCustom: true), to: h.session.defaults)
+        #expect(h.session.reloadPreferences() == true)
+        #expect(h.session.store.load() == nil)
+        #expect(h.session.forecast == nil)
+        #expect(h.session.preferences.activeCustom == custom.customLocation)
+    }
+
+    @Test func localEditsFireTheHook() throws {
+        let h = try Harness(fixture: true); defer { h.cleanup() }
+        final class Box: @unchecked Sendable { var seen: [LocationSettings.Preferences] = [] }
+        let box = Box()
+        h.session.onPreferencesChanged = { prefs in box.seen.append(prefs) }
+        h.session.saveCustom(custom)
+        h.session.selectDefault()
+        h.session.selectCustom()
+        h.session.selectCustom() // no-op, already selected
+        #expect(box.seen.map(\.useCustom) == [true, false, true])
+        #expect(box.seen.allSatisfy { $0.custom == custom })
+        #expect(LocationSettings.load(from: h.session.defaults) == .init(custom: custom, useCustom: true))
+    }
+
+    @Test func payloadTimeZoneWinsOverSavedLocationTimeZone() throws {
+        var p = PreviewData.payload
+        p.loc.tz = "Europe/London"
+        let f = Forecast(payload: p, isDefault: false)
+        #expect(f.timeZone.identifier == "Europe/London")
+        #expect(Derivations.horizonLabel(forecast: f) == "HRRR ends 13:00") // 12:00Z horizon in BST
+        #expect(custom.timeZone.identifier == "America/Los_Angeles") // card only
+    }
+}

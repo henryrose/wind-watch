@@ -38,6 +38,7 @@ targets:
     platform: iOS
     sources:
       - WindWatch
+      - Shared/LocationSync.swift
     dependencies:
       - package: WindCore
       - target: WindWatchWatch
@@ -66,6 +67,7 @@ targets:
     sources:
       - WindWatchWatch
       - Shared/Complications
+      - Shared/LocationSync.swift
     dependencies:
       - package: WindCore
       - target: WindWatchComplications

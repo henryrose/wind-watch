@@ -4,8 +4,15 @@ import WindCore
 
 @main
 struct WindWatchWatchApp: App {
-    @State private var session = ForecastSession(bundleInfo: Bundle.main.infoDictionary ?? [:])
+    @State private var session: ForecastSession
+    @State private var sync: LocationSync
     @Environment(\.scenePhase) private var scenePhase
+
+    init() {
+        let session = ForecastSession(bundleInfo: Bundle.main.infoDictionary ?? [:])
+        _session = State(initialValue: session)
+        _sync = State(initialValue: LocationSync(session: session))
+    }
 
     var body: some Scene {
         WindowGroup {
