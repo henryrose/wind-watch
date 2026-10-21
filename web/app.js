@@ -25,7 +25,9 @@ import {
   tzAbbrev,
   yDomainMax,
 } from './lib/derive.js';
+import { CACHE_KEY, parseRecord, recordAfterCheck, serializeRecord } from './lib/cache.js';
 
+const CHECK_MS = 10 * MINUTE_MS;
 const KITE = 'M0,-0.5 L0.38,0.5 L0,0.2 L-0.38,0.5 Z';
 const STATES = new Set(['fresh', 'stale', 'old', 'offline', 'horizon', 'firstrun', 'updating']);
 
@@ -64,12 +66,45 @@ function defaultNow(forecast, state) {
 
 // --- Data ----------------------------------------------------------------
 
-async function loadPayload() {
-  const base = (window.WW_CONFIG && window.WW_CONFIG.apiBase) || '';
-  const url = base ? `${base.replace(/\/$/, '')}/v1/wind` : new URL('../fixtures/payload-reference.json', location.href).href;
+function apiBase() {
+  return ((window.WW_CONFIG && window.WW_CONFIG.apiBase) || '').replace(/\/$/, '');
+}
+
+// Fixture mode: the reference payload, relative to this page.
+async function loadFixture() {
+  const url = new URL('../fixtures/payload-reference.json', location.href).href;
   const res = await fetch(url, { cache: 'no-cache' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
+}
+
+// Live mode: one conditional GET. Resolves to an outcome for recordAfterCheck;
+// never throws.
+async function checkLive(base, etag) {
+  const headers = {};
+  if (etag) headers['If-None-Match'] = etag;
+  try {
+    const res = await fetch(`${base}/v1/wind`, { cache: 'no-store', headers });
+    const now = Date.now();
+    if (res.status === 304) return { status: 304, now };
+    if (res.status === 200) {
+      const body = await res.json();
+      return { status: 200, etag: res.headers.get('ETag') || '', body, now };
+    }
+    let code = null;
+    try { code = (await res.json()).error || null; } catch { /* no JSON body */ }
+    return { status: res.status, code, now };
+  } catch (err) {
+    return { status: 'error', now: Date.now(), error: err };
+  }
+}
+
+// localStorage is optional (private mode, blocked storage): every access is guarded.
+function readCache() {
+  try { return parseRecord(localStorage.getItem(CACHE_KEY)); } catch { return null; }
+}
+function writeCache(record) {
+  try { localStorage.setItem(CACHE_KEY, serializeRecord(record)); } catch { /* ignore */ }
 }
 
 // --- Glyphs ----------------------------------------------------------------
@@ -259,7 +294,9 @@ function render(ctx) {
     $('trust').textContent = '';
     $('hero').innerHTML = `<div class="hero-main"><span class="hero-kn num dash">—</span><span class="hero-unit">kn</span></div>`;
     $('hero').setAttribute('aria-label', 'No data yet');
-    $('summary').textContent = 'No data yet. Needs cellular or Wi-Fi once.';
+    $('summary').textContent = ctx.reason === 'no_data'
+      ? 'No data yet. The server has not baked a forecast yet.'
+      : 'No data yet. Needs cellular or Wi-Fi once.';
     $('chart-card').classList.add('hidden');
     $('table-wrap').classList.add('hidden');
     $('footer-right').innerHTML = `<span class="trying"><span class="ring" aria-hidden="true"></span>trying…</span>`;
@@ -296,43 +333,30 @@ function render(ctx) {
 
 // --- Boot ------------------------------------------------------------------
 
-async function main() {
-  const opts = readOptions();
-  const ctx = { forecast: null, now: opts.now || new Date(), state: null };
-
-  if (opts.state !== 'firstrun') {
-    try {
-      ctx.forecast = toForecast(await loadPayload());
-    } catch (err) {
-      console.error('Wind Watch: could not load payload', err);
-      ctx.forecast = null;
-    }
-  }
-
+// Shared: pick the clock, compute the trust state, render. `?state=` forces a
+// state for verification in either mode; `?now=` pins the clock.
+function makeCompute(ctx, opts, { liveClock }) {
   const clock = () => {
-    if (opts.live) return new Date();
     if (opts.now) return opts.now;
+    if (opts.live || (liveClock && !opts.state)) return new Date();
     return ctx.forecast ? defaultNow(ctx.forecast, opts.state) : new Date();
   };
-
-  const compute = () => {
+  return () => {
     ctx.now = clock();
     ctx.state = trustState({
       forecast: ctx.forecast,
       now: ctx.now,
-      lastCheckOK: opts.state !== 'offline',
-      updating: opts.state === 'updating',
+      lastCheckOK: opts.state === 'offline' ? false : ctx.lastCheckOK,
+      updating: opts.state === 'updating' || ctx.updating,
     });
     if (ctx.forecast && opts.state === 'fresh' && !opts.now && !opts.live) {
       ctx.state = { ...ctx.state, kind: 'fresh', tier: 'fresh' };
     }
     render(ctx);
   };
+}
 
-  compute();
-
-  if (opts.live) setInterval(compute, MINUTE_MS);
-
+function watchResize(compute) {
   let raf = 0;
   window.addEventListener('resize', () => {
     const wide = window.innerWidth >= 900;
@@ -340,6 +364,95 @@ async function main() {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(compute);
   });
+}
+
+// Fixture mode (apiBase === ""): load the reference payload once, clock pinned
+// to start + 30 min unless ?now= says otherwise.
+async function bootFixture(opts) {
+  const ctx = { forecast: null, now: new Date(), state: null, lastCheckOK: true, updating: false, reason: null };
+  if (opts.state !== 'firstrun') {
+    try {
+      ctx.forecast = toForecast(await loadFixture());
+    } catch (err) {
+      console.error('Wind Watch: could not load fixture', err);
+    }
+  }
+  const compute = makeCompute(ctx, opts, { liveClock: false });
+  compute();
+  if (opts.live) setInterval(compute, MINUTE_MS);
+  watchResize(compute);
+}
+
+// Live mode: first paint from the localStorage cache (updating ring, never a
+// spinner over numbers), then a conditional GET; re-check every 10 min while
+// visible; re-render the trust line every minute on the live clock.
+async function bootLive(opts, base) {
+  const ctx = { forecast: null, now: new Date(), state: null, lastCheckOK: true, updating: false, reason: null };
+  let record = opts.state === 'firstrun' ? null : readCache();
+  let inFlight = false;
+
+  const adopt = (rec) => {
+    try {
+      ctx.forecast = toForecast(rec.body);
+      ctx.lastCheckOK = rec.lastCheckOK;
+      return true;
+    } catch (err) {
+      console.error('Wind Watch: cached payload unusable', err);
+      return false;
+    }
+  };
+
+  const compute = makeCompute(ctx, opts, { liveClock: true });
+
+  if (record && adopt(record)) {
+    ctx.updating = true;
+    compute();
+  }
+
+  const check = async () => {
+    if (inFlight) return;
+    inFlight = true;
+    if (ctx.forecast && !ctx.updating) {
+      ctx.updating = true;
+      compute();
+    }
+    const outcome = await checkLive(base, record ? record.etag : null);
+    const next = recordAfterCheck(record, outcome);
+    if (next) {
+      const changed = outcome.status === 200;
+      record = next;
+      writeCache(record);
+      if (changed || !ctx.forecast) adopt(record);
+      else ctx.lastCheckOK = record.lastCheckOK;
+    } else {
+      ctx.forecast = null;
+      ctx.lastCheckOK = false;
+      ctx.reason = outcome.code === 'no_data' ? 'no_data' : 'network';
+      if (outcome.status !== 503) console.error('Wind Watch: check failed', outcome.status, outcome.error || outcome.code || '');
+    }
+    ctx.updating = false;
+    inFlight = false;
+    compute();
+  };
+
+  await check();
+
+  setInterval(compute, MINUTE_MS);
+  setInterval(() => {
+    if (document.visibilityState === 'visible') check();
+  }, CHECK_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const since = record ? Date.now() - record.lastChecked : Infinity;
+    if (since >= CHECK_MS || !ctx.forecast) check();
+  });
+  watchResize(compute);
+}
+
+function main() {
+  const opts = readOptions();
+  const base = apiBase();
+  return base ? bootLive(opts, base) : bootFixture(opts);
 }
 
 main();
