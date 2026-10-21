@@ -5,9 +5,8 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B, C, E, D1 complete and committed; D2 was in progress when the session hit its usage limit; then D3–D5, F1, F2)
+Last updated: 2026-10-21 (A, B, C, E, D1, D2 complete; D3 running; then D4, D5, F1, F2)
 
-**Resume note (2026-10-21):** the orchestrator session stopped on a usage limit while the core agent was mid-D2 (iPhone app). Its output may exist as **uncommitted files under `apple/WindWatch/`** (and possibly `apple/WindCore/` for `SavedLocation`) with screenshots under `apple/build/d2-*.png`. Next session: run `cd apple && ./build.sh ios` and `cd apple/WindCore && swift test`, review the screenshots against HANDOFF §8/§11, then commit as D2 or re-dispatch with the D2 brief from `docs/IMPLEMENTATION_PLAN.md` §3. Then continue with D3, D4, D5, F1, F2 per `docs/LOOP_PROMPT.md`.
 
 ## Tasks
 
@@ -27,8 +26,8 @@ Last updated: 2026-10-21 (A, B, C, E, D1 complete and committed; D2 was in progr
 | C4 | core | TimelineBuilder + tests | C3 | done | `swift test` |  84 tests |
 | C5 | core | Glyphs, Tokens, TrustLine, WindChart, MiniStrip, previews | C4 | done | `swift build && swift test` |  99 tests, zero warnings |
 | D1 | apps | project.yml, xcconfig, entitlements, generated .xcodeproj, build script | A2, C5 | done | iOS sim build + watchOS generic build |  iOS + watchOS sim builds succeed (re-run by orchestrator); both apps launch in simulators with WW_FIXTURE=1 |
-| D2 | apps | iPhone app: Main, Location settings, About; fixture/state env; screenshots | D1 | in-progress (agent core) | build + screenshots reviewed | |
-| D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | todo | watchOS sim build + screenshots reviewed | |
+| D2 | apps | iPhone app: Main, Location settings, About; fixture/state env; screenshots | D1 | done | build + screenshots reviewed |  iOS build clean, 105 Swift tests; 11 screenshots reviewed (fresh/stale/old/offline/horizon/firstrun/updating dark, fresh light, location, about, AX reflow); shading direction pixel-verified |
+| D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | in-progress (agent core) | watchOS sim build + screenshots reviewed | |
 | D4 | apps | Complications: provider + 4 families + previews | D3 | todo | watchOS sim build; complication on a face screenshotted | |
 | D5 | apps | Custom-location sync (WatchConnectivity) + watch toggle | D4 | todo | both compiles + WindCore test | |
 | E1 | web | Page in fixture mode: chart, table, states, light/dark; node tests; screenshots | A3 | done | `node --test`; screenshots reviewed |  18 node tests; 13 screenshots in docs/screenshots (web-*); 375 px verified via iframe (headless Chrome clamps window width to 500) |
@@ -70,6 +69,7 @@ Last updated: 2026-10-21 (A, B, C, E, D1 complete and committed; D2 was in progr
 | 2026-10-21 | Web live mode: 304 keeps the derived forecast; 503 `no_data` → first-run wording; other 5xx/4xx/network → offline-with-cache or first-run; checks coalesced; `?state=` still works in live mode | web agent (E2) | |
 | 2026-10-21 | `pnpm dev --test-scheduled` (no `--`): pnpm 12 passes a literal `--` through to wrangler, which then treats the flag as a positional script | server agent (B5) | tripped a probe run |
 | 2026-10-21 | Watch app is a single-target watchOS app (no WatchKit extension), embedded by XcodeGen from a plain target dependency; `Local.xcconfig` is included at the end of Shared so it overrides; `WindCore.TimelineEntry` to be renamed `WindTimelineEntry` in D4 to avoid the WidgetKit clash; always address simulators by UDID (two booted sims make `booted` ambiguous) | core agent (D1) | |
+| 2026-10-21 | iPhone: arrows drawn in a chartOverlay band under the axis labels; default card shows the sea-cell coords 48.09, −122.78; table rows start at the hero hour; peak chip dot = Beaufort of the peak gust; `WW_TYPE_SIZE` env replaces the content-size launch arg (ignored under simctl); Map tiles don't load in headless screenshots, MKLocalSearch/geocoding need an interactive run | core agent (D2) | |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
@@ -86,4 +86,5 @@ Last updated: 2026-10-21 (A, B, C, E, D1 complete and committed; D2 was in progr
 
 - `docs/screenshots/web-<state>-<scheme>-1180.png` for fresh, stale, old, offline, horizon, firstrun × dark, light; `web-fresh-dark-375.png` (true 375 px via iframe). Captured 2026-10-21 from E1.
 - `docs/screenshots/d1-iphone-placeholder.png`, `d1-watch-placeholder.png`: D1 pipeline proof (placeholder UIs, real WindChart on the phone). Chart arrows overlap tick labels here; fixed in D2.
+- `docs/screenshots/d2-iphone-<state>-<scheme>.png`: iPhone app states plus location, about, and AX reflow. From D2.
 - `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.
