@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B, C, E, D1–D4 complete; D5 running; then F1, F2)
+Last updated: 2026-10-21 (ALL LOCAL TASKS DONE. Remaining rows are other-machine; see docs/HANDOFF-OTHER-MACHINE.md)
 
 
 ## Tasks
@@ -29,11 +29,11 @@ Last updated: 2026-10-21 (A, B, C, E, D1–D4 complete; D5 running; then F1, F2)
 | D2 | apps | iPhone app: Main, Location settings, About; fixture/state env; screenshots | D1 | done | build + screenshots reviewed |  iOS build clean, 105 Swift tests; 11 screenshots reviewed (fresh/stale/old/offline/horizon/firstrun/updating dark, fresh light, location, about, AX reflow); shading direction pixel-verified |
 | D3 | apps | watchOS app: Now, 12-h strip, Settings | D2 | done | watchOS sim build + screenshots reviewed |  watch + iOS builds clean, 111 Swift tests; 12 screenshots reviewed on 46 mm and 42 mm |
 | D4 | apps | Complications: provider + 4 families + previews | D3 | done | watchOS sim build; complication on a face screenshotted |  both builds clean, 112 tests; 5 DEBUG-page screenshots reviewed (all families, frame rule, tinted); real-face rendering is other-machine |
-| D5 | apps | Custom-location sync (WatchConnectivity) + watch toggle | D4 | in-progress (agent core) | both compiles + WindCore test | |
+| D5 | apps | Custom-location sync (WatchConnectivity) + watch toggle | D4 | done | both compiles + WindCore test |  116 tests, both builds clean; phone→watch context round trip proven on paired simulators (screenshot d5-watch-settings-synced) |
 | E1 | web | Page in fixture mode: chart, table, states, light/dark; node tests; screenshots | A3 | done | `node --test`; screenshots reviewed |  18 node tests; 13 screenshots in docs/screenshots (web-*); 375 px verified via iframe (headless Chrome clamps window width to 500) |
 | E2 | web | Live mode against wrangler dev; offline-with-cache | E1, B4 | done | manual curl/reload sequence |  22 tests; live + offline-cached screenshots in docs/screenshots |
-| F1 | handoff | docs/HANDOFF-OTHER-MACHINE.md checklist | B5, D5, E2 | todo | orchestrator review | |
-| F2 | handoff | CLAUDE.md complete, README.md | F1 | todo | orchestrator review | |
+| F1 | handoff | docs/HANDOFF-OTHER-MACHINE.md checklist | B5, D5, E2 | done | orchestrator review |  docs/HANDOFF-OTHER-MACHINE.md |
+| F2 | handoff | CLAUDE.md complete, README.md | F1 | done | orchestrator review |  CLAUDE.md commands + layout, README.md |
 
 ## Needs the other machine (from plan §7)
 
@@ -44,6 +44,7 @@ Last updated: 2026-10-21 (A, B, C, E, D1–D4 complete; D5 running; then F1, F2)
 | Signing, device install | other-machine | same |
 | Complications on a real watch face + shared App Group cache between app and extension | other-machine | unsigned simulator builds get no group container, so app and extension cannot share the cache here; DEBUG page `WW_PAGE=complications` verified the views |
 | Cellular standalone, hour-boundary rollover, 90-min/6-h flips on wrist | other-machine | device matrix |
+| WatchConnectivity custom-location round trip on hardware (simulator round trip done) | other-machine | device matrix rows 8–9 |
 | TestFlight upload | other-machine | same |
 
 ## Decisions log
@@ -73,6 +74,7 @@ Last updated: 2026-10-21 (A, B, C, E, D1–D4 complete; D5 running; then F1, F2)
 | 2026-10-21 | iPhone: arrows drawn in a chartOverlay band under the axis labels; default card shows the sea-cell coords 48.09, −122.78; table rows start at the hero hour; peak chip dot = Beaufort of the peak gust; `WW_TYPE_SIZE` env replaces the content-size launch arg (ignored under simctl); Map tiles don't load in headless screenshots, MKLocalSearch/geocoding need an interactive run | core agent (D2) | |
 | 2026-10-21 | Watch: Settings is page 3 of the vertical TabView (no long-press); `Next N h` uses whole hours left; summary fixed at 2 lines; shared `@Observable ForecastSession` in WindCore replaces the app-local model, takes `bundleInfo:` for testability, returns Bool from refresh so each app calls WidgetCenter itself; pages size from GeometryReader ignoring the bottom safe area | core agent (D3) | TabView vertical pages squeezed multi-line text otherwise |
 | 2026-10-21 | Complication views live in `apple/Shared/Complications/` compiled into both the extension and the watch app (WindCore stays WidgetKit-free); rectangular past-horizon uses a capsule dash, not the em-dash glyph; rectangular/inline trust text uses the age tier even when offline; corner gauge is a `Gauge(.accessoryLinear)` with a ramp gradient (no discrete segments or dashing on the corner arc); provider treats a `REPLACE` host as no client; `ww.fixture` group flag mirrors fixture data for the extension | core agent (D4) | |
+| 2026-10-21 | Location sync: the iPhone is the editor and its `useCustom` wins when a context arrives; the watch toggle is local-only between contexts and never pushes back; `reloadPreferences()` clears the cache only when the active location changed; iOS re-pushes the full preference on activation | core agent (D5) | DESIGN §7 |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
@@ -92,4 +94,5 @@ Last updated: 2026-10-21 (A, B, C, E, D1–D4 complete; D5 running; then F1, F2)
 - `docs/screenshots/d2-iphone-<state>-<scheme>.png`: iPhone app states plus location, about, and AX reflow. From D2.
 - `docs/screenshots/d3-watch-<page>-<state>.png` (46 mm) and `d3-watch42-<page>-fresh.png` (42 mm): watch app pages. From D3.
 - `docs/screenshots/d4-complications-<family>.png`: every family × fresh/stale/old/horizon from the DEBUG page, plus the circular frame rule and tinted rows. From D4.
+- `docs/screenshots/d5-watch-settings-synced.png`: watch Settings after the phone pushed a custom location over WatchConnectivity (paired simulators). From D5.
 - `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.
