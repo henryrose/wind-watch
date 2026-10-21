@@ -1,0 +1,130 @@
+# XcodeGen spec. Regenerate the project after editing: `cd apple && ./build.sh gen`.
+# The generated WindWatch.xcodeproj is committed; this file is the editable source.
+name: WindWatch
+options:
+  xcodeVersion: "27.0"
+  deploymentTarget:
+    iOS: "26.0"
+    watchOS: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  groupSortPosition: top
+  defaultConfig: Debug
+
+configFiles:
+  Debug: Config/Shared.xcconfig
+  Release: Config/Shared.xcconfig
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: $(WW_TEAM_ID)
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1.0
+
+packages:
+  WindCore:
+    path: WindCore
+
+fileGroups:
+  - Config
+  - project.yml
+  - build.sh
+
+targets:
+  WindWatch:
+    type: application
+    platform: iOS
+    sources:
+      - WindWatch
+    dependencies:
+      - package: WindCore
+      - target: WindWatchWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(WW_BUNDLE_PREFIX).windwatch
+        CODE_SIGN_ENTITLEMENTS: WindWatch/WindWatch.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+    info:
+      path: WindWatch/Info.plist
+      properties:
+        CFBundleDisplayName: Wind Watch
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        WWAPIBase: $(WW_API_BASE)
+        WWBundlePrefix: $(WW_BUNDLE_PREFIX)
+
+  WindWatchWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - WindWatchWatch
+    dependencies:
+      - package: WindCore
+      - target: WindWatchComplications
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(WW_BUNDLE_PREFIX).windwatch.watchkitapp
+        CODE_SIGN_ENTITLEMENTS: WindWatchWatch/WindWatchWatch.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "4"
+    info:
+      path: WindWatchWatch/Info.plist
+      properties:
+        CFBundleDisplayName: Wind Watch
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: $(WW_BUNDLE_PREFIX).windwatch
+        WKRunsIndependentlyOfCompanionApp: true
+        WWAPIBase: $(WW_API_BASE)
+        WWBundlePrefix: $(WW_BUNDLE_PREFIX)
+
+  WindWatchComplications:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - WindWatchComplications
+    dependencies:
+      - package: WindCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(WW_BUNDLE_PREFIX).windwatch.watchkitapp.complications
+        CODE_SIGN_ENTITLEMENTS: WindWatchComplications/WindWatchComplications.entitlements
+        TARGETED_DEVICE_FAMILY: "4"
+    info:
+      path: WindWatchComplications/Info.plist
+      properties:
+        CFBundleDisplayName: Wind Watch
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        WWAPIBase: $(WW_API_BASE)
+        WWBundlePrefix: $(WW_BUNDLE_PREFIX)
+
+schemes:
+  WindWatch:
+    build:
+      targets:
+        WindWatch: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  WindWatchWatch:
+    build:
+      targets:
+        WindWatchWatch: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  WindWatchComplications:
+    build:
+      targets:
+        WindWatchComplications: all
+        WindWatchWatch: all
+    run:
+      config: Debug
+      executable: WindWatchWatch

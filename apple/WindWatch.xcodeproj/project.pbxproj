@@ -1,0 +1,655 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		03CEB699D8F557A6550B095A /* WindWatchComplications.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */; };
+		0A81E984588B6A974D5E84C1 /* WindWatchWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFD42382AB1221E5CA4B55FB /* WindWatchWatchApp.swift */; };
+		12D35C50B70B02A2FFFEB7A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 88B8947766E1C2627C56D88D /* Assets.xcassets */; };
+		30D7A52C482358091BCC2644 /* WindWatchWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3BB1979C3D4C84FD9774A534 /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = D118EB126FC6404CFFB2840E /* WindCore */; };
+		3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B968EE644A9F48069E6AD893 /* WindWatchApp.swift */; };
+		519D6E660E8B5007C90178CE /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5BBA5569E5CE275A4A381608 /* WindCore */; };
+		548F2E60A2EC4858DEB01B44 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610528FB3CF1737AA158F0C5 /* ContentView.swift */; };
+		722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */; };
+		94D7E968996A233B600B9B1F /* WindWatchComplications.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F37C31BBB679B9188BF2ECC5 /* WindWatchComplications.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CC1F63308295E0255808820B /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 000CADC025E3E5FA5D702086 /* WindCore */; };
+		D38522DEBCFCCAFD464E70F7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 265F9B3BA482C339737B1406 /* ContentView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		56EE14865E3A5FFCD44D5C80 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 897C4BE3988586FAE6E023C2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 795F783165903CBD4B53054D;
+			remoteInfo = WindWatchComplications;
+		};
+		B4851CE5051EC3622FE6B08A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 897C4BE3988586FAE6E023C2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD1D7C3158C75F30863DD32E;
+			remoteInfo = WindWatchWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7D410EBF1CCE6F4256B7A94A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				94D7E968996A233B600B9B1F /* WindWatchComplications.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C35997ECE0DF3EF425E52854 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				30D7A52C482358091BCC2644 /* WindWatchWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		02607DDEE138EA8A5D0F038E /* WindWatchComplications.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindWatchComplications.entitlements; sourceTree = "<group>"; };
+		265F9B3BA482C339737B1406 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
+		5A731493680C28DF215DADD4 /* WindCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WindCore; path = WindCore; sourceTree = SOURCE_ROOT; };
+		610528FB3CF1737AA158F0C5 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		6824B339471D125681F8D7FC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		725A4B9D252F50A7C1A8A47F /* WindWatch.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WindWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		87B59470AFA17D03F69749A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		88B8947766E1C2627C56D88D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WindWatchWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B968EE644A9F48069E6AD893 /* WindWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindWatchApp.swift; sourceTree = "<group>"; };
+		CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindWatchComplications.swift; sourceTree = "<group>"; };
+		DA6C2B2900F3E8D0B0D0E3AF /* Local.xcconfig.example */ = {isa = PBXFileReference; path = Local.xcconfig.example; sourceTree = "<group>"; };
+		DE376BB46BAF294AAB5E65FB /* build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build.sh; sourceTree = "<group>"; };
+		E0F02E132C949642493A89C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E4FBB0E70AD12866419B4529 /* WindWatchWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindWatchWatch.entitlements; sourceTree = "<group>"; };
+		ED20FA8FFF7330F3D2C2BCF3 /* project.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = project.yml; sourceTree = "<group>"; };
+		F32627786F49BCD4FE518DB9 /* WindWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindWatch.entitlements; sourceTree = "<group>"; };
+		F37C31BBB679B9188BF2ECC5 /* WindWatchComplications.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WindWatchComplications.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FFD42382AB1221E5CA4B55FB /* WindWatchWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindWatchWatchApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1932C732FC70CFC0111B98E6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC1F63308295E0255808820B /* WindCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8ED2A02A06977D275735901D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				519D6E660E8B5007C90178CE /* WindCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F97AB1B303C249B279B0B50B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3BB1979C3D4C84FD9774A534 /* WindCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		021CF5DBD21BBB954BE7424D /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				5A731493680C28DF215DADD4 /* WindCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		090FC8E4B119AE597DE94313 = {
+			isa = PBXGroup;
+			children = (
+				1BF73C922603917690C29B59 /* Config */,
+				021CF5DBD21BBB954BE7424D /* Packages */,
+				866B070A27A329B54C53FE80 /* WindWatch */,
+				6CE415DAC538DD816B9100FE /* WindWatchComplications */,
+				B7777D4ABC8F840ADAA770EF /* WindWatchWatch */,
+				DE376BB46BAF294AAB5E65FB /* build.sh */,
+				ED20FA8FFF7330F3D2C2BCF3 /* project.yml */,
+				5B9EAC78FF55E914728793BE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1BF73C922603917690C29B59 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				DA6C2B2900F3E8D0B0D0E3AF /* Local.xcconfig.example */,
+				2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		5B9EAC78FF55E914728793BE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				725A4B9D252F50A7C1A8A47F /* WindWatch.app */,
+				F37C31BBB679B9188BF2ECC5 /* WindWatchComplications.appex */,
+				89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6CE415DAC538DD816B9100FE /* WindWatchComplications */ = {
+			isa = PBXGroup;
+			children = (
+				6824B339471D125681F8D7FC /* Info.plist */,
+				02607DDEE138EA8A5D0F038E /* WindWatchComplications.entitlements */,
+				CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */,
+			);
+			path = WindWatchComplications;
+			sourceTree = "<group>";
+		};
+		866B070A27A329B54C53FE80 /* WindWatch */ = {
+			isa = PBXGroup;
+			children = (
+				8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */,
+				610528FB3CF1737AA158F0C5 /* ContentView.swift */,
+				87B59470AFA17D03F69749A0 /* Info.plist */,
+				F32627786F49BCD4FE518DB9 /* WindWatch.entitlements */,
+				B968EE644A9F48069E6AD893 /* WindWatchApp.swift */,
+			);
+			path = WindWatch;
+			sourceTree = "<group>";
+		};
+		B7777D4ABC8F840ADAA770EF /* WindWatchWatch */ = {
+			isa = PBXGroup;
+			children = (
+				88B8947766E1C2627C56D88D /* Assets.xcassets */,
+				265F9B3BA482C339737B1406 /* ContentView.swift */,
+				E0F02E132C949642493A89C0 /* Info.plist */,
+				E4FBB0E70AD12866419B4529 /* WindWatchWatch.entitlements */,
+				FFD42382AB1221E5CA4B55FB /* WindWatchWatchApp.swift */,
+			);
+			path = WindWatchWatch;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		795F783165903CBD4B53054D /* WindWatchComplications */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C569CF635670248FE657D897 /* Build configuration list for PBXNativeTarget "WindWatchComplications" */;
+			buildPhases = (
+				7CD505EA91AEB9DA006D7291 /* Sources */,
+				8ED2A02A06977D275735901D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WindWatchComplications;
+			packageProductDependencies = (
+				5BBA5569E5CE275A4A381608 /* WindCore */,
+			);
+			productName = WindWatchComplications;
+			productReference = F37C31BBB679B9188BF2ECC5 /* WindWatchComplications.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BD1D7C3158C75F30863DD32E /* WindWatchWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBC2F9DF190D7A2B3E42236C /* Build configuration list for PBXNativeTarget "WindWatchWatch" */;
+			buildPhases = (
+				477DD09F373DAAB9384DF365 /* Sources */,
+				FB77151F701FEF0E2562FB00 /* Resources */,
+				1932C732FC70CFC0111B98E6 /* Frameworks */,
+				7D410EBF1CCE6F4256B7A94A /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DBBABD37AFFFD974F037C485 /* PBXTargetDependency */,
+			);
+			name = WindWatchWatch;
+			packageProductDependencies = (
+				000CADC025E3E5FA5D702086 /* WindCore */,
+			);
+			productName = WindWatchWatch;
+			productReference = 89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D0A7B46A48331E2BB7BF301A /* WindWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9E1D5ABA6FD55409C2D27446 /* Build configuration list for PBXNativeTarget "WindWatch" */;
+			buildPhases = (
+				9EF82D98ACAAD0B1A492BEC5 /* Sources */,
+				4BC6691238CF157B067ED0EC /* Resources */,
+				F97AB1B303C249B279B0B50B /* Frameworks */,
+				C35997ECE0DF3EF425E52854 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6368191869ABBF1181CFD03A /* PBXTargetDependency */,
+			);
+			name = WindWatch;
+			packageProductDependencies = (
+				D118EB126FC6404CFFB2840E /* WindCore */,
+			);
+			productName = WindWatch;
+			productReference = 725A4B9D252F50A7C1A8A47F /* WindWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		897C4BE3988586FAE6E023C2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					795F783165903CBD4B53054D = {
+						DevelopmentTeam = "$(WW_TEAM_ID)";
+						ProvisioningStyle = Automatic;
+					};
+					BD1D7C3158C75F30863DD32E = {
+						DevelopmentTeam = "$(WW_TEAM_ID)";
+						ProvisioningStyle = Automatic;
+					};
+					D0A7B46A48331E2BB7BF301A = {
+						DevelopmentTeam = "$(WW_TEAM_ID)";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = FE6449D139D7CF7C309D3587 /* Build configuration list for PBXProject "WindWatch" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 090FC8E4B119AE597DE94313;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E37428E8C53D42A1FCD376D9 /* XCLocalSwiftPackageReference "WindCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5B9EAC78FF55E914728793BE /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D0A7B46A48331E2BB7BF301A /* WindWatch */,
+				BD1D7C3158C75F30863DD32E /* WindWatchWatch */,
+				795F783165903CBD4B53054D /* WindWatchComplications */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4BC6691238CF157B067ED0EC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB77151F701FEF0E2562FB00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				12D35C50B70B02A2FFFEB7A6 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		477DD09F373DAAB9384DF365 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D38522DEBCFCCAFD464E70F7 /* ContentView.swift in Sources */,
+				0A81E984588B6A974D5E84C1 /* WindWatchWatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7CD505EA91AEB9DA006D7291 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				03CEB699D8F557A6550B095A /* WindWatchComplications.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9EF82D98ACAAD0B1A492BEC5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				548F2E60A2EC4858DEB01B44 /* ContentView.swift in Sources */,
+				3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6368191869ABBF1181CFD03A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD1D7C3158C75F30863DD32E /* WindWatchWatch */;
+			targetProxy = B4851CE5051EC3622FE6B08A /* PBXContainerItemProxy */;
+		};
+		DBBABD37AFFFD974F037C485 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 795F783165903CBD4B53054D /* WindWatchComplications */;
+			targetProxy = 56EE14865E3A5FFCD44D5C80 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0C7986F6503D5955EF39FA80 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = WindWatch/WindWatch.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = WindWatch/Info.plist;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WW_BUNDLE_PREFIX).windwatch";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		5508145DD4CA736D83C843FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = WindWatch/WindWatch.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = WindWatch/Info.plist;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WW_BUNDLE_PREFIX).windwatch";
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		5B150094B50FD03266AFE237 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WindWatchComplications/WindWatchComplications.entitlements;
+				INFOPLIST_FILE = WindWatchComplications/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WW_BUNDLE_PREFIX).windwatch.watchkitapp.complications";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		6B867C141BBF3DFEDA59C64C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WindWatchComplications/WindWatchComplications.entitlements;
+				INFOPLIST_FILE = WindWatchComplications/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WW_BUNDLE_PREFIX).windwatch.watchkitapp.complications";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		A456941EFD060FD9C5ACCA05 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = WindWatchWatch/WindWatchWatch.entitlements;
+				INFOPLIST_FILE = WindWatchWatch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WW_BUNDLE_PREFIX).windwatch.watchkitapp";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		C65A9026C293013D1E503F08 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "$(WW_TEAM_ID)";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		CEBBE58936EC0882EA480113 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "$(WW_TEAM_ID)";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CFD008AD0D4EB49DDC317991 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = WindWatchWatch/WindWatchWatch.entitlements;
+				INFOPLIST_FILE = WindWatchWatch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(WW_BUNDLE_PREFIX).windwatch.watchkitapp";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9E1D5ABA6FD55409C2D27446 /* Build configuration list for PBXNativeTarget "WindWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5508145DD4CA736D83C843FF /* Debug */,
+				0C7986F6503D5955EF39FA80 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BBC2F9DF190D7A2B3E42236C /* Build configuration list for PBXNativeTarget "WindWatchWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A456941EFD060FD9C5ACCA05 /* Debug */,
+				CFD008AD0D4EB49DDC317991 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C569CF635670248FE657D897 /* Build configuration list for PBXNativeTarget "WindWatchComplications" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B867C141BBF3DFEDA59C64C /* Debug */,
+				5B150094B50FD03266AFE237 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FE6449D139D7CF7C309D3587 /* Build configuration list for PBXProject "WindWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEBBE58936EC0882EA480113 /* Debug */,
+				C65A9026C293013D1E503F08 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		E37428E8C53D42A1FCD376D9 /* XCLocalSwiftPackageReference "WindCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = WindCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		000CADC025E3E5FA5D702086 /* WindCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WindCore;
+		};
+		5BBA5569E5CE275A4A381608 /* WindCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WindCore;
+		};
+		D118EB126FC6404CFFB2840E /* WindCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = WindCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 897C4BE3988586FAE6E023C2 /* Project object */;
+}
