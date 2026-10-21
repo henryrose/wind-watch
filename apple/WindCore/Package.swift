@@ -10,6 +10,7 @@ let package = Package(
     targets: [
         .target(
             name: "WindCore",
+            resources: [.copy("Resources/payload-reference.json")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(

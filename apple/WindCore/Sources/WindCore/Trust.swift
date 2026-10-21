@@ -137,6 +137,11 @@ public enum TimeFormat {
         return f
     }
 
+    /// `13` (axis tick labels)
+    public static func hh(_ date: Date, tz: TimeZone) -> String {
+        formatter("HH", tz: tz).string(from: date)
+    }
+
     /// `13:05`
     public static func hhmm(_ date: Date, tz: TimeZone) -> String {
         formatter("HH:mm", tz: tz).string(from: date)
