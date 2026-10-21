@@ -59,7 +59,9 @@ describe("transform on the 2026-10-21 fixture", () => {
     expect(payload.model).toBe("ncep_hrrr_conus");
     expect(payload.loc).toEqual(DEFAULT_LOC);
     expect(payload.fetched).toBe(FETCHED);
-    expect(payload.summary).toBe("");
+    // summary is populated by B3; its content is covered in summary.test.ts.
+    expect(payload.summary.length).toBeGreaterThan(0);
+    expect(payload.summary.length).toBeLessThanOrEqual(110);
     // sun is populated by B2; its content is covered in sun.test.ts.
     expect(payload.sun).toHaveLength(3);
   });
