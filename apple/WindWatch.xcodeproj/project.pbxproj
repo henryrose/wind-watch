@@ -8,22 +8,24 @@
 
 /* Begin PBXBuildFile section */
 		03CEB699D8F557A6550B095A /* WindWatchComplications.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */; };
+		08B5E3C768FFC6BEB4282436 /* NowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEBA269A7EC279F059FBC8C /* NowView.swift */; };
 		0A81E984588B6A974D5E84C1 /* WindWatchWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFD42382AB1221E5CA4B55FB /* WindWatchWatchApp.swift */; };
 		12D35C50B70B02A2FFFEB7A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 88B8947766E1C2627C56D88D /* Assets.xcassets */; };
 		30D7A52C482358091BCC2644 /* WindWatchWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3BB1979C3D4C84FD9774A534 /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = D118EB126FC6404CFFB2840E /* WindCore */; };
 		3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B968EE644A9F48069E6AD893 /* WindWatchApp.swift */; };
 		489A22C83A7CA9794A022654 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDEBA8472F1941D436D61CB4 /* AboutView.swift */; };
-		48FB612FC409734FBF9DD1F1 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43CB5F04E5044241586734AE /* AppModel.swift */; };
 		511B228A64B8B935F87BE831 /* HourTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BC4826A662A28196C080F90 /* HourTable.swift */; };
 		519D6E660E8B5007C90178CE /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5BBA5569E5CE275A4A381608 /* WindCore */; };
 		722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */; };
+		726DC8D942D5F1E9C5FB2B8A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9912859D54146B54B9E84827 /* RootView.swift */; };
 		73B96DE1EA8356B696B6A71A /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E90582FC4E07F44513EF7A /* MainView.swift */; };
+		840E18B7166F6D1A238D2195 /* StripView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4343CAF9F8A29B107D6A3259 /* StripView.swift */; };
 		94D7E968996A233B600B9B1F /* WindWatchComplications.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F37C31BBB679B9188BF2ECC5 /* WindWatchComplications.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B19DFB68BD943E2B9F8CAAE0 /* NowBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */; };
 		B43579891702CA7D0145B38D /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19FB8ABF9DBA6ED958ABFEB5 /* HeaderView.swift */; };
+		B466169D722E9711CEF2599D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 865CC0FED12CA8C718A55AC7 /* SettingsView.swift */; };
 		CC1F63308295E0255808820B /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 000CADC025E3E5FA5D702086 /* WindCore */; };
-		D38522DEBCFCCAFD464E70F7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 265F9B3BA482C339737B1406 /* ContentView.swift */; };
 		E89AB377FED9C9186DFAA7DA /* LocationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */; };
 /* End PBXBuildFile section */
 
@@ -72,19 +74,21 @@
 /* Begin PBXFileReference section */
 		02607DDEE138EA8A5D0F038E /* WindWatchComplications.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindWatchComplications.entitlements; sourceTree = "<group>"; };
 		19FB8ABF9DBA6ED958ABFEB5 /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
-		265F9B3BA482C339737B1406 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		3BC4826A662A28196C080F90 /* HourTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HourTable.swift; sourceTree = "<group>"; };
-		43CB5F04E5044241586734AE /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		4343CAF9F8A29B107D6A3259 /* StripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripView.swift; sourceTree = "<group>"; };
 		5A731493680C28DF215DADD4 /* WindCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WindCore; path = WindCore; sourceTree = SOURCE_ROOT; };
 		6824B339471D125681F8D7FC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		725A4B9D252F50A7C1A8A47F /* WindWatch.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WindWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		865CC0FED12CA8C718A55AC7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		87B59470AFA17D03F69749A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		87E90582FC4E07F44513EF7A /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		88B8947766E1C2627C56D88D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WindWatchWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8BEBA269A7EC279F059FBC8C /* NowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowView.swift; sourceTree = "<group>"; };
 		8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowBlock.swift; sourceTree = "<group>"; };
+		9912859D54146B54B9E84827 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		B968EE644A9F48069E6AD893 /* WindWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindWatchApp.swift; sourceTree = "<group>"; };
 		CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindWatchComplications.swift; sourceTree = "<group>"; };
 		CDEBA8472F1941D436D61CB4 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
@@ -182,7 +186,6 @@
 			isa = PBXGroup;
 			children = (
 				CDEBA8472F1941D436D61CB4 /* AboutView.swift */,
-				43CB5F04E5044241586734AE /* AppModel.swift */,
 				8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */,
 				19FB8ABF9DBA6ED958ABFEB5 /* HeaderView.swift */,
 				3BC4826A662A28196C080F90 /* HourTable.swift */,
@@ -200,8 +203,11 @@
 			isa = PBXGroup;
 			children = (
 				88B8947766E1C2627C56D88D /* Assets.xcassets */,
-				265F9B3BA482C339737B1406 /* ContentView.swift */,
 				E0F02E132C949642493A89C0 /* Info.plist */,
+				8BEBA269A7EC279F059FBC8C /* NowView.swift */,
+				9912859D54146B54B9E84827 /* RootView.swift */,
+				865CC0FED12CA8C718A55AC7 /* SettingsView.swift */,
+				4343CAF9F8A29B107D6A3259 /* StripView.swift */,
 				E4FBB0E70AD12866419B4529 /* WindWatchWatch.entitlements */,
 				FFD42382AB1221E5CA4B55FB /* WindWatchWatchApp.swift */,
 			);
@@ -345,7 +351,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D38522DEBCFCCAFD464E70F7 /* ContentView.swift in Sources */,
+				08B5E3C768FFC6BEB4282436 /* NowView.swift in Sources */,
+				726DC8D942D5F1E9C5FB2B8A /* RootView.swift in Sources */,
+				B466169D722E9711CEF2599D /* SettingsView.swift in Sources */,
+				840E18B7166F6D1A238D2195 /* StripView.swift in Sources */,
 				0A81E984588B6A974D5E84C1 /* WindWatchWatchApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -363,7 +372,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				489A22C83A7CA9794A022654 /* AboutView.swift in Sources */,
-				48FB612FC409734FBF9DD1F1 /* AppModel.swift in Sources */,
 				B43579891702CA7D0145B38D /* HeaderView.swift in Sources */,
 				511B228A64B8B935F87BE831 /* HourTable.swift in Sources */,
 				E89AB377FED9C9186DFAA7DA /* LocationSettingsView.swift in Sources */,

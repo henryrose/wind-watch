@@ -1,14 +1,28 @@
 import SwiftUI
 import WindCore
 
+/// Pushed screens. `WW_SCREEN=location|about` opens one at launch (screenshots).
+enum Screen: Hashable {
+    case location
+    case about
+}
+
 /// HANDOFF §8.1: header, now block, summary, chart card, table; everything scrolls together.
 struct MainView: View {
-    @Environment(AppModel.self) private var model
+    @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
+    @State private var path: [Screen]
+
+    init() {
+        switch ProcessInfo.processInfo.environment["WW_SCREEN"] {
+        case "location": _path = State(initialValue: [.location])
+        case "about": _path = State(initialValue: [.about])
+        default: _path = State(initialValue: [])
+        }
+    }
 
     var body: some View {
-        @Bindable var model = model
-        NavigationStack(path: $model.path) {
+        NavigationStack(path: $path) {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
                     HeaderView()
@@ -35,7 +49,7 @@ struct MainView: View {
             }
             .background(Tokens.ground(scheme))
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: AppModel.Screen.self) { screen in
+            .navigationDestination(for: Screen.self) { screen in
                 switch screen {
                 case .location: LocationSettingsView()
                 case .about: AboutView()
@@ -79,7 +93,7 @@ struct MainView: View {
                     .foregroundStyle(Tokens.inkSecondary(scheme))
             }
             Spacer()
-            NavigationLink(value: AppModel.Screen.about) {
+            NavigationLink(value: Screen.about) {
                 Label("About", systemImage: "info.circle")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Tokens.inkSecondary(scheme))
@@ -92,5 +106,5 @@ struct MainView: View {
 }
 
 #Preview("Main · fixture") {
-    MainView().environment(AppModel())
+    MainView().environment(ForecastSession(bundleInfo: [:], environment: ["WW_FIXTURE": "1"]))
 }

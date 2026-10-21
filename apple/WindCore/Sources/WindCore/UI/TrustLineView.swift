@@ -50,7 +50,7 @@ public struct TrustLineView: View {
                     .accessibilityHidden(true)
             }
             Text(text)
-                .lineLimit(state == .offlineCached ? 2 : 1)
+                .lineLimit(state == .offlineCached || state == .pastHorizon ? 2 : 1)
                 .minimumScaleFactor(0.85)
         }
         .font(Tokens.trustFont(watch: compact, amber: isAmber))

@@ -1,9 +1,10 @@
 import SwiftUI
+import WidgetKit
 import WindCore
 
 @main
 struct WindWatchApp: App {
-    @State private var model = AppModel()
+    @State private var model = ForecastSession(bundleInfo: Bundle.main.infoDictionary ?? [:])
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -22,7 +23,11 @@ struct WindWatchApp: App {
                 }
                 .onChange(of: scenePhase, initial: true) { _, phase in
                     if phase == .active {
-                        Task { await model.refreshIfNeeded() }
+                        Task {
+                            if await model.refreshIfNeeded() {
+                                WidgetCenter.shared.reloadAllTimelines()
+                            }
+                        }
                     }
                 }
         }

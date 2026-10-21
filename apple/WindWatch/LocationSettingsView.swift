@@ -4,7 +4,7 @@ import WindCore
 
 /// HANDOFF §8.3. The default card is always one tap and never moves.
 struct LocationSettingsView: View {
-    @Environment(AppModel.self) private var model
+    @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
 
     @State private var query = ""

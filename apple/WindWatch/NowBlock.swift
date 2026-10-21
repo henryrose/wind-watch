@@ -4,7 +4,7 @@ import WindCore
 /// HANDOFF §8.1 item 2: hero 72 + `kn`, `G 25` over arrow + `from W`, peak-gust chip over the
 /// Beaufort pill. Past horizon / first run: `—`, nothing else.
 struct NowBlock: View {
-    @Environment(AppModel.self) private var model
+    @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
 
     private var numberInk: Color { Tokens.numberInk(scheme, tier: model.ageTier) }

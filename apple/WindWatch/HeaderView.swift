@@ -3,7 +3,7 @@ import WindCore
 
 /// Location name, trust line (with `· ends Fri 05:00`), gear button → Location settings.
 struct HeaderView: View {
-    @Environment(AppModel.self) private var model
+    @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
@@ -22,7 +22,7 @@ struct HeaderView: View {
                 )
             }
             Spacer(minLength: 0)
-            NavigationLink(value: AppModel.Screen.location) {
+            NavigationLink(value: Screen.location) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(Tokens.inkSecondary(scheme))
