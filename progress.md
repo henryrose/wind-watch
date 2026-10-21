@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B1–B4, C1–C5, E1 done; B5, D1, E2 running)
+Last updated: 2026-10-21 (A, B, C, E complete; D1 running; then D2–D5, F1, F2)
 
 ## Tasks
 
@@ -18,7 +18,7 @@ Last updated: 2026-10-21 (A, B1–B4, C1–C5, E1 done; B5, D1, E2 running)
 | B2 | server | sun.ts civil twilight + tests | B1 | done | `pnpm test` |  268b412; 39 tests; payload 931 B with sun |
 | B3 | server | summary.ts rules + tests | B2 | done | `pnpm test` |  59 tests; live payload 1,023 B raw |
 | B4 | server | index.ts fetch + scheduled, ETag/304, custom path; wrangler dev curl sequence | B3 | done | `pnpm test`; curl 200 then 304 |  79 tests; local dev: cron bake → 200 (994 B, ETag) → 304; custom path cached |
-| B5 | server | server/README.md deploy runbook | B4 | in-progress (agent server) | commands exist in package.json | |
+| B5 | server | server/README.md deploy runbook | B4 | done | commands exist in package.json |  all six pnpm scripts exist; no `wrangler cron trigger` exists, README documents waiting or `dev --remote --test-scheduled` |
 | C1 | core | Package.swift, Payload, Forecast, Beaufort, Compass, TrustState, derivations + tests | A3 | done | `cd apple/WindCore && swift test` |  (see commit C1); 43 tests, Swift Testing, tools 6.2 |
 | C2 | core | Twilight stops + tests | C1 | done | `swift test` |  51 tests total |
 | C3 | core | WindClient + AppGroupStore + tests | C2 | done | `swift test` |  e4beb88; 74 tests |
@@ -30,7 +30,7 @@ Last updated: 2026-10-21 (A, B1–B4, C1–C5, E1 done; B5, D1, E2 running)
 | D4 | apps | Complications: provider + 4 families + previews | D3 | todo | watchOS sim build; complication on a face screenshotted | |
 | D5 | apps | Custom-location sync (WatchConnectivity) + watch toggle | D4 | todo | both compiles + WindCore test | |
 | E1 | web | Page in fixture mode: chart, table, states, light/dark; node tests; screenshots | A3 | done | `node --test`; screenshots reviewed |  18 node tests; 13 screenshots in docs/screenshots (web-*); 375 px verified via iframe (headless Chrome clamps window width to 500) |
-| E2 | web | Live mode against wrangler dev; offline-with-cache | E1, B4 | in-progress (agent web) | manual curl/reload sequence | |
+| E2 | web | Live mode against wrangler dev; offline-with-cache | E1, B4 | done | manual curl/reload sequence |  22 tests; live + offline-cached screenshots in docs/screenshots |
 | F1 | handoff | docs/HANDOFF-OTHER-MACHINE.md checklist | B5, D5, E2 | todo | orchestrator review | |
 | F2 | handoff | CLAUDE.md complete, README.md | F1 | todo | orchestrator review | |
 
@@ -65,6 +65,8 @@ Last updated: 2026-10-21 (A, B1–B4, C1–C5, E1 done; B5, D1, E2 running)
 | 2026-10-21 | Summary: aligned non-overlapping 6-h windows; whole-forecast calm short-circuits to `Calm through …`; no compass under 4 kn; daytime periods take "by", night periods don't; trims whole clauses easing → gusts → building | server agent (B3) | sliding windows failed the briefed "building to 15 kn W" |
 | 2026-10-21 | Chart: `.all` plots every hour from `start` (not from now); arrow cadence/ticks derive from the window; bars use hour-interval x with `.ratio(0.72)`; Old desaturation applied to the whole Chart view; `ChartStyle.watch` in points (198×92 plot); past-horizon trust line is amber; `PreviewData` is `static let` | core agent (C5) | pixel tuning deferred to D2/D3 screenshots |
 | 2026-10-21 | Worker tests mock upstream with `vi.stubGlobal("fetch")` (no `fetchMock` in pool-workers 0.23 or vitest-plugin 1.4); stayed on pool-workers. Custom cache key rounds to 2 dp; cached copy max-age 600, client sees no-cache; non-GET → 404 | server agent (B4) | brief's codemod fallback would not have helped |
+| 2026-10-21 | Web live mode: 304 keeps the derived forecast; 503 `no_data` → first-run wording; other 5xx/4xx/network → offline-with-cache or first-run; checks coalesced; `?state=` still works in live mode | web agent (E2) | |
+| 2026-10-21 | `pnpm dev --test-scheduled` (no `--`): pnpm 12 passes a literal `--` through to wrangler, which then treats the flag as a positional script | server agent (B5) | tripped a probe run |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
@@ -80,3 +82,4 @@ Last updated: 2026-10-21 (A, B1–B4, C1–C5, E1 done; B5, D1, E2 running)
 ## Screenshots index
 
 - `docs/screenshots/web-<state>-<scheme>-1180.png` for fresh, stale, old, offline, horizon, firstrun × dark, light; `web-fresh-dark-375.png` (true 375 px via iframe). Captured 2026-10-21 from E1.
+- `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.
