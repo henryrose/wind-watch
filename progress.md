@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (A, B1–B2, C1–C4, E1 done; B3, C5 running; E2 waits for B4)
+Last updated: 2026-10-21 (A, B1–B3, C1–C4, E1 done; B4, C5 running; E2 waits for B4)
 
 ## Tasks
 
@@ -16,8 +16,8 @@ Last updated: 2026-10-21 (A, B1–B2, C1–C4, E1 done; B3, C5 running; E2 waits
 | A3 | foundation | Fixtures: Open-Meteo forecast + meta captures, payload-reference.json | A2 | done | python loads all three, 45 hours | c812af9; live forecast fixture has 43 non-null hours (16Z run), reference payload has 45 |
 | B1 | server | Scaffold + transform.ts + tests | A3 | done | `cd server && pnpm test` |  6b8cfbf; 19 tests; live fixture → 713 B, 43 h |
 | B2 | server | sun.ts civil twilight + tests | B1 | done | `pnpm test` |  268b412; 39 tests; payload 931 B with sun |
-| B3 | server | summary.ts rules + tests | B2 | in-progress (agent server) | `pnpm test` | |
-| B4 | server | index.ts fetch + scheduled, ETag/304, custom path; wrangler dev curl sequence | B3 | todo | `pnpm test`; curl 200 then 304 | |
+| B3 | server | summary.ts rules + tests | B2 | done | `pnpm test` |  59 tests; live payload 1,023 B raw |
+| B4 | server | index.ts fetch + scheduled, ETag/304, custom path; wrangler dev curl sequence | B3 | in-progress (agent server) | `pnpm test`; curl 200 then 304 | |
 | B5 | server | server/README.md deploy runbook | B4 | todo | commands exist in package.json | |
 | C1 | core | Package.swift, Payload, Forecast, Beaufort, Compass, TrustState, derivations + tests | A3 | done | `cd apple/WindCore && swift test` |  (see commit C1); 43 tests, Swift Testing, tools 6.2 |
 | C2 | core | Twilight stops + tests | C1 | done | `swift test` |  51 tests total |
@@ -62,6 +62,7 @@ Last updated: 2026-10-21 (A, B1–B2, C1–C4, E1 done; B3, C5 running; E2 waits
 | 2026-10-21 | `WindClient` is a Sendable final class; requests use `.reloadIgnoringLocalCacheData`; `refresh()` always fetches and callers consult `RefreshPolicy.shouldFetch` first; store writes under `<container>/WindWatch/` and falls back to Application Support when the group is not entitled | core agent (C3) | keeps 304 handling honest; degrades without crashing in unsigned builds |
 | 2026-10-21 | Web: tick labels sit inside the plot bottom with a halo; narrow breakpoint uses 22/16 insets; gridline labels live in the card padding; past-horizon boundary = `start + hours·3600`; peak chip dot = Beaufort of the peak gust; `?scheme=` and `?now=` are verification aids | web agent (E1) | §6.1 web insets leave no room below the arrow row |
 | 2026-10-21 | Timeline: single past-horizon entry once `now > horizon` (not only after the +1 h boundary); cap drops furthest-out hours first; `lastCheckOK` applies to every entry | core agent (C4) | HANDOFF §3 defines past horizon as `now > horizon` |
+| 2026-10-21 | Summary: aligned non-overlapping 6-h windows; whole-forecast calm short-circuits to `Calm through …`; no compass under 4 kn; daytime periods take "by", night periods don't; trims whole clauses easing → gusts → building | server agent (B3) | sliding windows failed the briefed "building to 15 kn W" |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
