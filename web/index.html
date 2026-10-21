@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Wind Watch</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js"></script>
+</head>
+<body>
+  <main class="page" id="page">
+    <header class="header">
+      <div class="header-left">
+        <h1 id="location">Wind Watch</h1>
+        <div class="trust" id="trust" aria-live="polite"></div>
+      </div>
+      <section class="hero" id="hero" aria-label="Loading"></section>
+    </header>
+
+    <p class="summary" id="summary"></p>
+
+    <section class="card" id="chart-card">
+      <div class="chart-head">
+        <h2 id="chart-title">Hourly forecast</h2>
+        <span id="chart-sub"></span>
+      </div>
+      <div id="chart-host"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="table-wrap" id="table-wrap"></section>
+
+    <footer class="footer">
+      <span id="attribution">Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · CC BY 4.0</span>
+      <span id="footer-right"></span>
+    </footer>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

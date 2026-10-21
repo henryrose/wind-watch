@@ -1,0 +1,415 @@
+/* Wind Watch — web (HANDOFF §4 tokens, §9 layout, §6.4 chart notes) */
+
+/* --- Tokens: light column (default) --------------------------------------- */
+:root {
+  color-scheme: light;
+  --ground: #F4F5F7;
+  --card: #FFFFFF;
+  --hairline: #D9DDE3;
+  --ink-primary: #0B0E12;
+  --ink-body: #3A414B;
+  --ink-secondary: #5F6975;
+  --ink-old: #7A8390;
+  --ink-disabled: #A0A8B2;
+  --trust-amber: #B86E00;
+  --sun: #E08A00;
+
+  --bft-calm: #8A97A6;
+  --bft-2: #2A86C4;
+  --bft-3: #1E9E80;
+  --bft-4: #5FA82E;
+  --bft-5: #C9A800;
+  --bft-6: #E07F12;
+  --bft-7: #D6451A;
+  --bft-8: #C7154B;
+  --bft-9: #8C1FB3;
+  --bft-10: #1B1B1F;
+
+  /* day shading: light = black 0 % day, 8 % night */
+  --shade-day-opacity: 0;
+  --shade-night-opacity: 0.08;
+  --chip-ink: #000000;
+
+  --font-text: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-num: ui-rounded, -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --gutter: 24px;
+  --radius-card: 10px;
+}
+
+/* --- Tokens: dark column ------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-scheme="light"]) {
+    color-scheme: dark;
+    --ground: #0B0E12;
+    --card: #171C23;
+    --hairline: #2A2F36;
+    --ink-primary: #FFFFFF;
+    --ink-body: #C7CED8;
+    --ink-secondary: #9AA4B1;
+    --ink-old: #B8BEC7;
+    --ink-disabled: #5C6B7A;
+    --trust-amber: #FFB340;
+    --sun: #FFB340;
+    --bft-calm: #5C6B7A;
+    --bft-2: #4FA3D8;
+    --bft-3: #3FC2A0;
+    --bft-4: #8DD44A;
+    --bft-5: #F2D13D;
+    --bft-6: #F59A2B;
+    --bft-7: #EC5A2A;
+    --bft-8: #E0245E;
+    --bft-9: #A32CD1;
+    --bft-10: #F5F5F7;
+    --shade-day-opacity: 0.07;
+    --shade-night-opacity: 0;
+  }
+}
+/* ?scheme=dark forces the dark column (verification aid; same values as above) */
+:root[data-scheme="dark"] {
+  color-scheme: dark;
+  --ground: #0B0E12;
+  --card: #171C23;
+  --hairline: #2A2F36;
+  --ink-primary: #FFFFFF;
+  --ink-body: #C7CED8;
+  --ink-secondary: #9AA4B1;
+  --ink-old: #B8BEC7;
+  --ink-disabled: #5C6B7A;
+  --trust-amber: #FFB340;
+  --sun: #FFB340;
+  --bft-calm: #5C6B7A;
+  --bft-2: #4FA3D8;
+  --bft-3: #3FC2A0;
+  --bft-4: #8DD44A;
+  --bft-5: #F2D13D;
+  --bft-6: #F59A2B;
+  --bft-7: #EC5A2A;
+  --bft-8: #E0245E;
+  --bft-9: #A32CD1;
+  --bft-10: #F5F5F7;
+  --shade-day-opacity: 0.07;
+  --shade-night-opacity: 0;
+}
+
+/* --- Base ------------------------------------------------------------------ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink-primary);
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px var(--gutter) 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.hidden { display: none !important; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* --- Header + hero cluster (HANDOFF §9, §8.1) ----------------------------- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px 40px;
+  flex-wrap: wrap;
+}
+.header-left { min-width: 0; }
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+.trust {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+.trust.amber { color: var(--trust-amber); font-weight: 600; }
+.trust .glyph { width: 16px; height: 16px; flex: none; }
+.trust .glyph path, .trust .glyph line { stroke: currentColor; }
+.trust .glyph circle { fill: currentColor; }
+
+.ring {
+  width: 14px; height: 14px; flex: none;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ring { animation-duration: 2.4s; } }
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.hero-main {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.hero-kn {
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.hero-kn.dash { color: var(--ink-disabled); font-weight: 400; }
+.hero-unit {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 4px;
+}
+.hero-gust { font-size: 26px; font-weight: 700; line-height: 1; }
+.hero-gust .g { font-size: 17px; font-weight: 600; color: var(--ink-secondary); margin-right: 4px; }
+.hero-dir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.hero-dir svg { width: 18px; height: 18px; display: block; }
+.hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  padding-bottom: 6px;
+}
+.chip-peak {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border-radius: 999px;
+  padding: 6px 12px 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px var(--hairline) inset;
+}
+.chip-peak .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.pill { width: 48px; height: 6px; border-radius: 3px; }
+.arrow { fill: currentColor; }
+
+/* --- Summary / body ------------------------------------------------------- */
+.summary {
+  font-size: 16px;
+  color: var(--ink-body);
+  margin: 0;
+  max-width: 72ch;
+}
+.body-note { font-size: 16px; color: var(--ink-body); margin: 0; }
+
+/* --- Chart card (HANDOFF §9, §6) ------------------------------------------ */
+.card {
+  background: var(--card);
+  border-radius: var(--radius-card);
+  padding: 16px 28px 20px;
+  box-shadow: 0 0 0 1px var(--hairline) inset;
+}
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+.chart-head h2 { font-size: 15px; font-weight: 700; color: var(--ink-primary); margin: 0; }
+.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--font-num); font-weight: 600; fill: var(--ink-primary); }
+.chart .grid { stroke: var(--ink-primary); opacity: 0.12; stroke-width: 1; }
+.chart .grid-label { font-size: 11px; opacity: 0.45; }
+.chart .shade-day { fill: url(#ww-shade-day); opacity: var(--shade-day-opacity); }
+.chart .shade-night { fill: url(#ww-shade-night); opacity: var(--shade-night-opacity); }
+.chart .bar-inset { fill: none; stroke: var(--bft-8); stroke-width: 2; }
+.chart .gust-line { fill: none; stroke: var(--ink-primary); stroke-width: 1.5; opacity: 0.75; stroke-linejoin: round; }
+.chart .gust-cap { stroke: var(--ink-primary); stroke-width: 1.5; stroke-linecap: round; }
+.chart .sun { fill: var(--sun); }
+.chart .tick { stroke: var(--ink-primary); opacity: 0.5; stroke-width: 1; }
+/* Tick labels sit inside the plot bottom (the bottom inset is the arrow row),
+   so they get a card-coloured halo to stay legible over bars. */
+.chart .tick-label {
+  font-size: 12px;
+  opacity: 0.8;
+  paint-order: stroke;
+  stroke: var(--card);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.chart.narrow .tick-label { font-size: 11px; }
+.chart .tick-label .day { font-weight: 700; }
+.chart .arrow { fill: var(--ink-primary); }
+.chart .now-rule { stroke: var(--ink-primary); stroke-width: 1.5; }
+.chart .now-label { font-size: 12px; }
+.chart .edge-rule { stroke: var(--ink-primary); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7; }
+.chart .edge-label { font-size: 12px; opacity: 0.7; }
+
+.bft-calm { fill: var(--bft-calm); background: var(--bft-calm); }
+.bft-2 { fill: var(--bft-2); background: var(--bft-2); }
+.bft-3 { fill: var(--bft-3); background: var(--bft-3); }
+.bft-4 { fill: var(--bft-4); background: var(--bft-4); }
+.bft-5 { fill: var(--bft-5); background: var(--bft-5); }
+.bft-6 { fill: var(--bft-6); background: var(--bft-6); }
+.bft-7 { fill: var(--bft-7); background: var(--bft-7); }
+.bft-8 { fill: var(--bft-8); background: var(--bft-8); }
+.bft-9 { fill: var(--bft-9); background: var(--bft-9); }
+.bft-10 { fill: var(--bft-10); background: var(--bft-10); box-shadow: 0 0 0 2px var(--bft-8) inset; }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  font-weight: 500;
+}
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-ramp { display: inline-flex; gap: 3px; align-items: flex-end; }
+.legend-ramp .swatch {
+  width: 12px; height: 12px; border-radius: 3px; display: block;
+}
+.legend-ramp .step { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; line-height: 1; }
+.legend-item svg { display: block; width: 22px; height: 14px; }
+.legend-item .sundot { width: 6px; height: 6px; border-radius: 50%; background: var(--sun); }
+
+/* --- Table (HANDOFF §9, §8.1 columns) ------------------------------------- */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 420px;
+  font-size: 15px;
+}
+th, td {
+  text-align: left;
+  padding: 0 10px;
+  height: 44px;
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+th:first-child, td:first-child { padding-left: 4px; }
+th:last-child, td:last-child { padding-right: 4px; }
+thead th, tr.day-row th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  text-transform: none;
+  height: 36px;
+  border-bottom: 1px solid var(--hairline);
+  position: sticky;
+  top: 0;
+  background: var(--ground);
+  z-index: 1;
+}
+tr.day-row th:first-child { color: var(--ink-primary); font-weight: 700; }
+td.hour { color: var(--ink-secondary); width: 72px; }
+td.kn { font-family: var(--font-num); font-weight: 700; font-size: 17px; width: 64px; }
+td.gust { color: var(--ink-body); width: 64px; }
+td.dir { display: flex; align-items: center; gap: 8px; height: 44px; font-weight: 500; }
+td.dir svg { width: 14px; height: 14px; display: block; }
+td.bft { width: 48px; text-align: right; }
+.chip {
+  display: inline-block;
+  min-width: 24px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--chip-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 16px;
+}
+.chip.bft-10 { color: #FFFFFF; }
+:root[data-scheme="dark"] .chip.bft-10 { color: #000000; }
+@media (prefers-color-scheme: dark) { :root:not([data-scheme="light"]) .chip.bft-10 { color: #000000; } }
+tr.now td { background: color-mix(in srgb, var(--card) 70%, transparent); }
+tr.now td.hour { color: var(--ink-primary); font-weight: 600; }
+
+/* --- Footer --------------------------------------------------------------- */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ink-secondary);
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
+}
+.footer a { color: inherit; }
+.footer .trying { display: inline-flex; align-items: center; gap: 8px; }
+
+/* --- Trust-state treatments (HANDOFF §3) ---------------------------------- */
+.state-old .num,
+.state-old .hero-kn,
+.state-old .hero-gust,
+.state-old .hero-dir,
+.state-old td.kn,
+.state-old td.gust,
+.state-old td.dir,
+.state-horizon td.kn,
+.state-horizon td.gust,
+.state-horizon td.dir { color: var(--ink-old); }
+.state-old .chart,
+.state-old .pill,
+.state-old .chip,
+.state-old .chip-peak .dot,
+.state-old .hero-dir svg,
+.state-horizon .chart,
+.state-horizon .chip { filter: saturate(0.35); opacity: 0.7; }
+
+/* --- Breakpoints ---------------------------------------------------------- */
+@media (max-width: 899px) {
+  .card { padding: 14px 20px 16px; }
+}
+@media (max-width: 699px) {
+  .header { flex-direction: column; align-items: stretch; }
+  .hero { justify-content: space-between; }
+  .hero-right { align-items: flex-start; padding-bottom: 0; }
+}
+@media (max-width: 599px) {
+  :root { --gutter: 16px; }
+  .page { padding-top: 20px; gap: 16px; }
+  h1 { font-size: 28px; }
+  .hero-kn { font-size: 64px; }
+  .chip-peak { white-space: normal; }
+}
