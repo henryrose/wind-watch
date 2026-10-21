@@ -10,4 +10,4 @@ crons = ["*/10 * * * *"]
 
 [[kv_namespaces]]
 binding = "WIND"
-id = "REPLACE_ON_DEPLOY"
+id = "858e4c763fa74a4b91a06a0ce3c261a2"

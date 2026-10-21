@@ -56,8 +56,8 @@ The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict subset and is gone.
 
 | Item | Status | Where verified |
 |---|---|---|
-| Worker deploy + KV + cron live | other-machine | HANDOFF-OTHER-MACHINE §deploy |
-| Real API base in Shared.xcconfig and web/config.js | other-machine | same |
+| Worker deploy + KV + cron live | done | 2026-10-21: https://wind-watch.wind-watch-server.workers.dev; cron bake verified, 200 + ETag, 304 on If-None-Match, ?lat&lon 200 |
+| Real API base in Shared.xcconfig and web/config.js | done | 2026-10-21; web tests 22/22 |
 | Signing, device install | other-machine | same |
 | Complications on a real watch face + shared App Group cache between app and extension | other-machine | unsigned simulator builds get no group container, so app and extension cannot share the cache here; DEBUG page `WW_PAGE=complications` verified the views |
 | Cellular standalone, hour-boundary rollover, 90-min/6-h flips on wrist | other-machine | device matrix |
