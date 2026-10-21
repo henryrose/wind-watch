@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (B1, C1 done; B2, C2, E1 running)
+Last updated: 2026-10-21 (B1, C1, C2 done; B2, C3, E1 running)
 
 ## Tasks
 
@@ -20,8 +20,8 @@ Last updated: 2026-10-21 (B1, C1 done; B2, C2, E1 running)
 | B4 | server | index.ts fetch + scheduled, ETag/304, custom path; wrangler dev curl sequence | B3 | todo | `pnpm test`; curl 200 then 304 | |
 | B5 | server | server/README.md deploy runbook | B4 | todo | commands exist in package.json | |
 | C1 | core | Package.swift, Payload, Forecast, Beaufort, Compass, TrustState, derivations + tests | A3 | done | `cd apple/WindCore && swift test` |  (see commit C1); 43 tests, Swift Testing, tools 6.2 |
-| C2 | core | Twilight stops + tests | C1 | in-progress (agent core) | `swift test` | |
-| C3 | core | WindClient + AppGroupStore + tests | C2 | todo | `swift test` | |
+| C2 | core | Twilight stops + tests | C1 | done | `swift test` |  51 tests total |
+| C3 | core | WindClient + AppGroupStore + tests | C2 | in-progress (agent core) | `swift test` | |
 | C4 | core | TimelineBuilder + tests | C3 | todo | `swift test` | |
 | C5 | core | Glyphs, Tokens, TrustLine, WindChart, MiniStrip, previews | C4 | todo | `swift build && swift test` | |
 | D1 | apps | project.yml, xcconfig, entitlements, generated .xcodeproj, build script | A2, C5 | todo | iOS sim build + watchOS generic build | |
@@ -57,6 +57,7 @@ Last updated: 2026-10-21 (B1, C1 done; B2, C2, E1 running)
 | 2026-10-21 | `@cloudflare/vitest-pool-workers` is deprecated in favour of `@cloudflare/vitest-plugin`; kept for now, migrate in B4 if cheap | server agent (B1) | brief named the old package |
 | 2026-10-21 | Swift tools-version 6.2; Swift Testing; `Beaufort.step` returns true 0–12 and colour merging happens in `colorToken` | core agent (C1) | `.v26` platforms need tools 6.2 |
 | 2026-10-21 | TrustState precedence: firstRun > pastHorizon > updating > offlineCached > old > stale > fresh; `AgeTier` exposed separately so numbers dim under offline/updating | core agent (C1) | HANDOFF §3 "age rules still apply" |
+| 2026-10-21 | Twilight: empty `sun` → day = 1; interpolation on absolute dates so any window shares `day(at:)`; fixture Thu sun times are 07:09/07:41 (handoff text says 07:08/07:40), §6.2 fractions still within ±0.002 | core agent (C2) | fixture is the oracle, not the handoff prose |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
 
 ## Questions for Henry (loop proceeds on the stated default)
