@@ -69,7 +69,7 @@ async function get(path: string, headers: Record<string, string> = {}, method = 
 
 async function clearState(): Promise<void> {
   await Promise.all(Object.values(KV_KEYS).map((k) => env.WIND.delete(k)));
-  for (const q of ["lat=48.1&lon=-122.75", "lat=48.1&lon=-122.76", "lat=21.31&lon=-157.86"]) {
+  for (const q of ["lat=48.1&lon=-122.75", "lat=48.1&lon=-122.76", "lat=21.31&lon=-157.86", "lat=51.5&lon=-0.12"]) {
     await caches.default.delete(new Request(`https://wind-watch.cache/v1/wind?${q}`));
   }
 }
@@ -294,6 +294,27 @@ describe("GET /v1/wind?lat&lon (custom location)", () => {
     const res = await get("/v1/wind?lat=21.31&lon=-157.86");
     expect(res.status).toBe(502);
     expect(await res.json()).toEqual({ error: "upstream" });
+  });
+
+  it("422 outside_coverage when Open-Meteo has no HRRR data for the point", async () => {
+    mockUpstream({ forecastStatus: 400, forecastBody: { error: true, reason: "No data is available for this location" } });
+    const res = await get("/v1/wind?lat=51.5&lon=-0.12");
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "outside_coverage" });
+  });
+
+  it("422 outside_coverage when every hour is null (the grid edge)", async () => {
+    const nulls = forecastFixture.hourly.time.map(() => null);
+    const empty = { ...forecastFixture, hourly: { ...forecastFixture.hourly, wind_speed_10m: nulls, wind_gusts_10m: nulls, wind_direction_10m: nulls } };
+    mockUpstream({ forecastBody: empty });
+    const res = await get("/v1/wind?lat=51.5&lon=-0.12");
+    expect(res.status).toBe(422);
+  });
+
+  it("other upstream 400s stay 502", async () => {
+    mockUpstream({ forecastStatus: 400, forecastBody: { error: true, reason: "Parameter 'hourly' is invalid" } });
+    const res = await get("/v1/wind?lat=21.31&lon=-157.86");
+    expect(res.status).toBe(502);
   });
 });
 

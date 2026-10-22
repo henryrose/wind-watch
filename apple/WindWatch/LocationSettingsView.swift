@@ -12,6 +12,7 @@ struct LocationSettingsView: View {
     @State private var candidate: SavedLocation?
     @State private var searchError: String?
     @State private var isSearching = false
+    @State private var isSaving = false
     @State private var camera: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: SavedLocation.portTownsendBay.lat, longitude: SavedLocation.portTownsendBay.lon),
@@ -40,6 +41,16 @@ struct LocationSettingsView: View {
         .background(Tokens.ground(scheme))
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
+            #if DEBUG
+            // `WW_CANDIDATE="Name,lat,lon"`: propose an unsaved point at launch (screenshots).
+            if let spec = model.environment["WW_CANDIDATE"] {
+                let parts = spec.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                if parts.count == 3, let lat = Double(parts[1]), let lon = Double(parts[2]) {
+                    propose(SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier))
+                    return
+                }
+            }
+            #endif
             if let custom = model.preferences.custom {
                 camera = .region(MKCoordinateRegion(
                     center: CLLocationCoordinate2D(latitude: custom.lat, longitude: custom.lon),
@@ -99,12 +110,18 @@ struct LocationSettingsView: View {
                 }
                 Spacer()
                 if hasUnsavedCandidate, let candidate {
-                    Button("Save") { model.saveCustom(candidate); self.candidate = nil }
+                    // No Save for a point outside the HRRR grid; `searchError` says why.
+                    if candidate.isInHRRRCoverage {
+                        Button { Task { await save(candidate) } } label: {
+                            if isSaving { ProgressView().controlSize(.small) } else { Text("Save") }
+                        }
                         .font(.system(size: 15, weight: .semibold))
                         .buttonStyle(.borderedProminent)
                         .tint(Tokens.trustAmber(scheme))
                         .foregroundStyle(Color.black)
                         .frame(minHeight: 44)
+                        .disabled(isSaving)
+                    }
                 } else {
                     Button {
                         model.selectCustom()
@@ -196,6 +213,7 @@ struct LocationSettingsView: View {
 
     private func propose(_ location: SavedLocation) {
         candidate = location
+        searchError = location.isInHRRRCoverage ? nil : HRRRCoverage.outsideText
         camera = .region(MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lon),
             span: MKCoordinateSpan(latitudeDelta: 0.4, longitudeDelta: 0.4)))
@@ -211,6 +229,19 @@ struct LocationSettingsView: View {
             tz = item.timeZone?.identifier ?? tz
         }
         propose(SavedLocation(name: name, lat: coordinate.latitude, lon: coordinate.longitude, tz: tz))
+    }
+
+    /// Fetches the point before switching to it; the server can still refuse one at the grid edge.
+    private func save(_ location: SavedLocation) async {
+        isSaving = true
+        defer { isSaving = false }
+        switch await model.trySaveCustom(location) {
+        case .saved:
+            candidate = nil
+            searchError = nil
+        case .outsideCoverage:
+            searchError = HRRRCoverage.outsideText
+        }
     }
 
     // MARK: Map

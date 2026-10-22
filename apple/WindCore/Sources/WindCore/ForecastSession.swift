@@ -162,6 +162,37 @@ public final class ForecastSession {
         locationChanged()
     }
 
+    public enum SaveCustomOutcome: Sendable, Equatable {
+        case saved
+        /// Nothing changed: the point is outside the HRRR grid (`HRRRCoverage`, or the server's 422).
+        case outsideCoverage
+    }
+
+    /// The Location screen's Save. Fetches the new point first, so the current forecast stays on
+    /// screen until the new one is in hand and a point the server refuses changes nothing. Any
+    /// other failure (offline, server down) saves anyway and the next refresh fills it in.
+    public func trySaveCustom(_ location: SavedLocation) async -> SaveCustomOutcome {
+        guard location.isInHRRRCoverage else { return .outsideCoverage }
+        guard let client, !isFixture, !isUpdating else {
+            saveCustom(location)
+            return .saved
+        }
+        isUpdating = true
+        let result = await client.fetch(ifNoneMatch: nil, location: location.customLocation)
+        isUpdating = false
+        switch result {
+        case .failed(let error) where error as? WindClientError == .outsideCoverage:
+            return .outsideCoverage
+        case .updated(let data, let etag):
+            preferences.custom = location
+            preferences.useCustom = true
+            locationChanged(prefetched: (data, etag))
+        default:
+            saveCustom(location)
+        }
+        return .saved
+    }
+
     /// Re-reads the preference from the group defaults after an external write (the watch's
     /// `WCSession` handler, D5). Returns true when the *active* location changed; only then is the
     /// cache dropped (a different location is a different payload). Fixture mode keeps its data and
@@ -181,10 +212,16 @@ public final class ForecastSession {
         return activeChanged
     }
 
-    private func locationChanged() {
+    /// `prefetched` is the new location's payload when the caller already has it (`trySaveCustom`).
+    private func locationChanged(prefetched: (data: Data, etag: String?)? = nil) {
         LocationSettings.save(preferences, to: defaults)
         if isFixture {
             setCached(cached) // rebuilds `forecast` with the new isDefault flag
+        } else if let prefetched {
+            try? store.clear()
+            try? store.save(payloadData: prefetched.data, etag: prefetched.etag, at: .now)
+            setCached(store.load())
+            tick()
         } else {
             try? store.clear()
             setCached(nil)

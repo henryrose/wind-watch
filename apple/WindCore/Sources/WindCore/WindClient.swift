@@ -16,6 +16,8 @@ public enum WindClientError: Error, Equatable, Sendable {
     case http(Int)
     /// The response was not an HTTP response.
     case invalidResponse
+    /// 422 `outside_coverage`: the custom point is outside the HRRR grid. Definite, not worth retrying.
+    case outsideCoverage
 }
 
 /// Outcome of one `GET /v1/wind`.
@@ -119,6 +121,8 @@ public final class WindClient: Sendable {
             return .updated(data: data, etag: http.value(forHTTPHeaderField: "ETag"))
         case 304:
             return .notModified
+        case 422:
+            return .failed(WindClientError.outsideCoverage)
         default:
             return .failed(WindClientError.http(http.statusCode))
         }

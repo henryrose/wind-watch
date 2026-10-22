@@ -57,7 +57,7 @@ cd apple && ./build.sh gen      # regenerate WindWatch.xcodeproj from project.ym
 ./build.sh all                  # gen + swift test + ios + watch
 # Run with fixture data: launch with env WW_FIXTURE=1 (+ WW_STATE=stale|old|offline|horizon|firstrun|updating,
 # WW_NOW=<ISO8601>, WW_TYPE_SIZE=ax3, WW_SCREEN=location|about, WW_SCRUB=<hour index>, WW_LANDSCAPE=1,
-# WW_TABLE=1|0 (hourly table open/closed) on iPhone; WW_PAGE=strip|now|settings|complications on watch, strip is the default). Wait ~7 s before a screenshot (first frame compiles a gradient).
+# WW_TABLE=1|0 (hourly table open/closed), WW_CANDIDATE="Name,lat,lon" (unsaved point on the Location screen) on iPhone; WW_PAGE=strip|now|settings|complications on watch, strip is the default). Wait ~7 s before a screenshot (first frame compiles a gradient).
 # Always address simulators by UDID when two are booted (`xcrun simctl list devices`).
 
 # Web (static page, no build step)

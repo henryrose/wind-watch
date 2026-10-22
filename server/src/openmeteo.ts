@@ -37,6 +37,8 @@ export class UpstreamError extends Error {
   constructor(
     message: string,
     readonly status?: number,
+    /** Open-Meteo's `reason` from an error body, e.g. "No data is available for this location". */
+    readonly reason?: string,
   ) {
     super(message);
     this.name = "UpstreamError";
@@ -55,13 +57,25 @@ export async function fetchJSON<T>(url: string, init: RequestInit = {}): Promise
     throw new UpstreamError(`fetch failed: ${e instanceof Error ? e.message : String(e)}`);
   }
   if (!res.ok) {
-    throw new UpstreamError(`upstream ${res.status} for ${new URL(url).pathname}`, res.status);
+    let reason: string | undefined;
+    try {
+      const body = (await res.json()) as { reason?: unknown };
+      if (typeof body.reason === "string") reason = body.reason;
+    } catch {
+      // Not JSON; the status is enough.
+    }
+    throw new UpstreamError(`upstream ${res.status} for ${new URL(url).pathname}${reason ? `: ${reason}` : ""}`, res.status, reason);
   }
   try {
     return (await res.json()) as T;
   } catch (e) {
     throw new UpstreamError(`bad JSON: ${e instanceof Error ? e.message : String(e)}`);
   }
+}
+
+/** True when Open-Meteo refused a point because it is outside the model's grid (400 + "No data is available"). */
+export function isOutsideCoverage(e: unknown): boolean {
+  return e instanceof UpstreamError && e.status === 400 && /no data is available/i.test(e.reason ?? "");
 }
 
 export function fetchMeta(): Promise<OpenMeteoMeta> {

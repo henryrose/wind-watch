@@ -158,6 +158,22 @@ struct ForecastSessionSyncTests {
         #expect(LocationSettings.load(from: h.session.defaults) == .init(custom: custom, useCustom: true))
     }
 
+    @Test func trySaveCustomRefusesAPointOutsideHRRRAndChangesNothing() async throws {
+        let h = try Harness(fixture: false); defer { h.cleanup() }
+        let london = SavedLocation(name: "London", lat: 51.5, lon: -0.12, tz: "Europe/London")
+        let before = h.session.preferences
+        #expect(await h.session.trySaveCustom(london) == .outsideCoverage)
+        #expect(h.session.preferences == before)
+        #expect(h.session.forecast != nil) // the cache is untouched
+        #expect(h.session.store.load() != nil)
+    }
+
+    @Test func trySaveCustomSavesInFixtureMode() async throws {
+        let h = try Harness(fixture: true); defer { h.cleanup() }
+        #expect(await h.session.trySaveCustom(custom) == .saved)
+        #expect(h.session.preferences == .init(custom: custom, useCustom: true))
+    }
+
     @Test func payloadTimeZoneWinsOverSavedLocationTimeZone() throws {
         var p = PreviewData.payload
         p.loc.tz = "Europe/London"

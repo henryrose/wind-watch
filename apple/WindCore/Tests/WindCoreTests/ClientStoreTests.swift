@@ -110,6 +110,13 @@ struct WindClientTests {
         #expect(error as? WindClientError == .http(500))
     }
 
+    @Test func outsideCoverageIsItsOwnError() async {
+        let (_, client) = Stub.client { _ in .init(status: 422, body: Data("{\"error\":\"outside_coverage\"}".utf8)) }
+        let result = await client.fetch(ifNoneMatch: nil, location: CustomLocation(lat: 51.5, lon: -0.12))
+        guard case .failed(let error) = result else { Issue.record("expected .failed, got \(result)"); return }
+        #expect(error as? WindClientError == .outsideCoverage)
+    }
+
     @Test func invalidJSONFails() async {
         let (_, client) = Stub.client { _ in .init(status: 200, body: Data("not json".utf8)) }
         let result = await client.fetch(ifNoneMatch: nil)

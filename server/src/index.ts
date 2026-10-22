@@ -3,7 +3,7 @@
 // (§4.4) and bakes custom locations on demand behind the Cache API (§7).
 
 import { CUSTOM_CACHE_ORIGIN, CUSTOM_CACHE_TTL, DEFAULT_LOCATION, KV_KEYS } from "./config.js";
-import { fetchForecast, fetchMeta } from "./openmeteo.js";
+import { fetchForecast, fetchMeta, isOutsideCoverage } from "./openmeteo.js";
 import { serializePayload } from "./stableStringify.js";
 import { transform } from "./transform.js";
 import type { Location, OpenMeteoForecast, OpenMeteoMeta } from "./types.js";
@@ -168,6 +168,11 @@ async function serveCustom(request: Request, ctx: ExecutionContext, rawLat: stri
     ({ body, etag } = await bake(forecast, meta, loc, Math.floor(Date.now() / 1000)));
   } catch (e) {
     console.error(`custom ${lat},${lon}: ${e instanceof Error ? e.message : String(e)}`);
+    // Outside the HRRR grid (or all-null at its edge): a definite answer the client shows as such,
+    // not a transient failure to retry.
+    if (isOutsideCoverage(e) || (e instanceof Error && e.message.startsWith("transform: forecast has no"))) {
+      return jsonError(422, "outside_coverage", head);
+    }
     return jsonError(502, "upstream", head);
   }
 
