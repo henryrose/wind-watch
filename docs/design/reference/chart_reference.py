@@ -105,7 +105,8 @@ def svg(start,n,W,H,ymax=30,top=14,bot=14,left=0,arrows='all',ticks=3,now=None,l
                 x=X(i)
                 if i>start:
                     o.append(f'<line x1="{x:.1f}" x2="{x:.1f}" y1="{top-18}" y2="{top+plotH:.1f}" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2 3"/>')
-                o.append(f'<text x="{x+5:.1f}" y="{top-22}" font-size="{font}" font-weight="700" fill="#FFFFFF" fill-opacity="0.75" font-family="-apple-system,system-ui,sans-serif">{name}</text>')
+                dx = 5 if i>start else 4
+                o.append(f'<text x="{x+dx:.1f}" y="{top-22}" font-size="{font}" font-weight="700" fill="#FFFFFF" fill-opacity="0.75" font-family="-apple-system,system-ui,sans-serif">{name}</text>')
     if now is not None:
         x=X(now)
         o.append(f'<line x1="{x:.1f}" x2="{x:.1f}" y1="{top-6}" y2="{top+plotH:.1f}" stroke="#FFFFFF" stroke-width="1.5"/>')
@@ -122,9 +123,9 @@ if __name__=='__main__':
     L12b=[(0,'9am'),(3,'noon'),(6,'3pm'),(9,'6pm'),(12,'9pm'),(15,'12am'),(18,'3am'),(21,'6am'),(24,'9am'),(27,'noon'),(30,'3pm'),(33,'6pm'),(36,'9pm'),(39,'12am'),(42,'3am')]
     DAYS=[(0,'Wed'),(15,'Thu'),(39,'Fri')]
     L6=[(0,'09'),(6,'15'),(12,'21'),(15,'Thu'),(18,'03'),(24,'09'),(30,'15'),(36,'21'),(39,'Fri'),(42,'03')]
-    if which=='phonebig': print(svg(0,45,370,262,top=38,bot=18,arrows=3,ticks=6,now=0.4,labels=L12,end_label='ends Fri 5am',uid='pb',days=DAYS))
-    if which=='phonesel': print(svg(0,45,370,262,top=38,bot=18,arrows=3,ticks=6,now=0.4,labels=L12,end_label='ends Fri 5am',uid='ps',sel=15,days=DAYS))
-    if which=='land': print(svg(0,45,756,296,top=38,bot=22,arrows=1,ticks=3,now=0.4,labels=L12b,end_label='ends Fri 5am',uid='ld',sel=15,days=DAYS,font=12,arrow_size=9))
+    if which=='phonebig': print(svg(0,45,402,262,top=38,bot=18,arrows=3,ticks=6,now=0.4,labels=L12,end_label='ends Fri 5am',uid='pb',days=DAYS))
+    if which=='phonesel': print(svg(0,45,402,262,top=38,bot=18,arrows=3,ticks=6,now=0.4,labels=L12,end_label='ends Fri 5am',uid='ps',sel=15,days=DAYS))
+    if which=='land': print(svg(0,45,834,296,top=38,bot=22,arrows=1,ticks=3,now=0.4,labels=L12b,end_label='ends Fri 5am',uid='ld',sel=15,days=DAYS,font=12,arrow_size=9))
     if which=='webhover': print(svg(0,45,1120,300,top=40,bot=22,arrows=1,ticks=3,now=0.4,labels=L12b,end_label='ends Fri 5am',font=12,arrow_size=10,uid='dh',sel=15,days=DAYS))
     if which=='phone': print(svg(0,45,370,190,top=22,bot=16,arrows=3,ticks=6,now=0.4,labels=[(i,t) for i,t in L6 if t not in('Thu','Fri')],end_label='HRRR ends 05:00',uid='p'))
     if which=='watchstrip': print(svg(0,12,396,230,top=24,bot=22,arrows='all',ticks=3,now=0.4,labels=[(3,'12'),(6,'15'),(9,'18')],font=22,arrow_size=14,gw=2.5,sun_r=5,uid='w'))

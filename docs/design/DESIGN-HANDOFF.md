@@ -262,6 +262,13 @@ Same `Chart` view, switched on `verticalSizeClass == .compact`. Table, summary a
 
 One `pointermove` listener on the SVG; `hour = floor((x − plotLeft) / slot)`. Highlight = white 1.5 px outline on the bar + full-height rule; other bars `opacity 0.45`. Tooltip card: dark ground, white 1.5 px ring, radius 10, anchored to the slot centre 4 px below the day band; content `Thu 12am · midnight · 15 kn · G 25 · ▸ from W · 283° · [B4]`. Flip to the left of the rule within 160 px of the right edge. `pointerleave` clears. On touch (narrow widths) the card docks to the top of the chart card. SVG is focusable; ←/→ step the hour; the card text lives in an `aria-live="polite"` region.
 
+### 6.4d Second-round refinements (supersede anything above that conflicts)
+
+- **Readout row has a fixed height.** iPhone portrait: 96 pt, `card` fill, radius 12, horizontal margin 12. Both states render the same structure — a 13 pt label line (`Now · Wed 9:25am` with a blue 2 pt bar, or `Thu 12am · midnight` with a white bar), the number, `G`, arrow + `from W · 290°`, right column (peak chip text or `now 3 kn`) over the Beaufort chip. Scrubbing only adds a 1.5 pt white inset ring. Nothing above the chart may change height while a finger is down; use `.frame(height: 96)` and never let text reflow (single-line, `.lineLimit(1)`, `.minimumScaleFactor(0.85)`). Landscape: 48 pt, same rule.
+- **Chart is edge to edge.** Portrait plot width = screen width (402 on the reference device): no horizontal padding on the chart card; the y-axis labels and the `now`/edge labels are drawn inside the plot. `.ignoresSafeArea(.container, edges: .horizontal)` on the chart only; the title row above it keeps the 16 pt inset. Landscape: plot width = screen width − 40 (20 pt each side) — 834 on the reference device — so the first and last hour are not under the Dynamic Island; everything else ignores the side safe areas.
+- **Hourly table is collapsible, collapsed by default.** iPhone: a 52 pt disclosure row under the summary (`Hourly table` Semibold 17 · `45 hours · Wed 9am → Fri 5am` 13 secondary · chevron), `card` fill, radius 12; tapping expands the table in place with the standard spring; state persists in `@AppStorage("hourlyTableExpanded")`. At AX sizes the row is 60 pt. Web: a `<details>` with a styled `<summary>` of the same content; closed by default, state remembered in `localStorage`; `prefers-reduced-motion` disables the height animation.
+- **Watch: the 12-hour strip is the launch screen.** Page order is strip → Now detail → (Crown/long-press) Settings. The strip's header carries the compact hero so the one job still lands on wrist raise: `3 kn · G 4 · ▸ from W` (Rounded Heavy 32 / Bold 17 / Semibold 13) with a secondary line `Port Townsend Bay · next 12 h · gusts to 15`. The Now detail page keeps the big number, summary and full trust line. Page dots: strip is dot 1.
+
 ### 6.5 Web implementation notes
 
 One `<svg viewBox="0 0 W H">` scaled to 100 % width; recompute `W` at two breakpoints (≥ 900 px: 1120×280, else 358×200) so stroke weights stay in CSS px. Shading is a single `<rect>` with a horizontal `<linearGradient>` whose stops come from §2. `prefers-color-scheme` swaps the token columns in §4; nothing else changes.
@@ -370,6 +377,32 @@ summary "Light and variable this morning, building to 15 kn W by late afternoon,
 Expected derived values: hour 0 → `3 kn G4 from W`, B1, arrow rotation 110°. Hour 15 → `15 kn G25 from W`, B4, rotation 103°. Y domain 0–30. Horizon label `HRRR ends 05:00`.
 
 ---
+
+## 10a. Brand
+
+**App icon — "Wake" (icon B·3).** A white TO-arrow at 103° (a westerly) trailing three short streaks in `bft.2` / `bft.3` / `bft.4`, on a `#0B0E12` tile. One source of truth: `reference/brand_icon.py` (`icon(size, round_, mono)`), which picks the size tier automatically.
+
+| Tier | Sizes | Streaks | Stroke (180 grid) | Arrow half-height | Glyph centre (180 grid) |
+|---|---|---|---|---|---|
+| full | ≥ 48 pt | B2 / B3 / B4, middle longest | 11 | 46 | (115.2, 101.8) |
+| small | 24–47 pt | B2 / B4 | 18 | 50 | (116.8, 102.2) |
+| tiny | < 24 pt | B3 only | 26 | 54 | (117, 103.1) |
+
+Everything rotates 103° about the glyph centre; kite path `M0,-s L0.75s,s L0,0.4s L-0.75s,s Z`; streaks are round-capped lines along the arrow's axis behind the tail. The glyph's bounding box sits 1 pt below the tile centre (optical).
+
+Icon Composer layers (iOS 26 / watchOS 26): ground `#0B0E12` → wake (one layer per streak, so tinted mode steps their luminance) → arrow `#FFFFFF`. Glass/specular on the arrow layer only. The ground stays dark in light mode. Watch icon = the same art clipped to a circle. Export the 1024 master from `brand_icon.py` at full tier; Xcode generates the rest, but **ship explicit small/tiny-tier PNGs for 29/40 pt slots and the 16/32 favicons** so the streak count changes as designed.
+
+**Wordmark.** "Wind Watch" in SF Pro Rounded: "Wind" Heavy in `ink.primary`, " Watch" Medium in `ink.secondary`, tracking −3 %. Two words, title case. On the web use the system stack (`-apple-system, system-ui, …`) — no web font. Lockup = icon tile + wordmark, gap ≈ 0.4 × type size.
+
+**Where the name appears — and nowhere else:**
+
+- iPhone main (portrait): 15 pt eyebrow lockup (17 pt tile, tiny tier) above the location name. Not in landscape.
+- iPhone About: lockup replaces the "About" title — 30 pt tile + 26 pt wordmark + "1.0".
+- Web: a lockup row above the header (28 pt tile + 26 pt wordmark desktop; 24/22 phone) with "HRRR wind · Port Townsend Bay, WA" right-aligned at 12 px `ink.disabled`; `<title>` = "Wind Watch — Port Townsend Bay"; favicon 16/32 tiny tier, apple-touch-icon 180 full tier.
+- Footers (iPhone main, web): "Wind Watch · weather data by Open-Meteo.com".
+- Watch: settings footer only — 24 pt round icon + "Wind Watch 1.0" over the attribution. The strip and Now pages carry no brand. Inline complication past-horizon text stays "Wind — open app".
+
+**Rules.** The wake is the only coloured part of the brand and is always B2→B4 in order, hard-stepped. Never amber or B5+ in brand marks, never the wake without the arrow, never the arrow at any angle but 103° in the mark (chart arrows rotate freely — that's data). Voice: short, concrete, sailor-plain; no exclamation marks. VoiceOver label for the mark: "Wind Watch".
 
 ## 11. Acceptance checklist
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Wind Watch web page at phone width</title>
+<title>Wind Watch — Port Townsend Bay</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -15,6 +15,7 @@ a{color:#9BB7D4}a:hover{color:#FFFFFF}
 </helmet>
 <div style="min-height: 100vh; box-sizing: border-box; background: #0B0E12; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif; padding: 24px 16px 32px 16px; font-variant-numeric: tabular-nums">
   <div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #171C23"><div style="display: flex; align-items: center; gap: 9px"><svg width="24" height="24" viewBox="0 0 180 180" aria-hidden="true"><defs><clipPath id="wk25"><rect width="180" height="180" rx="40"/></clipPath></defs><g clip-path="url(#wk25)"><rect width="180" height="180" fill="#0B0E12"/></g><g transform="translate(116.8,102.2) rotate(103)"><line x1="-16" x2="-16" y1="62" y2="86" stroke="#4FA3D8" stroke-width="18" stroke-linecap="round"/><line x1="16" x2="16" y1="62" y2="92" stroke="#8DD44A" stroke-width="18" stroke-linecap="round"/><path d="M0,-50 L37.5,50 L0,20.0 L-37.5,50 Z" fill="#FFFFFF"/></g></svg><span style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif; font-size: 22px; line-height: 1; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF; white-space: nowrap">Wind<span style="font-weight: 500; color: #9AA4B1"> Watch</span></span></div><span style="font-size: 12px; color: #5C6B7A">HRRR wind · Port Townsend Bay, WA</span></div>
     <header style="display: flex; flex-direction: column; gap: 6px">
       <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.01em">Port Townsend Bay</h1>
       <div style="font-size: 13px; line-height: 18px; font-weight: 500; color: #9AA4B1">as of 09:00 PDT · HRRR 15Z · ends Fri 05:00</div>
@@ -181,7 +182,12 @@ a{color:#9BB7D4}a:hover{color:#FFFFFF}
 </svg></div>
     </section>
 
-    <section aria-label="Hourly table" style="overflow-x: auto">
+    <details style="border-radius: 10px; background: #171C23">
+      <summary style="list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; min-height: 52px; box-sizing: border-box">
+        <span style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 16px; font-weight: 700">Hourly table</span><span style="font-size: 13px; color: #9AA4B1">45 hours</span></span>
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3,5 L7,9 L11,5" fill="none" stroke="#9AA4B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <section aria-label="Hourly table" style="overflow-x: auto; padding: 0 8px 12px 8px">
       <table style="width: 100%; border-collapse: collapse; font-size: 15px">
         <thead><tr style="color: #9AA4B1; font-size: 12px; text-align: left"><th scope="col" style="padding: 6px 8px; border-bottom: 1px solid #2A2F36; font-weight: 600">Wed</th><th scope="col" style="padding: 6px 8px; border-bottom: 1px solid #2A2F36; font-weight: 600; text-align: right">kn</th><th scope="col" style="padding: 6px 8px; border-bottom: 1px solid #2A2F36; font-weight: 600; text-align: right">gust</th><th scope="col" style="padding: 6px 8px; border-bottom: 1px solid #2A2F36; font-weight: 600">from</th><th scope="col" style="padding: 6px 8px; border-bottom: 1px solid #2A2F36; font-weight: 600; text-align: right">B</th></tr></thead>
         <tbody>
@@ -194,8 +200,9 @@ a{color:#9BB7D4}a:hover{color:#FFFFFF}
         </tbody>
       </table>
     </section>
+    </details>
 
-    <footer style="font-size: 13px; color: #9AA4B1; padding-top: 8px; border-top: 1px solid #2A2F36">Weather data by <a href="https://open-meteo.com" style="color: #9BB7D4; text-decoration: none">Open-Meteo.com</a> · HRRR 3 km · times in PDT</footer>
+    <footer style="font-size: 13px; color: #9AA4B1; padding-top: 8px; border-top: 1px solid #2A2F36">Wind Watch · weather data by <a href="https://open-meteo.com" style="color: #9BB7D4; text-decoration: none">Open-Meteo.com</a> · HRRR 3 km · times in PDT</footer>
   </div>
 </div>
 </x-dc>
