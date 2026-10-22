@@ -92,7 +92,8 @@ async function loadFixture() {
 // Live mode: one conditional GET. Resolves to an outcome for recordAfterCheck;
 // never throws.
 async function checkLive(base, etag) {
-  const headers = {};
+  // X-WW-Client lets the Worker count requests per surface (server/src/usage.ts).
+  const headers = { 'X-WW-Client': 'web/1' };
   if (etag) headers['If-None-Match'] = etag;
   try {
     const res = await fetch(`${base}/v1/wind`, { cache: 'no-store', headers });

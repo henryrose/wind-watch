@@ -35,15 +35,35 @@ public final class WindClient: Sendable {
     public let baseURL: URL
     public let session: URLSession
     public let timeout: TimeInterval
+    /// Sent as `X-WW-Client` so the Worker can count requests per surface (server/src/usage.ts).
+    public let clientTag: String?
 
     /// - Parameters:
     ///   - baseURL: the API base from configuration (e.g. `https://<name>.workers.dev`), no path.
     ///   - session: injectable for tests (`URLProtocol` stubs).
     ///   - timeout: per-request, seconds (DESIGN §5.2 uses 10 s).
-    public init(baseURL: URL, session: URLSession = .shared, timeout: TimeInterval = 10) {
+    ///   - clientTag: `<surface>/<version>`, usually from `WindClient.clientTag(bundleInfo:)`.
+    public init(baseURL: URL, session: URLSession = .shared, timeout: TimeInterval = 10, clientTag: String? = nil) {
         self.baseURL = baseURL
         self.session = session
         self.timeout = timeout
+        self.clientTag = clientTag
+    }
+
+    public static let clientHeader = "X-WW-Client"
+
+    /// `ios|watch|widget/<short version>+<build>` from the target's Info.plist. The surface comes
+    /// from the bundle id suffix (`.windwatch`, `.watchkitapp`, `.complications`).
+    public static func clientTag(bundleInfo: [String: Any]) -> String {
+        let id = bundleInfo["CFBundleIdentifier"] as? String ?? ""
+        let surface: String
+        if id.hasSuffix(".complications") { surface = "widget" }
+        else if id.hasSuffix(".watchkitapp") { surface = "watch" }
+        else if id.hasSuffix(".windwatch") { surface = "ios" }
+        else { surface = "other" }
+        let version = bundleInfo["CFBundleShortVersionString"] as? String ?? "?"
+        let build = bundleInfo["CFBundleVersion"] as? String ?? "?"
+        return "\(surface)/\(version)+\(build)"
     }
 
     /// The request URL for the default or a custom location.
@@ -66,6 +86,9 @@ public final class WindClient: Sendable {
         // ETags are handled here, not by URLSession's cache; never let it synthesise a 200 from a 304.
         request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let clientTag {
+            request.setValue(clientTag, forHTTPHeaderField: Self.clientHeader)
+        }
         if let etag, !etag.isEmpty {
             request.setValue(etag, forHTTPHeaderField: "If-None-Match")
         }

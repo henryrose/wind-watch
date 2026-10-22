@@ -155,6 +155,23 @@ struct WindClientTests {
         #expect(r.timeoutInterval == 7)
         #expect(r.cachePolicy == .reloadIgnoringLocalCacheData)
         #expect(r.value(forHTTPHeaderField: "If-None-Match") == nil) // empty etag not sent
+        #expect(r.value(forHTTPHeaderField: WindClient.clientHeader) == nil) // no tag, no header
+    }
+
+    @Test func requestSendsClientTag() {
+        let client = WindClient(baseURL: URL(string: "https://example.test")!, clientTag: "watch/0.1.0+1")
+        let r = client.request(ifNoneMatch: nil, location: nil)
+        #expect(r.value(forHTTPHeaderField: "X-WW-Client") == "watch/0.1.0+1")
+    }
+
+    @Test func clientTagFromBundleInfo() {
+        func tag(_ id: String) -> String {
+            WindClient.clientTag(bundleInfo: ["CFBundleIdentifier": id, "CFBundleShortVersionString": "0.1.0", "CFBundleVersion": "2"])
+        }
+        #expect(tag("com.x.windwatch") == "ios/0.1.0+2")
+        #expect(tag("com.x.windwatch.watchkitapp") == "watch/0.1.0+2")
+        #expect(tag("com.x.windwatch.watchkitapp.complications") == "widget/0.1.0+2")
+        #expect(tag("") == "other/0.1.0+2")
     }
 }
 

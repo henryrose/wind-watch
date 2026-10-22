@@ -11,3 +11,8 @@ crons = ["*/10 * * * *"]
 [[kv_namespaces]]
 binding = "WIND"
 id = "858e4c763fa74a4b91a06a0ce3c261a2"
+
+# Request counts per client surface (src/usage.ts); query with `pnpm usage`.
+[[analytics_engine_datasets]]
+binding = "USAGE"
+dataset = "wind_watch_usage"

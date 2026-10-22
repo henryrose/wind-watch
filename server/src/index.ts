@@ -7,15 +7,18 @@ import { fetchForecast, fetchMeta } from "./openmeteo.js";
 import { serializePayload } from "./stableStringify.js";
 import { transform } from "./transform.js";
 import type { Location, OpenMeteoForecast, OpenMeteoMeta } from "./types.js";
+import { CLIENT_HEADER, recordUsage } from "./usage.js";
 
 export interface Env {
   WIND: KVNamespace;
+  /** Analytics Engine dataset for request counts; optional so tests and local dev run without it. */
+  USAGE?: AnalyticsEngineDataset;
 }
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-  "Access-Control-Allow-Headers": "If-None-Match",
+  "Access-Control-Allow-Headers": `If-None-Match, ${CLIENT_HEADER}`,
   "Access-Control-Expose-Headers": "ETag",
 } as const;
 
@@ -197,8 +200,10 @@ export default {
 
     const lat = url.searchParams.get("lat");
     const lon = url.searchParams.get("lon");
-    if (lat === null && lon === null) return serveDefault(request, env);
-    return serveCustom(request, ctx, lat, lon);
+    const custom = !(lat === null && lon === null);
+    const res = custom ? await serveCustom(request, ctx, lat, lon) : await serveDefault(request, env);
+    recordUsage(env.USAGE, request, custom, res.status);
+    return res;
   },
 
   async scheduled(_controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {

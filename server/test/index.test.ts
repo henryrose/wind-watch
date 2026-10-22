@@ -310,6 +310,7 @@ describe("other routes", () => {
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     expect(res.headers.get("Access-Control-Allow-Methods")).toContain("GET");
     expect(res.headers.get("Access-Control-Allow-Headers")).toContain("If-None-Match");
+    expect(res.headers.get("Access-Control-Allow-Headers")).toContain("X-WW-Client");
   });
 });
 

@@ -65,7 +65,7 @@ public final class ForecastSession {
         } else {
             self.store = store ?? AppGroupStore(groupID: groupID)
             if let base = bundleInfo["WWAPIBase"] as? String, let url = URL(string: base), url.host() != nil {
-                client = WindClient(baseURL: url)
+                client = WindClient(baseURL: url, clientTag: WindClient.clientTag(bundleInfo: bundleInfo))
             } else {
                 client = nil
             }

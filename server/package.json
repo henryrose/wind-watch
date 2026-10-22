@@ -10,7 +10,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "tail": "wrangler tail",
-    "kv:get": "wrangler kv key get --binding WIND --remote"
+    "kv:get": "wrangler kv key get --binding WIND --remote",
+    "usage": "node scripts/usage.mjs"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.23.0",

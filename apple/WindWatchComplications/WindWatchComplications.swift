@@ -21,7 +21,7 @@ struct WindProvider: TimelineProvider {
         guard let base = info["WWAPIBase"] as? String, let url = URL(string: base), url.host() != nil,
               url.host()?.contains("REPLACE") == false
         else { return nil }
-        return WindClient(baseURL: url)
+        return WindClient(baseURL: url, clientTag: WindClient.clientTag(bundleInfo: info))
     }
 
     private static var isFixture: Bool {
