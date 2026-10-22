@@ -4,7 +4,8 @@ Personal iPhone + Apple Watch app (plus a one-page web version) showing the hour
 forecast for Port Townsend Bay, WA. Knots, gusts, direction, honest about age.
 
 - Start with `CLAUDE.md` for the architecture and commands.
-- `docs/DESIGN.md` is the technical design, `docs/WINDWATCH-DESIGN-HANDOFF.md` the UI contract.
+- `docs/DESIGN.md` is the technical design; `docs/design/` is the UI design package
+  (`README.md` → `DESIGN-HANDOFF.md`, renders, artboards, `chart_reference.py`).
 - `progress.md` records what was built, verified, and decided.
 - `docs/HANDOFF-OTHER-MACHINE.md` is the checklist for deploying the Worker, signing, device
   tests, and TestFlight on the Mac that holds the accounts.

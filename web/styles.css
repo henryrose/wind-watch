@@ -1,4 +1,4 @@
-/* Wind Watch — web (HANDOFF §4 tokens, §9 layout, §6.4 chart notes) */
+/* Wind Watch — web (HANDOFF §4 tokens, §9 layout, §6.1/§6.4c/§6.5 chart) */
 
 /* --- Tokens: light column (default) --------------------------------------- */
 :root {
@@ -13,6 +13,7 @@
   --ink-disabled: #A0A8B2;
   --trust-amber: #B86E00;
   --sun: #E08A00;
+  --link: #2A5F8F;
 
   --bft-calm: #8A97A6;
   --bft-2: #2A86C4;
@@ -25,10 +26,11 @@
   --bft-9: #8C1FB3;
   --bft-10: #1B1B1F;
 
-  /* day shading: light = black 0 % day, 8 % night */
-  --shade-day-opacity: 0;
-  --shade-night-opacity: 0.08;
+  /* day shading: light = black 8 % × (1 − day); dark = white 7 % × day */
+  --shade-day: 0;
+  --shade-night: 1;
   --chip-ink: #000000;
+  --tip-shadow: rgba(0, 0, 0, 0.25);
 
   --font-text: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
   --font-num: ui-rounded, -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
@@ -50,6 +52,7 @@
     --ink-disabled: #5C6B7A;
     --trust-amber: #FFB340;
     --sun: #FFB340;
+    --link: #9BB7D4;
     --bft-calm: #5C6B7A;
     --bft-2: #4FA3D8;
     --bft-3: #3FC2A0;
@@ -60,8 +63,9 @@
     --bft-8: #E0245E;
     --bft-9: #A32CD1;
     --bft-10: #F5F5F7;
-    --shade-day-opacity: 0.07;
-    --shade-night-opacity: 0;
+    --shade-day: 1;
+    --shade-night: 0;
+    --tip-shadow: rgba(0, 0, 0, 0.5);
   }
 }
 /* ?scheme=dark forces the dark column (verification aid; same values as above) */
@@ -77,6 +81,7 @@
   --ink-disabled: #5C6B7A;
   --trust-amber: #FFB340;
   --sun: #FFB340;
+  --link: #9BB7D4;
   --bft-calm: #5C6B7A;
   --bft-2: #4FA3D8;
   --bft-3: #3FC2A0;
@@ -87,8 +92,9 @@
   --bft-8: #E0245E;
   --bft-9: #A32CD1;
   --bft-10: #F5F5F7;
-  --shade-day-opacity: 0.07;
-  --shade-night-opacity: 0;
+  --shade-day: 1;
+  --shade-night: 0;
+  --tip-shadow: rgba(0, 0, 0, 0.5);
 }
 
 /* --- Base ------------------------------------------------------------------ */
@@ -107,10 +113,10 @@ body {
 .page {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 28px var(--gutter) 32px;
+  padding: 32px var(--gutter) 40px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 .num {
   font-family: var(--font-num);
@@ -127,20 +133,21 @@ body {
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px 40px;
+  align-items: flex-end;
+  gap: 16px 32px;
   flex-wrap: wrap;
 }
 .header-left { min-width: 0; }
 h1 {
   font-size: 32px;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 38px;
   margin: 0 0 6px;
   letter-spacing: -0.01em;
 }
 .trust {
   font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
   color: var(--ink-secondary);
   display: inline-flex;
@@ -177,7 +184,7 @@ h1 {
 .hero-kn {
   font-size: 72px;
   font-weight: 800;
-  line-height: 0.95;
+  line-height: 64px;
   letter-spacing: -0.03em;
 }
 .hero-kn.dash { color: var(--ink-disabled); font-weight: 400; }
@@ -189,16 +196,17 @@ h1 {
 .hero-side {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   padding-bottom: 4px;
 }
-.hero-gust { font-size: 26px; font-weight: 700; line-height: 1; }
+.hero-gust { font-size: 26px; font-weight: 700; line-height: 28px; }
 .hero-gust .g { font-size: 17px; font-weight: 600; color: var(--ink-secondary); margin-right: 4px; }
 .hero-dir {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 17px;
+  line-height: 22px;
   font-weight: 600;
 }
 .hero-dir svg { width: 18px; height: 18px; display: block; }
@@ -206,20 +214,19 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
-  padding-bottom: 6px;
+  gap: 6px;
+  padding-bottom: 4px;
 }
 .chip-peak {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--card);
   border-radius: 999px;
-  padding: 6px 12px 6px 10px;
+  padding: 5px 10px;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
-  box-shadow: 0 0 0 1px var(--hairline) inset;
 }
 .chip-peak .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .pill { width: 48px; height: 6px; border-radius: 3px; }
@@ -228,18 +235,17 @@ h1 {
 /* --- Summary / body ------------------------------------------------------- */
 .summary {
   font-size: 16px;
+  line-height: 22px;
   color: var(--ink-body);
   margin: 0;
-  max-width: 72ch;
+  max-width: 760px;
 }
-.body-note { font-size: 16px; color: var(--ink-body); margin: 0; }
 
 /* --- Chart card (HANDOFF §9, §6) ------------------------------------------ */
 .card {
   background: var(--card);
   border-radius: var(--radius-card);
   padding: 16px 28px 20px;
-  box-shadow: 0 0 0 1px var(--hairline) inset;
 }
 .chart-head {
   display: flex;
@@ -247,39 +253,71 @@ h1 {
   align-items: baseline;
   gap: 12px;
   margin-bottom: 10px;
-  font-size: 13px;
-  color: var(--ink-secondary);
-  font-weight: 600;
 }
 .chart-head h2 { font-size: 15px; font-weight: 700; color: var(--ink-primary); margin: 0; }
-.chart { display: block; width: 100%; height: auto; overflow: visible; }
-.chart text { font-family: var(--font-num); font-weight: 600; fill: var(--ink-primary); }
-.chart .grid { stroke: var(--ink-primary); opacity: 0.12; stroke-width: 1; }
-.chart .grid-label { font-size: 11px; opacity: 0.45; }
-.chart .shade-day { fill: url(#ww-shade-day); opacity: var(--shade-day-opacity); }
-.chart .shade-night { fill: url(#ww-shade-night); opacity: var(--shade-night-opacity); }
-.chart .bar-inset { fill: none; stroke: var(--bft-8); stroke-width: 2; }
-.chart .gust-line { fill: none; stroke: var(--ink-primary); stroke-width: 1.5; opacity: 0.75; stroke-linejoin: round; }
-.chart .gust-cap { stroke: var(--ink-primary); stroke-width: 1.5; stroke-linecap: round; }
-.chart .sun { fill: var(--sun); }
-.chart .tick { stroke: var(--ink-primary); opacity: 0.5; stroke-width: 1; }
-/* Tick labels sit inside the plot bottom (the bottom inset is the arrow row),
-   so they get a card-coloured halo to stay legible over bars. */
-.chart .tick-label {
-  font-size: 12px;
-  opacity: 0.8;
-  paint-order: stroke;
-  stroke: var(--card);
-  stroke-width: 3px;
-  stroke-linejoin: round;
+.chart-hint { font-size: 12px; font-weight: 500; color: var(--ink-secondary); }
+.chart-wrap { position: relative; }
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+  outline: none;
 }
-.chart.narrow .tick-label { font-size: 11px; }
-.chart .tick-label .day { font-weight: 700; }
-.chart .arrow { fill: var(--ink-primary); }
+.chart:focus-visible { outline: 2px solid var(--ink-primary); outline-offset: 6px; border-radius: 4px; }
+.chart text { font-family: var(--font-text); fill: var(--ink-primary); }
+.chart .shade-day { opacity: var(--shade-day); }
+.chart .shade-night { opacity: var(--shade-night); }
+.chart .grid { stroke: var(--ink-primary); stroke-opacity: 0.12; stroke-width: 1; }
+.chart .grid-label { fill-opacity: 0.45; }
+.chart .sun { fill: var(--sun); }
+.chart .bar { transition: fill-opacity 80ms linear; }
+.chart.selecting .bar { fill-opacity: 0.45; }
+.chart.selecting .bar.selected { fill-opacity: 1; }
+.chart .bar-inset { fill: none; stroke: var(--bft-8); stroke-width: 2; }
+.chart .sel-rule { stroke: var(--ink-primary); stroke-width: 1.5; }
+.chart .sel-outline { fill: none; stroke: var(--ink-primary); stroke-width: 1.5; }
+.chart .gust-line { fill: none; stroke: var(--ink-primary); stroke-opacity: 0.75; stroke-width: 1.5; stroke-linejoin: round; }
+.chart .gust-cap { stroke: var(--ink-primary); stroke-width: 1.5; stroke-linecap: round; }
+.chart .arrow { fill: var(--ink-primary); fill-opacity: 0.9; }
+.chart .tick { stroke: var(--ink-primary); stroke-opacity: 0.5; stroke-width: 1; }
+.chart .tick-label { fill-opacity: 0.6; }
+.chart .day-divider { stroke: var(--ink-primary); stroke-opacity: 0.28; stroke-width: 1; stroke-dasharray: 2 3; }
+.chart .day-label { font-weight: 700; fill-opacity: 0.75; }
 .chart .now-rule { stroke: var(--ink-primary); stroke-width: 1.5; }
-.chart .now-label { font-size: 12px; }
-.chart .edge-rule { stroke: var(--ink-primary); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7; }
-.chart .edge-label { font-size: 12px; opacity: 0.7; }
+.chart .now-label { font-weight: 600; }
+.chart .edge-rule { stroke: var(--ink-primary); stroke-opacity: 0.7; stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .edge-label { font-weight: 600; fill-opacity: 0.7; }
+
+/* Tooltip card (HANDOFF §6.4c; Web-Desktop artboard) */
+.tip {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--ground);
+  box-shadow: 0 0 0 1.5px var(--ink-primary), 0 8px 24px var(--tip-shadow);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+  font-variant-numeric: tabular-nums;
+}
+.tip-when { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.tip-bar { width: 2px; height: 14px; background: var(--ink-primary); border-radius: 1px; }
+.tip-kn { display: flex; align-items: baseline; gap: 4px; }
+.tip-kn .n { font-size: 28px; line-height: 30px; font-weight: 800; letter-spacing: -0.02em; }
+.tip-kn .u { font-size: 13px; font-weight: 600; color: var(--ink-secondary); }
+.tip-gust { font-size: 20px; line-height: 22px; font-weight: 700; }
+.tip-gust .g { color: var(--ink-secondary); font-size: 13px; font-weight: 600; margin-right: 4px; }
+.tip-dir { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.tip-dir svg { width: 16px; height: 16px; display: block; }
+.tip .chip { font-size: 12px; font-weight: 700; min-width: 24px; padding: 2px 0; }
 
 .bft-calm { fill: var(--bft-calm); background: var(--bft-calm); }
 .bft-2 { fill: var(--bft-2); background: var(--bft-2); }
@@ -296,65 +334,59 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 22px;
+  gap: 14px 22px;
   margin-top: 14px;
   font-size: 12px;
   color: var(--ink-secondary);
-  font-weight: 500;
 }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-.legend-ramp { display: inline-flex; gap: 3px; align-items: flex-end; }
-.legend-ramp .swatch {
-  width: 12px; height: 12px; border-radius: 3px; display: block;
-}
-.legend-ramp .step { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; line-height: 1; }
-.legend-item svg { display: block; width: 22px; height: 14px; }
-.legend-item .sundot { width: 6px; height: 6px; border-radius: 50%; background: var(--sun); }
+.legend-item .swatch { width: 12px; height: 12px; border-radius: 2px; display: block; }
+.legend-gust { margin-left: 8px; }
+.legend-gust svg { display: block; width: 22px; height: 12px; }
+.legend-item .arrow { display: block; width: 12px; height: 12px; fill: var(--ink-primary); }
+.legend-item .sundot { width: 8px; height: 8px; border-radius: 50%; background: var(--sun); }
 
-/* --- Table (HANDOFF §9, §8.1 columns) ------------------------------------- */
+/* --- Table (Web-Desktop / Web-Phone artboards) ---------------------------- */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; }
 table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 420px;
+  min-width: 560px;
   font-size: 15px;
 }
+table.compact { min-width: 0; }
 th, td {
   text-align: left;
-  padding: 0 10px;
-  height: 44px;
-  border-bottom: 1px solid var(--hairline);
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--card);
   white-space: nowrap;
 }
-th:first-child, td:first-child { padding-left: 4px; }
-th:last-child, td:last-child { padding-right: 4px; }
-thead th, tr.day-row th {
+th.r, td.r { text-align: right; }
+th {
+  padding: 8px 10px;
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-secondary);
-  text-transform: none;
-  height: 36px;
   border-bottom: 1px solid var(--hairline);
   position: sticky;
   top: 0;
   background: var(--ground);
   z-index: 1;
 }
-tr.day-row th:first-child { color: var(--ink-primary); font-weight: 700; }
-td.hour { color: var(--ink-secondary); width: 72px; }
-td.kn { font-family: var(--font-num); font-weight: 700; font-size: 17px; width: 64px; }
-td.gust { color: var(--ink-body); width: 64px; }
-td.dir { display: flex; align-items: center; gap: 8px; height: 44px; font-weight: 500; }
+tr.day-row th { padding-top: 14px; }
+td.hour { color: var(--ink-secondary); }
+td.kn { font-weight: 700; }
+td.gust { color: var(--ink-body); font-weight: 400; }
+td.dir > span { display: inline-flex; align-items: center; gap: 8px; }
 td.dir svg { width: 14px; height: 14px; display: block; }
-td.bft { width: 48px; text-align: right; }
 .chip {
   display: inline-block;
-  min-width: 24px;
-  padding: 2px 6px;
+  min-width: 26px;
+  padding: 2px 0;
   border-radius: 6px;
   color: var(--chip-ink);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   text-align: center;
   line-height: 16px;
 }
@@ -363,19 +395,23 @@ td.bft { width: 48px; text-align: right; }
 @media (prefers-color-scheme: dark) { :root:not([data-scheme="light"]) .chip.bft-10 { color: #000000; } }
 tr.now td { background: color-mix(in srgb, var(--card) 70%, transparent); }
 tr.now td.hour { color: var(--ink-primary); font-weight: 600; }
+table.compact th, table.compact td { padding: 10px 8px; }
+table.compact th { padding: 6px 8px; }
+table.compact tr.day-row th { padding-top: 14px; }
 
 /* --- Footer --------------------------------------------------------------- */
 .footer {
   display: flex;
   justify-content: space-between;
-  gap: 12px 24px;
+  gap: 8px 24px;
   flex-wrap: wrap;
   font-size: 13px;
   color: var(--ink-secondary);
   padding-top: 8px;
   border-top: 1px solid var(--hairline);
 }
-.footer a { color: inherit; }
+.footer a { color: var(--link); text-decoration: none; }
+.footer a:hover { color: var(--ink-primary); }
 .footer .trying { display: inline-flex; align-items: center; gap: 8px; }
 
 /* --- Trust-state treatments (HANDOFF §3) ---------------------------------- */
@@ -398,18 +434,19 @@ tr.now td.hour { color: var(--ink-primary); font-weight: 600; }
 .state-horizon .chip { filter: saturate(0.35); opacity: 0.7; }
 
 /* --- Breakpoints ---------------------------------------------------------- */
-@media (max-width: 899px) {
-  .card { padding: 14px 20px 16px; }
-}
 @media (max-width: 699px) {
   .header { flex-direction: column; align-items: stretch; }
-  .hero { justify-content: space-between; }
+  .hero { justify-content: space-between; gap: 14px; }
   .hero-right { align-items: flex-start; padding-bottom: 0; }
 }
 @media (max-width: 599px) {
   :root { --gutter: 16px; }
-  .page { padding-top: 20px; gap: 16px; }
-  h1 { font-size: 28px; }
-  .hero-kn { font-size: 64px; }
+  .page { padding: 24px var(--gutter) 32px; gap: 16px; }
+  h1 { font-size: 28px; line-height: 34px; }
+  .trust { font-size: 13px; line-height: 18px; }
+  .summary { font-size: 15px; line-height: 20px; }
   .chip-peak { white-space: normal; }
+  .card { padding: 10px 0 12px; }
+  .chart-head, .legend { display: none; }
+  .tip { gap: 6px 12px; padding: 8px 12px; flex-wrap: wrap; justify-content: center; width: max-content; max-width: 100%; }
 }

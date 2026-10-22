@@ -46,7 +46,8 @@ the page from anywhere; it only needs `index.html`, `styles.css`, `app.js`,
    5xx → cached body kept with `lastCheckOK = false`.
 3. **Trust states** (HANDOFF §3) from the live clock, re-rendered every minute
    so the 90-min and 6-h flips happen without a reload:
-   - `as of HH:MM · HRRR 17Z · ends Fri 05:00` — fresh (< 90 min since the server
+   - `as of HH:MM PDT · HRRR 17Z · forecast ends Fri 5am` (`… · ends Fri 5am`
+     under 600 px) — fresh (< 90 min since the server
      last got new model data), or amber when stale (< 6 h) / old (≥ 6 h, with
      the day name; numbers and chart desaturate).
    - `Couldn't reach server · showing data from HH:MM` (amber, wifi-slash) —
@@ -73,7 +74,7 @@ curl -i localhost:8787/v1/wind            # 200 + ETag
 # 2. Page on :8080 with a TEMPORARY config.js
 #    window.WW_CONFIG = { apiBase: "http://localhost:8787" };
 cd <repo root> && python3 -m http.server 8080 &
-open http://localhost:8080/web/           # trust line: as of HH:MM · HRRR NNZ · ends …
+open http://localhost:8080/web/           # trust line: as of HH:MM PDT · HRRR NNZ · forecast ends …
 
 # 3. Offline with cache: stop the Worker, reload the page
 pkill -f "wrangler dev"                   # → amber "Couldn't reach server · showing data from HH:MM"
@@ -94,6 +95,7 @@ Work in both modes (in live mode they are debugging aids only):
 | `state` | `fresh` `stale` `old` `offline` `horizon` `firstrun` `updating` | Forces a HANDOFF §3 trust state. Each also picks a default `now` (stale = fetched + 2 h, old = fetched + 7 h, horizon = past the last hour) unless `now` is given. `firstrun` ignores the cache. |
 | `now` | ISO 8601, e.g. `2026-10-22T06:30:00Z`, or `live` | Pins the clock (`live` = real clock, also in fixture mode). |
 | `scheme` | `dark` `light` | Forces a colour scheme instead of `prefers-color-scheme` (headless screenshots). |
+| `hover` | hour index, e.g. `15` | Applies the chart hover state (highlight + tooltip) for that hour on render, for screenshots. |
 
 Examples:
 
@@ -113,5 +115,10 @@ cd web && node --test
 
 `test/derive.test.js` checks the HANDOFF §10 expected values, the §6.2 twilight
 fractions, trust-state transitions, labels, and that `styles.css` carries the
-exact §4.1 ramp hexes. `test/cache.test.js` checks the live-mode cache record
-(200 / 304 / error folding, serialize/parse).
+exact §4.1 ramp hexes. `test/chart.test.js` checks the chart port
+(`derive.chartLayout`, the JS twin of `docs/design/reference/chart_reference.py`)
+against the numbers in `docs/design/reference/charts/webhover.svg` and
+`webphone48.svg`: bars, gust polyline and caps, arrows, ticks, 12-hour labels,
+day band, sun dots, now and edge rules, gradient stops, hour selection.
+`test/cache.test.js` checks the live-mode cache record (200 / 304 / error
+folding, serialize/parse).

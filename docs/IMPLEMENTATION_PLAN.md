@@ -1,7 +1,7 @@
 # Wind Watch — implementation plan (multi-agent)
 
 Written 2026-10-21. Inputs: `InitialPrompt.md`, `docs/DESIGN.md` (architecture, API contract),
-`docs/WINDWATCH-DESIGN-HANDOFF.md` (UI contract; wins over the canvas). This plan is executed
+`docs/design/DESIGN-HANDOFF.md` (UI contract; wins over the canvas). This plan is executed
 by an orchestrator loop (`docs/LOOP_PROMPT.md`) that dispatches subagents and records state in
 `progress.md`. Nothing in this plan requires the other machine until §7.
 
@@ -156,7 +156,7 @@ Wave 1: A1–A3 (orchestrator, minutes). Wave 2: B1, C1, E1 in parallel. Then ea
 
 ## 5. Rules for every agent (paste into every brief)
 
-- Read `docs/DESIGN.md` and `docs/WINDWATCH-DESIGN-HANDOFF.md` sections named in your task before writing code. The handoff doc wins over the canvas; `docs/IMPLEMENTATION_PLAN.md` §0 wins over both where they differ.
+- Read `docs/DESIGN.md` and `docs/design/DESIGN-HANDOFF.md` sections named in your task before writing code. The handoff doc wins over the canvas; `docs/IMPLEMENTATION_PLAN.md` §0 wins over both where they differ.
 - Touch only the paths your workstream owns. Do not edit `progress.md`, `CLAUDE.md`, or anything under `docs/`. Do not commit. Do not push.
 - For anything under `server/` or `web/`, run `export PATH="$HOME/.nvm/versions/node/v24.13.0/bin:$PATH"` first. Use `pnpm`, never `npm`.
 - Never hardcode a team id, bundle prefix, KV id, or API URL; use the xcconfig / `wrangler.toml` placeholders / `config.js`.

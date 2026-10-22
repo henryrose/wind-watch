@@ -1,39 +1,46 @@
 // Wind Watch — page controller. Everything that depends on "now" or on pixels.
 import {
+  CHART_STYLES,
   HOUR_MS,
   MINUTE_MS,
+  SHADE_DAY_ALPHA,
+  SHADE_NIGHT_ALPHA,
   arrowRotation,
   beaufortStep,
   beaufortToken,
   chartAriaLabel,
+  chartLayout,
+  chartTitle,
   compassLabel,
-  formatHH,
   formatHHMM,
   hero as heroFor,
   heroAriaLabel,
-  horizonLabel,
+  hourAt,
+  hourAtX,
   localDayNumber,
   nowIndex as nowIndexFor,
   peakChipText,
-  shortDate,
+  scrubLabel,
+  selectionGeometry,
   shortDay,
-  sunMarkers,
   toForecast,
   trustLine,
   trustState,
-  twilightStops,
   tzAbbrev,
-  yDomainMax,
 } from './lib/derive.js';
 import { CACHE_KEY, parseRecord, recordAfterCheck, serializeRecord } from './lib/cache.js';
 
 const CHECK_MS = 10 * MINUTE_MS;
 const KITE = 'M0,-0.5 L0.38,0.5 L0,0.2 L-0.38,0.5 Z';
 const STATES = new Set(['fresh', 'stale', 'old', 'offline', 'horizon', 'firstrun', 'updating']);
+const WIDE_MIN = 900; // desktop chart geometry (HANDOFF §6.5)
+const COMPACT_MAX = 599; // phone layout: compact table, no chart head/legend (§9)
+const TIP_FLIP_PX = 160; // flip the tooltip within this distance of the chart's right edge (§6.4c)
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const r2 = (n) => Math.round(n * 100) / 100;
+const r4 = (n) => Math.round(n * 10000) / 10000;
 
 // --- Options from the query string ----------------------------------------
 
@@ -50,7 +57,10 @@ function readOptions() {
   }
   const scheme = q.get('scheme');
   if (scheme === 'dark' || scheme === 'light') document.documentElement.dataset.scheme = scheme;
-  return { state, now, live };
+  // ?hover=<hour index>: verification aid that applies the hover state on render.
+  const hoverParam = q.get('hover');
+  const hover = hoverParam !== null && /^\d+$/.test(hoverParam) ? Number(hoverParam) : null;
+  return { state, now, live, hover };
 }
 
 // Default clock per forced state so the fixture lands in that state.
@@ -117,143 +127,251 @@ function arrowSvg(dirFrom, size, cls = 'arrow') {
 const WIFI_SLASH = `<svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round">
   <path d="M2.5 9.5a14 14 0 0 1 19 0"/><path d="M6 13.5a9 9 0 0 1 12 0"/><circle cx="12" cy="18" r="1.6" stroke="none"/><line x1="3" y1="3" x2="21" y2="21"/></svg>`;
 
-// --- Chart (HANDOFF §6.1 web column, §6.4) ---------------------------------
+// --- Chart (chart_reference.py::svg via derive.chartLayout) -----------------
 
-const GEO = {
-  wide: { W: 1120, H: 280, top: 28, bottom: 22, plotH: 230, arrowEvery: 1, arrowSize: 10, labelEvery: 3 },
-  narrow: { W: 358, H: 200, top: 22, bottom: 16, plotH: 162, arrowEvery: 3, arrowSize: 10, labelEvery: 6 },
-};
-
-function buildChart(forecast, now, nowIdx, wide) {
-  const g = wide ? GEO.wide : GEO.narrow;
+function buildChart(forecast, L) {
   const tz = forecast.location.tz;
-  const hours = forecast.hours;
-  const n = hours.length;
-  const slot = g.W / n;
-  const bw = Math.max(3, 0.72 * slot);
-  const plotTop = g.top;
-  const plotBottom = g.top + g.plotH;
-  const yMax = yDomainMax(hours);
-  const y = (v) => plotBottom - (v / yMax) * g.plotH;
-  const xAt = (i) => i * slot; // hour boundary i (fractional ok)
-  const cx = (i) => (i + 0.5) * slot; // bar centre
   const out = [];
+  const { W, H, top, plotH, plotBottom, font } = L;
 
-  // Shading: one rect, horizontal gradient from the twilight stops.
-  const stops = twilightStops(forecast);
-  const gradient = (id, valueOf) =>
-    `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0">${stops
-      .map((s) => `<stop offset="${r2(s.offset * 100)}%" stop-color="${id.endsWith('day') ? '#fff' : '#000'}" stop-opacity="${r2(valueOf(s.value))}"/>`)
+  // Shading: one rect per scheme with a horizontal gradient from the twilight
+  // stops; CSS shows the white-by-day one in dark and the black-by-night one
+  // in light.
+  const gradient = (id, color, alphaOf) =>
+    `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0">${L.stops
+      .map((s) => `<stop offset="${r4(s.offset)}" stop-color="${color}" stop-opacity="${r4(alphaOf(s.value))}"/>`)
       .join('')}</linearGradient>`;
-  out.push(`<defs>${gradient('ww-shade-day', (v) => v)}${gradient('ww-shade-night', (v) => 1 - v)}</defs>`);
-  out.push(`<rect class="shade-day" x="0" y="${plotTop}" width="${g.W}" height="${g.plotH}"/>`);
-  out.push(`<rect class="shade-night" x="0" y="${plotTop}" width="${g.W}" height="${g.plotH}"/>`);
+  out.push(`<defs>${gradient('ww-shade-day', '#FFFFFF', (v) => SHADE_DAY_ALPHA * v)}${gradient('ww-shade-night', '#000000', (v) => SHADE_NIGHT_ALPHA * (1 - v))}</defs>`);
+  out.push(`<rect class="shade shade-day" x="0" y="${top}" width="${W}" height="${plotH}" fill="url(#ww-shade-day)"/>`);
+  out.push(`<rect class="shade shade-night" x="0" y="${top}" width="${W}" height="${plotH}" fill="url(#ww-shade-night)"/>`);
 
-  // Gridlines every 10 kn, baseline included; labels right-aligned in the card gutter.
-  for (let v = 0; v <= yMax; v += 10) {
-    out.push(`<line class="grid" x1="0" x2="${g.W}" y1="${r2(y(v))}" y2="${r2(y(v))}"/>`);
-    if (v > 0) out.push(`<text class="grid-label" x="-6" y="${r2(y(v) + 4)}" text-anchor="end">${v}</text>`);
+  // Gridlines every 10 kn below ymax; labels right-aligned inside the plot.
+  for (const g of L.grid) {
+    out.push(`<line class="grid" x1="0" x2="${W}" y1="${r2(g.y)}" y2="${r2(g.y)}"/>`);
+    out.push(`<text class="grid-label" x="${g.labelX}" y="${r2(g.labelY)}" text-anchor="end" font-size="${font - 1}">${g.v}</text>`);
   }
 
-  // Bars (sustained), Beaufort-stepped fill, 1 px stub at 0 kn.
-  for (let i = 0; i < n; i++) {
-    const h = hours[i];
-    const top = h.kn > 0 ? y(h.kn) : plotBottom - 1;
-    const x = r2(cx(i) - bw / 2);
-    const step = beaufortStep(h.kn);
-    const token = beaufortToken(step);
-    out.push(`<rect class="bar bft-${token}" x="${x}" y="${r2(top)}" width="${r2(bw)}" height="${r2(plotBottom - top)}" rx="1.5"/>`);
-    if (step >= 10) {
-      out.push(`<rect class="bar-inset" x="${r2(x + 1)}" y="${r2(top + 1)}" width="${r2(bw - 2)}" height="${r2(Math.max(0, plotBottom - top - 2))}" rx="1"/>`);
+  // Sun dots on the plot's top edge.
+  for (const s of L.sun) {
+    out.push(`<circle class="sun" cx="${r2(s.x)}" cy="${s.y}" r="3"><title>${s.kind === 'rise' ? 'sunrise' : 'sunset'} ${formatHHMM(s.at, tz)}</title></circle>`);
+  }
+
+  // Bars (sustained), Beaufort-stepped fill; 10+ gets the inset stroke.
+  for (const b of L.bars) {
+    out.push(`<rect class="bar bft-${b.token}" data-i="${b.i}" x="${r2(b.x)}" y="${r2(b.y)}" width="${b.w}" height="${r2(b.h)}" rx="1.5"/>`);
+    if (b.step >= 10) {
+      out.push(`<rect class="bar-inset" x="${r2(b.x + 1)}" y="${r2(b.y + 1)}" width="${r2(b.w - 2)}" height="${r2(Math.max(0, b.h - 2))}" rx="1"/>`);
     }
   }
 
-  // Gust polyline through cap centres, then caps (bar + 2 wide).
-  out.push(`<polyline class="gust-line" points="${hours.map((h, i) => `${r2(cx(i))},${r2(y(h.gust))}`).join(' ')}"/>`);
-  for (let i = 0; i < n; i++) {
-    const gy = r2(y(hours[i].gust));
-    out.push(`<line class="gust-cap" x1="${r2(cx(i) - bw / 2 - 1)}" x2="${r2(cx(i) + bw / 2 + 1)}" y1="${gy}" y2="${gy}"/>`);
-  }
+  // Hover / keyboard selection layer (filled by setSelection).
+  out.push('<g class="sel"></g>');
 
-  // Time ticks every 3 h at hour boundaries; labels sit inside the plot bottom
-  // (the bottom inset is the arrow row). Day name at 00:00.
-  for (let i = 0; i < n; i++) {
-    const t = new Date(forecast.start.getTime() + i * HOUR_MS);
-    const hh = formatHH(t, tz);
-    if (Number(hh) % 3 !== 0) continue;
-    const x = r2(xAt(i));
-    out.push(`<line class="tick" x1="${x}" x2="${x}" y1="${plotBottom - 3}" y2="${plotBottom}"/>`);
-    if (Number(hh) % g.labelEvery !== 0) continue;
-    const day = hh === '00' ? `<tspan class="day">${shortDay(t, tz)} </tspan>` : '';
-    out.push(`<text class="tick-label" x="${r2(x + 4)}" y="${plotBottom - 6}">${day}${hh}</text>`);
+  // Gust polyline through cap centres, then caps (bar + 2 wide).
+  out.push(`<polyline class="gust-line" points="${L.gust.map((g) => `${r2(g.x)},${r2(g.y)}`).join(' ')}"/>`);
+  for (const g of L.gust) {
+    out.push(`<line class="gust-cap" x1="${r2(g.x - L.capW / 2)}" x2="${r2(g.x + L.capW / 2)}" y1="${r2(g.y)}" y2="${r2(g.y)}"/>`);
   }
 
   // Arrows in the bottom inset, pointing TO.
-  const ay = r2(plotBottom + g.bottom / 2);
-  for (let i = 0; i < n; i += g.arrowEvery) {
-    out.push(`<path class="arrow" d="${KITE}" transform="translate(${r2(cx(i))} ${ay}) rotate(${arrowRotation(hours[i].dirFrom)}) scale(${g.arrowSize})"/>`);
+  for (const a of L.arrows) {
+    out.push(`<path class="arrow" d="${KITE}" transform="translate(${r2(a.x)} ${r2(a.y)}) rotate(${a.rot}) scale(${L.arrowSize})"/>`);
   }
 
-  // Sun dots at sunrise/sunset on the plot's top edge.
-  for (const s of sunMarkers(forecast)) {
-    out.push(`<circle class="sun" cx="${r2(s.offset * g.W)}" cy="${plotTop - 1}" r="3"><title>${s.kind === 'rise' ? 'sunrise' : 'sunset'} ${formatHHMM(s.at, tz)}</title></circle>`);
+  // Time ticks and 12-hour labels below the arrow row.
+  for (const t of L.ticks) {
+    out.push(`<line class="tick" x1="${r2(t.x)}" x2="${r2(t.x)}" y1="${r2(t.y1)}" y2="${r2(t.y2)}"/>`);
+  }
+  for (const l of L.labels) {
+    out.push(`<text class="tick-label" x="${r2(l.x)}" y="${l.y}" text-anchor="middle" font-size="${font}">${l.text}</text>`);
+  }
+
+  // Day band: name at the left of each day, dotted divider at each midnight.
+  for (const d of L.days) {
+    if (d.divider) out.push(`<line class="day-divider" x1="${r2(d.divider.x)}" x2="${r2(d.divider.x)}" y1="${d.divider.y1}" y2="${r2(d.divider.y2)}"/>`);
+    if (!d.hidden) out.push(`<text class="day-label" x="${r2(d.labelX)}" y="${d.labelY}" font-size="${font}">${d.name}</text>`);
   }
 
   // Now marker (only when inside the plotted range).
-  if (nowIdx >= 0 && nowIdx <= n) {
-    const x = r2(xAt(nowIdx));
-    out.push(`<line class="now-rule" x1="${x}" x2="${x}" y1="${plotTop - 6}" y2="${plotBottom}"/>`);
-    out.push(`<text class="now-label" x="${r2(x + 4)}" y="${plotTop - 8}">now</text>`);
+  if (L.now) {
+    out.push(`<line class="now-rule" x1="${r2(L.now.x)}" x2="${r2(L.now.x)}" y1="${L.now.y1}" y2="${r2(L.now.y2)}"/>`);
+    out.push(`<text class="now-label" x="${r2(L.now.labelX)}" y="${L.now.labelY}" font-size="${font}">${L.now.text}</text>`);
   }
 
   // Horizon edge: the chart ends where the forecast ends.
-  const ex = g.W;
-  out.push(`<line class="edge-rule" x1="${ex}" x2="${ex}" y1="${plotTop - 6}" y2="${plotBottom}"/>`);
-  out.push(`<text class="edge-label" x="${ex - 4}" y="${plotTop - 8}" text-anchor="end">${esc(horizonLabel(forecast, nowIdx))}</text>`);
+  out.push(`<line class="edge-rule" x1="${r2(L.edge.x)}" x2="${r2(L.edge.x)}" y1="${L.edge.y1}" y2="${r2(L.edge.y2)}"/>`);
+  out.push(`<text class="edge-label" x="${r2(L.edge.labelX)}" y="${L.edge.labelY}" text-anchor="end" font-size="${font}">${esc(L.edge.text)}</text>`);
 
-  return `<svg class="chart ${wide ? 'wide' : 'narrow'}" viewBox="0 0 ${g.W} ${g.H}" role="img" aria-label="${esc(chartAriaLabel(forecast))}">${out.join('')}</svg>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" tabindex="0" aria-label="${esc(chartAriaLabel(forecast))}">${out.join('')}</svg>`;
 }
 
 function buildLegend() {
-  const ramp = [['calm', '0–1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6'], ['7', '7'], ['8', '8'], ['9', '9'], ['10', '10+']];
+  const ramp = [['calm', '0–1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6'], ['7', '7'], ['8', '8+']];
+  return `${ramp
+    .map(([t, l]) => `<span class="legend-item"><span class="swatch bft-${t}"></span>${l}</span>`)
+    .join('')}
+    <span class="legend-item legend-gust"><svg viewBox="0 0 22 12" aria-hidden="true"><polyline points="1,10 11,4 21,7" fill="none" stroke="currentColor" stroke-opacity="0.75" stroke-width="1.5"/><line x1="7" x2="15" y1="4" y2="4" stroke="currentColor" stroke-width="1.5"/></svg>gust</span>
+    <span class="legend-item">${arrowSvg(283, 12)}blowing to</span>
+    <span class="legend-item"><span class="sundot"></span>sunrise / sunset</span>`;
+}
+
+// --- Hover / touch / keyboard (HANDOFF §6.4c) -------------------------------
+
+const chartState = { forecast: null, layout: null, sel: null, wide: true, touchSticky: false };
+
+function tooltipHtml(forecast, i) {
+  const h = forecast.hours[i];
+  const step = beaufortStep(h.kn);
   return `
-    <span class="legend-item"><span class="legend-ramp">${ramp
-      .map(([t, l]) => `<span class="step"><span class="swatch bft-${t}"></span>${l}</span>`)
-      .join('')}</span><span>Beaufort, sustained</span></span>
-    <span class="legend-item"><svg viewBox="0 0 22 14" aria-hidden="true"><line x1="2" y1="11" x2="20" y2="3" stroke="currentColor" stroke-width="1.5" opacity="0.75"/><line x1="6" y1="7" x2="16" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>gust</span>
-    <span class="legend-item">${arrowSvg(270, 14)}blowing to</span>
-    <span class="legend-item"><span class="sundot"></span>sunrise · sunset</span>`;
+    <div class="tip-when"><span class="tip-bar" aria-hidden="true"></span>${esc(scrubLabel(hourAt(forecast, i), forecast.location.tz))}</div>
+    <div class="tip-kn"><span class="n num">${h.kn}</span><span class="u">kn</span></div>
+    <div class="tip-gust num"><span class="g">G</span>${h.gust}</div>
+    <div class="tip-dir">${arrowSvg(h.dirFrom, 16)}<span>from ${compassLabel(h.dirFrom)} · ${h.dirFrom}°</span></div>
+    <span class="chip bft-${beaufortToken(step)}">${step}</span>`;
+}
+
+function placeTooltip(tip, svg, cx) {
+  const rect = svg.getBoundingClientRect();
+  const cxPx = cx * (rect.width / chartState.layout.W);
+  if (!chartState.wide) {
+    // Narrow widths: dock to the top of the chart card, centred.
+    tip.style.top = '0';
+    tip.style.left = '50%';
+    tip.style.transform = 'translateX(-50%)';
+    return;
+  }
+  tip.style.top = '44px'; // 4 px below the day band
+  tip.style.left = `${r2(cxPx)}px`;
+  if (rect.width - cxPx < TIP_FLIP_PX) tip.style.transform = 'translateX(calc(-100% - 10px))'; // flip left of the rule
+  else if (cxPx < TIP_FLIP_PX) tip.style.transform = 'translateX(10px)'; // keep it inside the card at the left edge
+  else tip.style.transform = 'translateX(-50%)';
+}
+
+function setSelection(i) {
+  const svg = $('chart-host').querySelector('svg');
+  const tip = $('chart-tip');
+  if (!svg || !chartState.layout) return;
+  const prev = svg.querySelector('.bar.selected');
+  if (prev) prev.classList.remove('selected');
+  const selG = svg.querySelector('.sel');
+  if (i == null) {
+    chartState.sel = null;
+    svg.classList.remove('selecting');
+    selG.innerHTML = '';
+    tip.classList.add('hidden');
+    tip.innerHTML = '';
+    return;
+  }
+  const g = selectionGeometry(chartState.layout, i);
+  if (!g) return;
+  chartState.sel = i;
+  svg.classList.add('selecting');
+  const bar = svg.querySelector(`.bar[data-i="${i}"]`);
+  if (bar) bar.classList.add('selected');
+  selG.innerHTML =
+    `<line class="sel-rule" x1="${r2(g.rule.x)}" x2="${r2(g.rule.x)}" y1="${g.rule.y1}" y2="${r2(g.rule.y2)}"/>` +
+    `<rect class="sel-outline" x="${r2(g.outline.x)}" y="${r2(g.outline.y)}" width="${r2(g.outline.w)}" height="${r2(g.outline.h)}" rx="${g.outline.rx}"/>`;
+  tip.innerHTML = tooltipHtml(chartState.forecast, i);
+  tip.classList.remove('hidden');
+  placeTooltip(tip, svg, g.cx);
+}
+
+function hourFromEvent(e, svg) {
+  const rect = svg.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (chartState.layout.W / rect.width);
+  return hourAtX(chartState.layout, x);
+}
+
+let interactionInstalled = false;
+function installChartInteraction() {
+  if (interactionInstalled) return;
+  interactionInstalled = true;
+  const host = $('chart-host');
+  const svgOf = (e) => e.target.closest && e.target.closest('svg.chart');
+
+  host.addEventListener('pointermove', (e) => {
+    const svg = svgOf(e);
+    if (!svg || !chartState.layout) return;
+    const i = hourFromEvent(e, svg);
+    if (e.pointerType === 'touch') chartState.touchSticky = true;
+    if (i !== chartState.sel) setSelection(i);
+  });
+  host.addEventListener('pointerdown', (e) => {
+    const svg = svgOf(e);
+    if (!svg || !chartState.layout) return;
+    chartState.touchSticky = e.pointerType === 'touch';
+    setSelection(hourFromEvent(e, svg));
+  });
+  host.addEventListener('pointerleave', (e) => {
+    // A touch selection stays until the next tap outside the chart.
+    if (chartState.touchSticky && e.pointerType === 'touch') return;
+    setSelection(null);
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (chartState.sel != null && chartState.touchSticky && !host.contains(e.target)) {
+      chartState.touchSticky = false;
+      setSelection(null);
+    }
+  });
+  host.addEventListener('keydown', (e) => {
+    if (!svgOf(e) || !chartState.layout) return;
+    const n = chartState.layout.n;
+    if (e.key === 'Escape') {
+      setSelection(null);
+      e.preventDefault();
+      return;
+    }
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    let i;
+    if (chartState.sel == null) {
+      const nowI = chartState.layout.now ? Math.floor(chartState.layout.now.x / chartState.layout.slot) : 0;
+      i = Math.min(n - 1, Math.max(0, nowI));
+    } else {
+      i = Math.min(n - 1, Math.max(0, chartState.sel + dir));
+    }
+    setSelection(i);
+  });
+  host.addEventListener('focusout', () => setSelection(null));
 }
 
 // --- Table ----------------------------------------------------------------
 
-function buildTable(forecast, nowIdx) {
+function buildTable(forecast, nowIdx, compact) {
   const tz = forecast.location.tz;
+  const nowRow = Math.floor(nowIdx);
+  const chipMin = compact ? 24 : 26;
+  const headCells = (dayName) => compact
+    ? `<th scope="col">${esc(dayName)}</th><th scope="col" class="r">kn</th><th scope="col" class="r">gust</th><th scope="col">from</th><th scope="col" class="r">B</th>`
+    : `<th scope="col">Hour (${esc(tzAbbrev(forecast.start, tz))})</th><th scope="col" class="r">Sustained kn</th><th scope="col" class="r">Gust kn</th><th scope="col">From</th><th scope="col" class="r">Beaufort</th>`;
   const rows = [];
   let lastDay = null;
-  const nowRow = Math.floor(nowIdx);
   forecast.hours.forEach((h, i) => {
-    const t = new Date(forecast.start.getTime() + i * HOUR_MS);
+    const t = hourAt(forecast, i);
     const day = localDayNumber(t, tz);
-    if (day !== lastDay) {
+    if (lastDay === null) lastDay = day;
+    else if (compact && day !== lastDay) {
       lastDay = day;
-      rows.push(`<tr class="day-row"><th scope="col">${shortDay(t, tz)} <span class="visually-hidden">(</span>${shortDate(t, tz)}<span class="visually-hidden">)</span></th><th scope="col">kn</th><th scope="col">gust</th><th scope="col">from</th><th scope="col">Bft</th></tr>`);
+      rows.push(`<tr class="day-row">${headCells(shortDay(t, tz))}</tr>`);
     }
     const step = beaufortStep(h.kn);
+    const hour = compact ? formatHHMM(t, tz) : `${shortDay(t, tz)} ${formatHHMM(t, tz)}`;
+    const from = compact ? compassLabel(h.dirFrom) : `from ${compassLabel(h.dirFrom)} · ${h.dirFrom}°`;
     rows.push(`<tr${i === nowRow ? ' class="now"' : ''}>
-      <td class="hour num">${formatHHMM(t, tz)}</td>
-      <td class="kn">${h.kn}</td>
-      <td class="gust num">G ${h.gust}</td>
-      <td class="dir">${arrowSvg(h.dirFrom, 14)}<span>from ${compassLabel(h.dirFrom)}</span></td>
-      <td class="bft"><span class="chip bft-${beaufortToken(step)}">${step}</span></td>
+      <td class="hour num">${hour}</td>
+      <td class="kn r">${h.kn}</td>
+      <td class="gust num r">${h.gust}</td>
+      <td class="dir"><span>${arrowSvg(h.dirFrom, 14)}${from}</span></td>
+      <td class="bft r"><span class="chip bft-${beaufortToken(step)}" style="min-width:${chipMin}px">${step}</span></td>
     </tr>`);
   });
-  return `<table><caption class="visually-hidden">Hourly wind forecast, knots</caption><tbody>${rows.join('')}</tbody></table>`;
+  return `<table class="${compact ? 'compact' : ''}"><caption class="visually-hidden">Hourly wind forecast, knots</caption><thead><tr>${headCells(shortDay(forecast.start, tz))}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
 }
 
 // --- Hero ------------------------------------------------------------------
 
-function buildHero(forecast, now, state) {
+function buildHero(forecast, now) {
   const h = heroFor(forecast, now);
   if (!h) {
     return {
@@ -280,13 +398,15 @@ function buildHero(forecast, now, state) {
 
 // --- Render --------------------------------------------------------------
 
-let lastWide = null;
+const layoutKey = () => `${window.innerWidth >= WIDE_MIN ? 'wide' : 'narrow'}/${window.innerWidth <= COMPACT_MAX ? 'compact' : 'full'}`;
+let lastLayoutKey = null;
 
-function render(ctx) {
+function render(ctx, opts) {
   const { forecast, now, state } = ctx;
   const page = $('page');
   page.className = `page state-${state.kind}`;
   document.title = forecast ? `${forecast.location.name} · Wind Watch` : 'Wind Watch';
+  lastLayoutKey = layoutKey();
 
   if (state.kind === 'firstrun') {
     $('location').textContent = 'Wind Watch';
@@ -300,35 +420,45 @@ function render(ctx) {
     $('chart-card').classList.add('hidden');
     $('table-wrap').classList.add('hidden');
     $('footer-right').innerHTML = `<span class="trying"><span class="ring" aria-hidden="true"></span>trying…</span>`;
+    chartState.layout = null;
     return;
   }
 
   const tz = forecast.location.tz;
   const nowIdx = nowIndexFor(forecast, now);
+  const wide = window.innerWidth >= WIDE_MIN;
+  const compact = window.innerWidth <= COMPACT_MAX;
   $('location').textContent = forecast.location.name;
 
-  const tl = trustLine(forecast, state, tz);
+  const tl = trustLine(forecast, state, tz, { compact });
   const trust = $('trust');
   trust.className = `trust${tl.amber ? ' amber' : ''}`;
   trust.innerHTML = `${tl.glyph === 'wifi-slash' ? WIFI_SLASH : ''}${tl.glyph === 'ring' ? '<span class="ring" aria-hidden="true"></span>' : ''}<span>${esc(tl.text)}</span>`;
 
-  const hero = buildHero(forecast, now, state);
+  const hero = buildHero(forecast, now);
   $('hero').innerHTML = hero.html;
   $('hero').setAttribute('aria-label', hero.label);
 
   $('summary').textContent = forecast.summary;
 
-  const wide = window.innerWidth >= 900;
+  const layout = chartLayout(forecast, wide ? CHART_STYLES.desktop : CHART_STYLES.phone, { nowIdx });
+  chartState.forecast = forecast;
+  chartState.layout = layout;
+  chartState.wide = wide;
+  chartState.sel = null;
   $('chart-card').classList.remove('hidden');
-  $('chart-sub').textContent = `${forecast.hours.length} h · gusts to ${forecast.peakGust.kn} kn`;
-  $('chart-host').innerHTML = buildChart(forecast, now, nowIdx, wide);
-  lastWide = wide;
+  $('chart-title').textContent = chartTitle(forecast);
+  $('chart-host').innerHTML = buildChart(forecast, layout);
+  $('chart-tip').classList.add('hidden');
   if (!$('legend').innerHTML) $('legend').innerHTML = buildLegend();
+  installChartInteraction();
+  if (opts.hover != null) setSelection(opts.hover);
 
   $('table-wrap').classList.remove('hidden');
-  $('table-wrap').innerHTML = buildTable(forecast, nowIdx);
+  $('table-wrap').innerHTML = buildTable(forecast, nowIdx, compact);
 
-  $('footer-right').textContent = `times in ${tzAbbrev(forecast.start, tz)}`;
+  $('attribution').innerHTML = `Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km · times in ${esc(tzAbbrev(forecast.start, tz))}`;
+  $('footer-right').textContent = '';
 }
 
 // --- Boot ------------------------------------------------------------------
@@ -352,15 +482,14 @@ function makeCompute(ctx, opts, { liveClock }) {
     if (ctx.forecast && opts.state === 'fresh' && !opts.now && !opts.live) {
       ctx.state = { ...ctx.state, kind: 'fresh', tier: 'fresh' };
     }
-    render(ctx);
+    render(ctx, opts);
   };
 }
 
 function watchResize(compute) {
   let raf = 0;
   window.addEventListener('resize', () => {
-    const wide = window.innerWidth >= 900;
-    if (wide === lastWide) return;
+    if (layoutKey() === lastLayoutKey) return;
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(compute);
   });

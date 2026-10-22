@@ -23,16 +23,19 @@
     <section class="card" id="chart-card">
       <div class="chart-head">
         <h2 id="chart-title">Hourly forecast</h2>
-        <span id="chart-sub"></span>
+        <span class="chart-hint" id="chart-hint">hover or touch a bar for that hour</span>
       </div>
-      <div id="chart-host"></div>
+      <div class="chart-wrap" id="chart-wrap">
+        <div id="chart-host"></div>
+        <div class="tip hidden" id="chart-tip" aria-live="polite"></div>
+      </div>
       <div class="legend" id="legend"></div>
     </section>
 
     <section class="table-wrap" id="table-wrap"></section>
 
     <footer class="footer">
-      <span id="attribution">Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · CC BY 4.0</span>
+      <span id="attribution">Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km</span>
       <span id="footer-right"></span>
     </footer>
   </main>

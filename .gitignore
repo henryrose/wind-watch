@@ -1,6 +1,9 @@
 # macOS
 .DS_Store
 
+# Design package archive (its contents live in docs/design/)
+docs/windwatch-design.zip
+
 # Node / Cloudflare
 node_modules/
 .wrangler/

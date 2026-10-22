@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 (ALL LOCAL TASKS DONE. Remaining rows are other-machine; see docs/HANDOFF-OTHER-MACHINE.md)
+Last updated: 2026-10-21 evening (design package reconciliation, see the G rows; other-machine rows unchanged; see docs/HANDOFF-OTHER-MACHINE.md)
 
 
 ## Tasks
@@ -34,6 +34,20 @@ Last updated: 2026-10-21 (ALL LOCAL TASKS DONE. Remaining rows are other-machine
 | E2 | web | Live mode against wrangler dev; offline-with-cache | E1, B4 | done | manual curl/reload sequence |  22 tests; live + offline-cached screenshots in docs/screenshots |
 | F1 | handoff | docs/HANDOFF-OTHER-MACHINE.md checklist | B5, D5, E2 | done | orchestrator review |  docs/HANDOFF-OTHER-MACHINE.md |
 | F2 | handoff | CLAUDE.md complete, README.md | F1 | done | orchestrator review |  CLAUDE.md commands + layout, README.md |
+
+## Design package reconciliation (docs/design, 2026-10-21 evening)
+
+Henry dropped the Claude Design package into `docs/design/` (README → DESIGN-HANDOFF → renders,
+artboards, `chart_reference.py`). `docs/design/GAP-ANALYSIS.md` records the render-vs-build audit
+made before any change. The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict subset and is gone.
+
+| ID | Screen(s) | Task | Status | Verification | Notes |
+|---|---|---|---|---|---|
+| G1 | Chart spec | Port `chart_reference.py::svg()` into one `WindChart` (Canvas) over a pure `ChartGeometry`; styles phonePortrait / phoneLandscape / phoneClamped / watchStrip / mini; selection; 12-hour labels; day band | done | `cd apple/WindCore && swift test` (122; `ChartReferenceTests` compare bars, gust vertices, caps, sun dots, grid, now/edge rules, stops, arrows, ticks, day dividers with `reference/charts/*.svg`) | Swift Charts dropped; MiniStrip is now `WindChart(.next6, .mini)` |
+| G2 | iPhone main, scrub, landscape, trust states, AX table, location, about | Header 22 + card gear; readout 60 with scrub plate; full-bleed chart card with title + hint; summary under the chart; table `W` / `B`; landscape view; AX reflow; Location/About to the artboards | done | iOS build; `docs/screenshots/d6-iphone-*.png` reviewed against `Phone-*.png` | `WW_SCRUB`, `WW_LANDSCAPE` DEBUG env; landscape orientations enabled in Info.plist |
+| G3 | Watch Now, strip, settings; rectangular dash | Hero 84, rhythm, 3-line summary, first-run copy, two-line settings labels + blue check, wider dash | in-progress | watch build; `docs/screenshots/d6-watch-*.png` vs `Watch-*.png` | agent |
+| G4 | Web desktop + phone | Port `svg()` to JS (`webhover` / `webphone` geometry), hover tooltip + keyboard, legend, table, header/footer, phone layout | done | `cd web && node --test` (37; `chart.test.js` vs `webhover.svg` / `webphone48.svg`); `web-d6-desktop-{dark,light,hover}.png`, `web-d6-phone-dark.png` reviewed against `Web-Desktop.png` / `Web-Phone.png` | orchestrator re-ran tests and reviewed all four screenshots |
+| G5 | All | Acceptance checklist §11 walked line by line | in-progress | see "Acceptance checklist" below | |
 
 ## Needs the other machine (from plan §7)
 
@@ -76,6 +90,31 @@ Last updated: 2026-10-21 (ALL LOCAL TASKS DONE. Remaining rows are other-machine
 | 2026-10-21 | Complication views live in `apple/Shared/Complications/` compiled into both the extension and the watch app (WindCore stays WidgetKit-free); rectangular past-horizon uses a capsule dash, not the em-dash glyph; rectangular/inline trust text uses the age tier even when offline; corner gauge is a `Gauge(.accessoryLinear)` with a ramp gradient (no discrete segments or dashing on the corner arc); provider treats a `REPLACE` host as no client; `ww.fixture` group flag mirrors fixture data for the extension | core agent (D4) | |
 | 2026-10-21 | Location sync: the iPhone is the editor and its `useCustom` wins when a context arrives; the watch toggle is local-only between contexts and never pushes back; `reloadPreferences()` clears the cache only when the active location changed; iOS re-pushes the full preference on activation | core agent (D5) | DESIGN §7 |
 | 2026-10-21 | Relative-time bands: morning 05–11, afternoon 12–16, evening 17–22, around midnight 23–00, overnight 01–04; night belongs to the preceding day | core agent (C1) | makes Thu 00:00 peak read "around midnight" at Wed 09:00 per HANDOFF §8.1 |
+| 2026-10-21 | Chart is a Canvas port of `chart_reference.py`, not Swift Charts: one `WindChart` for strip/phone/landscape/mini; `ChartStyle.unit` = 0.5 on watch surfaces because the reference draws them at 2× px; tick hours are hour-of-day anchored (3-h at 00/03/…, 6-h at 03/09/15/21) so labels don't drift as the forecast rolls; the y-domain follows §6.1 everywhere (the reference `watchstrip` call pinned 30, rule gives 20 for hours 0–11); sun/twilight events past the horizon edge are not drawn (§6.2); the mini strip keeps 6 slots with an empty tail (§6.3) where the reference `minishort` stretched 4 | orchestrator (G1) | README says port `svg()`; doc wins over the script's pinned defaults |
+| 2026-10-21 | iPhone order is header → readout → chart card → summary → table (render / §6.4 "centrepiece"), not §8.1's summary-before-chart; scrub uses `highPriorityGesture` so touching the plot never scrolls; first-day label hidden when `now` sits under it (README nit); landscape plot height flexes (236 on a 402-tall phone) so the hint sits under the tick labels; AX sizes drop the `ends …` suffix (`Phone-Table-LargeType`) | orchestrator (G2) | |
+| 2026-10-21 | Location default card shows the sea-cell coordinates to 3 decimals (48.091, −122.777), not the artboard's 48.117, −122.760 (that is the town, not the HRRR point) | orchestrator (G2) | honesty about the actual grid point |
+| 2026-10-21 | Web: tooltip also flips right of the rule within 160 px of the left edge; a touch selection stays until a tap outside the chart (doc only says `pointerleave` clears); light-scheme tooltip uses the light ground with a dark ring; hour-of-day tick anchoring as on the phone | web agent (G4) | hours 0–5 would otherwise spill the card; a tap on a phone would only flash the card |
+| 2026-10-21 | Corner complication keeps the `Gauge(.accessoryLinear)` gradient and solid amber (render: stepped segments, dashed amber) — WidgetKit draws the corner arc itself | orchestrator (G3) | not reproducible in WidgetKit |
+
+## Acceptance checklist (DESIGN-HANDOFF §11), walked 2026-10-21
+
+| # | Item | Result | Evidence |
+|---|---|---|---|
+| 1 | Hero shows sustained, gust, arrow, `from X`, trust line on first paint from cache, no spinner | pass | `d6-iphone-main.png`; watch `d6-watch-now-fresh.png`; `ForecastSession` paints the cache synchronously, spinner only on first run |
+| 2 | Every wind number is an integer in knots, VoiceOver included | pass | `Forecast.Hour` is `Int`; `heroAccessibility` / `rowLabel` tests |
+| 3 | Bars use exactly the §4.1 ramp, no interpolation | pass | `hexesMatchHandoff41` test; Canvas fills from `Beaufort.colorToken` |
+| 4 | Gust line through cap centres; caps bar + 2 | pass | `ChartReferenceTests` (caps vs reference SVG) |
+| 5 | Arrows rotate `dirFrom + 180`; labels say `from`; inline snaps to 8 points | pass | `Compass` tests; `ChartReferenceTests` arrow rotations; inline uses `arrowSymbolName` |
+| 6 | Shading ramps linearly dawn→rise, set→dusk; sun dots only at rise/set | pass | `Twilight` tests; reference gradient stops match within 0.0015 |
+| 7 | Last bar is the last forecast hour; dashed edge + label; no padding | pass | `ChartReferenceTests` edge at `X(45)`; `d6-iphone-main.png` |
+| 8 | Trust flips at 90 min and 6 h without a refresh | pass | `TimelineBuilder` tests (entries at fetched + 90 min / + 6 h); app `tick()` every 60 s |
+| 9 | Offline with cache shows the reason and the cached time | pass | `d6-iphone-offline.png`, `d6-watch-now-offline.png` |
+| 10 | Circular: `8` and `15` keep arrow/gust still; ring survives tint; stale ring dashed | pass | `d4-complications-circular.png` (frame-rule row and tinted row; views unchanged) |
+| 11 | Rectangular never shows the location; Smart Stack does | pass / held | rectangular has no name; Smart Stack widget held (decision 2026-10-21) |
+| 12 | Default location one tap, card never moves | pass | `d6-iphone-location.png`: default card first, static; button on the whole card |
+| 13 | Phone table reflows at AX; chart clamps at 152 | pass | `d6-iphone-ax.png` (`ChartStyle.phoneClamped`, two-line rows) |
+| 14 | Web reads in both schemes and at 375 px with a scrolling table | pass | `web-d6-desktop-dark.png`, `web-d6-desktop-light.png`, `web-d6-phone-dark.png` (compact table in an `overflow-x: auto` wrapper) |
+| 15 | VoiceOver: chart `45-hour wind chart: … ends Friday 05:00`; hero `15 knots, gusting 25, from the west, as of 23:30` | pass | `WindChart.accessibilityText`; `heroAccessibility` test |
 
 ## Questions for Henry (loop proceeds on the stated default)
 
@@ -95,4 +134,6 @@ Last updated: 2026-10-21 (ALL LOCAL TASKS DONE. Remaining rows are other-machine
 - `docs/screenshots/d3-watch-<page>-<state>.png` (46 mm) and `d3-watch42-<page>-fresh.png` (42 mm): watch app pages. From D3.
 - `docs/screenshots/d4-complications-<family>.png`: every family × fresh/stale/old/horizon from the DEBUG page, plus the circular frame rule and tinted rows. From D4.
 - `docs/screenshots/d5-watch-settings-synced.png`: watch Settings after the phone pushed a custom location over WatchConnectivity (paired simulators). From D5.
+- `docs/screenshots/d6-iphone-<name>.png`: post-design-package iPhone set — main, scrub (hour 15), land / land-idle (landscape), ax (AX3), old, offline, light, location, about. From G2.
+- `docs/screenshots/d6-watch-*.png`, `web-d6-*.png`: watch and web sets from G3 / G4.
 - `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.

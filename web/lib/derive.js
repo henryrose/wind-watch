@@ -180,13 +180,14 @@ export function trustState({ forecast, now, lastCheckOK = true, updating = false
 
 // Trust-line content for the header. { text, amber, glyph }
 //   glyph ∈ null | 'wifi-slash' | 'ring'
-export function trustLine(forecast, state, tz) {
+// `compact` (under 600 px) drops the word "forecast" from the ends phrase.
+export function trustLine(forecast, state, tz, { compact = false } = {}) {
   if (state.kind === 'firstrun') {
     return { text: 'No data yet. Needs cellular or Wi-Fi once.', amber: false, glyph: null };
   }
   const asOf = (withDay) =>
     (withDay ? `${shortDay(forecast.fetched, tz)} ` : '') + formatHHMM(forecast.fetched, tz);
-  const ends = `ends ${shortDay(forecast.horizon, tz)} ${formatHHMM(forecast.horizon, tz)}`;
+  const ends = `${compact ? '' : 'forecast '}ends ${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}`;
   const old = state.tier === 'old';
   switch (state.kind) {
     case 'horizon':
@@ -205,7 +206,7 @@ export function trustLine(forecast, state, tz) {
       return { text: `updating · as of ${asOf(old)}`, amber: state.tier !== 'fresh', glyph: 'ring' };
     default:
       return {
-        text: `as of ${asOf(old)} · ${forecast.run} · ${ends}`,
+        text: `as of ${asOf(old)} ${tzAbbrev(forecast.fetched, tz)} · ${forecast.run} · ${ends}`,
         amber: state.tier !== 'fresh',
         glyph: null,
       };
@@ -266,11 +267,48 @@ export function sunMarkers(forecast) {
 
 // --- Labels ---------------------------------------------------------------
 
-// "HRRR ends 05:00"; drops "HRRR " when the edge is within 12 slots of now.
-export function horizonLabel(forecast, nowIdx) {
-  const edge = forecast.hours.length;
-  const prefix = nowIdx != null && edge - nowIdx < 12 ? '' : 'HRRR ';
-  return `${prefix}ends ${formatHHMM(forecast.horizon, forecast.location.tz)}`;
+// --- 12-hour time labels (HANDOFF §6.4a) ----------------------------------
+
+// 0 → "12am", 9 → "9am", 12 → "12pm", 15 → "3pm".
+export function hour12(h) {
+  const x = ((h % 24) + 24) % 24;
+  if (x === 0) return '12am';
+  if (x === 12) return '12pm';
+  return x < 12 ? `${x}am` : `${x - 12}pm`;
+}
+
+export function hour12At(date, tz) {
+  return hour12(localHour(date, tz));
+}
+
+// Axis tick text: "9am · noon · 3pm · 6pm · 9pm · 12am · 3am · 6am".
+export function tickLabel(h) {
+  return ((h % 24) + 24) % 24 === 12 ? 'noon' : hour12(h);
+}
+
+// Chart edge label: "ends Fri 5am".
+export function horizonLabel(forecast) {
+  const tz = forecast.location.tz;
+  return `ends ${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}`;
+}
+
+// Chart card title: "Wed 9am → Fri 5am".
+export function chartTitle(forecast) {
+  const tz = forecast.location.tz;
+  return `${shortDay(forecast.start, tz)} ${hour12At(forecast.start, tz)} → ${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}`;
+}
+
+// Hover / scrub hour label: "Thu 12am · midnight", "Thu 12pm · noon", else "Thu 3pm".
+export function scrubLabel(date, tz) {
+  const h = localHour(date, tz);
+  const base = `${shortDay(date, tz)} ${hour12(h)}`;
+  if (h === 0) return `${base} · midnight`;
+  if (h === 12) return `${base} · noon`;
+  return base;
+}
+
+export function hourAt(forecast, i) {
+  return new Date(forecast.start.getTime() + i * HOUR_MS);
 }
 
 // Peak-gust chip phrase (HANDOFF §8.1). Not pinned down by the docs beyond
@@ -331,6 +369,121 @@ export function chartAriaLabel(forecast) {
 // HANDOFF §11: "15 knots, gusting 25, from the west, as of 23:30"
 export function heroAriaLabel(h, asOf, tz) {
   return `${h.kn} knots, gusting ${h.gust}, from the ${compassWord(h.dirFrom)}, as of ${formatHHMM(asOf, tz)}`;
+}
+
+// --- Chart layout (port of docs/design/reference/chart_reference.py::svg) --
+//
+// Everything is derived from slot = W / n in viewBox units; the page scales
+// the SVG to 100 % width. Styles are the two web breakpoints (HANDOFF §6.5,
+// §6.4a): desktop ≥ 900 px, phone below.
+
+export const CHART_STYLES = {
+  desktop: { W: 1120, H: 300, top: 40, bot: 22, arrowEvery: 1, tickEvery: 3, labelEvery: 3, font: 12, arrowSize: 10, dayBand: true },
+  phone: { W: 358, H: 200, top: 22, bot: 16, arrowEvery: 3, tickEvery: 6, labelEvery: 6, font: 11, arrowSize: 9, dayBand: false },
+};
+
+// Dark: white 7 % × day; light: black 8 % × (1 − day) (HANDOFF §6.1).
+export const SHADE_DAY_ALPHA = 0.07;
+export const SHADE_NIGHT_ALPHA = 0.08;
+
+// Layout model for one chart. nowIdx is fractional hours since start (null
+// hides the now marker). Returns only numbers and labels; the page turns it
+// into SVG and the tests compare it with reference/charts/webhover.svg.
+export function chartLayout(forecast, style, { nowIdx = null } = {}) {
+  const { W, H, top, bot, font, arrowSize } = style;
+  const tz = forecast.location.tz;
+  const hours = forecast.hours;
+  const n = hours.length;
+  const plotH = H - top - bot;
+  const plotBottom = top + plotH;
+  const slot = W / n;
+  const bw = Math.max(3, Math.round(slot * 0.72 * 100) / 100);
+  const capW = bw + 2;
+  const yMax = yDomainMax(hours);
+  const X = (i) => i * slot;
+  const Y = (v) => top + plotH - (v / yMax) * plotH;
+
+  const grid = [];
+  for (let v = 10; v < yMax; v += 10) grid.push({ v, y: Y(v), labelX: W - 2, labelY: Y(v) - 3 });
+
+  const sun = sunMarkers(forecast).map((s) => ({ kind: s.kind, x: s.offset * W, y: top - 1, at: s.at }));
+
+  // Bars sit on the baseline; 0 kn is a 1 px stub.
+  const bars = hours.map((h, i) => {
+    const y = h.kn > 0 ? Y(h.kn) : plotBottom - 1;
+    const step = beaufortStep(h.kn);
+    return { i, x: X(i) + (slot - bw) / 2, y, w: bw, h: plotBottom - y, step, token: beaufortToken(step) };
+  });
+
+  const gust = hours.map((h, i) => ({ i, x: X(i) + slot / 2, y: Y(h.gust) }));
+
+  const arrows = [];
+  for (let i = 0; i < n; i += style.arrowEvery) {
+    arrows.push({ i, x: X(i) + slot / 2, y: plotBottom + bot / 2, rot: arrowRotation(hours[i].dirFrom) });
+  }
+
+  // Ticks and labels are hour-of-day based: 3-h cadence at hours divisible
+  // by 3, 6-h cadence at 03/09/15/21 (both anchored on 9am).
+  const onCadence = (hod, every) => hod % every === 3 % every;
+  const ticks = [];
+  const labels = [];
+  const days = [];
+  for (let i = 0; i < n; i++) {
+    const t = hourAt(forecast, i);
+    const hod = localHour(t, tz);
+    const cx = X(i) + slot / 2;
+    if (onCadence(hod, style.tickEvery)) ticks.push({ i, x: cx, y1: plotBottom, y2: plotBottom + 3 });
+    if (onCadence(hod, style.labelEvery)) labels.push({ i, x: cx, y: H + 10, text: tickLabel(hod) });
+    if (style.dayBand && (i === 0 || hod === 0)) {
+      days.push({
+        i,
+        x: X(i),
+        name: shortDay(t, tz),
+        labelX: X(i) + 5,
+        labelY: top - 22,
+        divider: i > 0 ? { x: X(i), y1: top - 18, y2: plotBottom } : null,
+        hidden: false,
+      });
+    }
+  }
+
+  let now = null;
+  if (nowIdx != null && nowIdx >= 0 && nowIdx <= n) {
+    const x = X(nowIdx);
+    now = { x, y1: top - 6, y2: plotBottom, labelX: x + 4, labelY: top - 8, text: 'now' };
+    // README nit: hide the first day's name when "now" would sit under it.
+    if (days.length && days[0].i === 0 && now.labelX < days[0].labelX + font * 2.6) days[0].hidden = true;
+  }
+
+  const ex = X(n);
+  const edge = { x: ex, y1: top - 6, y2: plotBottom, labelX: ex - 4, labelY: top - 8, text: horizonLabel(forecast) };
+
+  return {
+    W, H, top, bot, plotH, plotBottom, n, slot, bw, capW, yMax, font, arrowSize,
+    stops: twilightStops(forecast),
+    grid, sun, bars, gust, arrows, ticks, labels, days, now, edge,
+  };
+}
+
+// Hover / scrub highlight for hour i (HANDOFF §6.4c): a 1.5 px outline on the
+// bar (radius 2.5, outset 1.5) and a full-height rule through the slot centre
+// from top − 6 to the bottom of the arrow row.
+export function selectionGeometry(layout, i) {
+  const b = layout.bars[i];
+  if (!b) return null;
+  const cx = i * layout.slot + layout.slot / 2;
+  return {
+    i,
+    cx,
+    rule: { x: cx, y1: layout.top - 6, y2: layout.plotBottom + layout.bot },
+    outline: { x: b.x - 1.5, y: b.y - 1.5, w: b.w + 3, h: b.h + 1.5, rx: 2.5 },
+  };
+}
+
+// hour = floor(x / slot) for an x in viewBox units; null outside the plot.
+export function hourAtX(layout, x) {
+  const i = Math.floor(x / layout.slot);
+  return i >= 0 && i < layout.n ? i : null;
 }
 
 // --- Time formatting (Intl with the payload tz) ---------------------------

@@ -85,10 +85,7 @@ test('Y domain max is 30 for the reference payload', () => {
 test('run label and horizon label', () => {
   assert.equal(runLabel(payload.run.latest), 'HRRR 15Z');
   assert.equal(runLabel(0), 'HRRR 00Z');
-  assert.equal(horizonLabel(forecast, nowIndex(forecast, NOW)), 'HRRR ends 05:00');
-  // within 12 slots of the edge the model prefix is dropped
-  assert.equal(horizonLabel(forecast, 40), 'ends 05:00');
-  assert.equal(horizonLabel(forecast, 33), 'HRRR ends 05:00');
+  assert.equal(horizonLabel(forecast), 'ends Fri 5am');
 });
 
 test('Beaufort table boundaries (HANDOFF §2)', () => {
@@ -196,9 +193,12 @@ test('trust line text per HANDOFF §3', () => {
     const now = new Date(forecast.fetched.getTime() + ms);
     return trustLine(forecast, trustState({ forecast, now, ...extra }), TZ);
   };
-  assert.deepEqual(line(30 * MINUTE_MS), { text: 'as of 09:00 · HRRR 15Z · ends Fri 05:00', amber: false, glyph: null });
-  assert.deepEqual(line(2 * HOUR_MS), { text: 'as of 09:00 · HRRR 15Z · ends Fri 05:00', amber: true, glyph: null });
-  assert.deepEqual(line(7 * HOUR_MS), { text: 'as of Wed 09:00 · HRRR 15Z · ends Fri 05:00', amber: true, glyph: null });
+  assert.deepEqual(line(30 * MINUTE_MS), { text: 'as of 09:00 PDT · HRRR 15Z · forecast ends Fri 5am', amber: false, glyph: null });
+  assert.deepEqual(line(2 * HOUR_MS), { text: 'as of 09:00 PDT · HRRR 15Z · forecast ends Fri 5am', amber: true, glyph: null });
+  assert.deepEqual(line(7 * HOUR_MS), { text: 'as of Wed 09:00 PDT · HRRR 15Z · forecast ends Fri 5am', amber: true, glyph: null });
+  // under 600 px the phrase is "ends Fri 5am"
+  const compact = trustLine(forecast, trustState({ forecast, now: NOW }), TZ, { compact: true });
+  assert.equal(compact.text, 'as of 09:00 PDT · HRRR 15Z · ends Fri 5am');
   assert.deepEqual(line(30 * MINUTE_MS, { lastCheckOK: false }), {
     text: "Couldn't reach server · showing data from 09:00", amber: true, glyph: 'wifi-slash',
   });

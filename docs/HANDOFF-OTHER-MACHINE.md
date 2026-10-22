@@ -7,7 +7,7 @@ complications in simulators, and the web page. What is left is deploy, signing, 
 behaviour, and TestFlight.
 
 Read first: `CLAUDE.md` (architecture in ten lines), then `progress.md` (what was verified and
-the decisions log), then this file. `docs/DESIGN.md` and `docs/WINDWATCH-DESIGN-HANDOFF.md`
+the decisions log), then this file. `docs/DESIGN.md` and `docs/design/DESIGN-HANDOFF.md`
 are the contracts if you need to change behaviour.
 
 ## 1. Clone and tools

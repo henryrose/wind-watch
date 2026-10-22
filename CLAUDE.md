@@ -11,6 +11,9 @@ forecast for Port Townsend Bay, WA. One user. Watch complications are the primar
 2. Clients never call Open-Meteo. The payload is the only contract: `docs/DESIGN.md` §4.2.
 3. `apple/WindCore` (Swift package) decodes the payload into a `Forecast` view model and holds
    all derivations: Beaufort, compass, trust state, twilight stops, timeline entries, the chart.
+   The chart is one Canvas drawing (`WindChart`) over a pure `ChartGeometry` that ports
+   `docs/design/reference/chart_reference.py`; the watch strip, phone, landscape and the
+   complication mini strip are the same view with different `ChartStyle`s.
 4. Three Apple targets link it: iOS app, watchOS app, watchOS widget extension (complications).
 5. Watch app and widget share an App Group cache; the widget's timeline is built from one fetch,
    one entry per hour, so complications roll forward with no network.
@@ -26,8 +29,10 @@ forecast for Port Townsend Bay, WA. One user. Watch complications are the primar
 
 - `InitialPrompt.md` — the brief.
 - `docs/DESIGN.md` — architecture, API contract, refresh model, costs, staged plan.
-- `docs/WINDWATCH-DESIGN-HANDOFF.md` — UI contract (tokens, chart spec, per-surface layouts).
-  Wins over the design canvas.
+- `docs/design/` — the UI design package. Read `README.md` first, then `DESIGN-HANDOFF.md`
+  (the contract: tokens, chart spec, scrub, per-surface layouts, acceptance checklist; wins over
+  the renders), `reference/renders/*.png`, `reference/artboards/*.dc.html` (exact values),
+  `reference/chart_reference.py` (chart maths). `GAP-ANALYSIS.md` is the render-vs-build audit.
 - `docs/IMPLEMENTATION_PLAN.md` — multi-agent task breakdown. §0 reconciles the two docs above.
 - `docs/LOOP_PROMPT.md` — orchestrator prompt.
 
@@ -51,7 +56,8 @@ cd apple && ./build.sh gen      # regenerate WindWatch.xcodeproj from project.ym
 ./build.sh watch                # WindWatchWatch scheme → Apple Watch Series 12 (46mm) simulator
 ./build.sh all                  # gen + swift test + ios + watch
 # Run with fixture data: launch with env WW_FIXTURE=1 (+ WW_STATE=stale|old|offline|horizon|firstrun|updating,
-# WW_NOW=<ISO8601>, WW_SCREEN=location|about on iPhone, WW_PAGE=now|strip|settings|complications on watch).
+# WW_NOW=<ISO8601>, WW_TYPE_SIZE=ax3, WW_SCREEN=location|about, WW_SCRUB=<hour index>, WW_LANDSCAPE=1 on iPhone;
+# WW_PAGE=now|strip|settings|complications on watch). Wait ~7 s before a screenshot (first frame compiles a gradient).
 # Always address simulators by UDID when two are booted (`xcrun simctl list devices`).
 
 # Web (static page, no build step)
@@ -62,12 +68,12 @@ python3 -m http.server 8080     # from the repo root, then open http://localhost
 ## Layout
 
 - `server/` — Worker: `src/transform.ts` (Open-Meteo → payload), `sun.ts`, `summary.ts`, `index.ts` (fetch + scheduled), tests in `test/`.
-- `apple/WindCore/` — Swift package: `Payload`, `Forecast`, `Beaufort`, `Compass`, `Trust`, `Twilight`, `TimelineBuilder`, `WindClient`, `AppGroupStore`, `ForecastSession`, `SavedLocation`, and `UI/` (tokens, glyphs, `WindChart`, `MiniStrip`, `TrustLineView`).
+- `apple/WindCore/` — Swift package: `Payload`, `Forecast`, `Beaufort`, `Compass`, `Trust`, `Twilight`, `TimelineBuilder`, `WindClient`, `AppGroupStore`, `ForecastSession`, `SavedLocation`, and `UI/` (tokens, glyphs, `ChartStyle`, `ChartGeometry`, `ChartModel`, `WindChart`, `MiniStrip`, `TrustLineView`). `Tests/…/ChartReferenceTests` checks the geometry against the reference SVGs.
 - `apple/WindWatch/` iOS app · `apple/WindWatchWatch/` watchOS app · `apple/WindWatchComplications/` widget extension · `apple/Shared/` views compiled into more than one target.
 - `apple/Config/Shared.xcconfig` (tracked) + `Local.xcconfig` (untracked: team id, bundle prefix).
 - `web/` — `index.html`, `app.js`, `lib/derive.js` (pure derivations), `config.js` (API base).
 - `fixtures/` — captured Open-Meteo responses and `payload-reference.json` (shared by all tests and previews).
-- `docs/` — design, UI handoff, implementation plan, screenshots, `HANDOFF-OTHER-MACHINE.md`.
+- `docs/` — `DESIGN.md`, `design/` (UI package), implementation plan, screenshots (`d6-*` and `web-d6-*` are the post-design-package set), `HANDOFF-OTHER-MACHINE.md`.
 
 ## Rules
 
