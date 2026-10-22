@@ -12,12 +12,20 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Wind Watch</title>
+  <title>Wind Watch — Port Townsend Bay</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js"></script>
 </head>
 <body>
   <main class="page" id="page">
+    <!-- Brand lockup row (HANDOFF §10a); icon from docs/design/reference/brand_icon.py, small tier -->
+    <div class="brand-row">
+      <div class="brand" role="img" aria-label="Wind Watch"><svg class="brand-tile" width="28" height="28" viewBox="0 0 180 180" aria-hidden="true"><defs><clipPath id="wk-tile"><rect width="180" height="180" rx="40"/></clipPath></defs><g clip-path="url(#wk-tile)"><rect width="180" height="180" fill="#0B0E12"/></g><g transform="translate(116.8,102.2) rotate(103)"><line x1="-16" x2="-16" y1="62" y2="86" stroke="#4FA3D8" stroke-width="18" stroke-linecap="round"/><line x1="16" x2="16" y1="62" y2="92" stroke="#8DD44A" stroke-width="18" stroke-linecap="round"/><path d="M0,-50 L37.5,50 L0,20.0 L-37.5,50 Z" fill="#FFFFFF"/></g></svg><span class="wordmark" aria-hidden="true">Wind<span class="wordmark-watch"> Watch</span></span></div>
+      <span class="brand-tagline">HRRR wind<span class="brand-place"> · Port Townsend Bay, WA</span></span>
+    </div>
     <header class="header">
       <div class="header-left">
         <h1 id="location">Wind Watch</h1>
@@ -49,7 +57,7 @@
     </details>
 
     <footer class="footer">
-      <span id="attribution">Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km</span>
+      <span id="attribution">Wind Watch · weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km</span>
       <span id="footer-right"></span>
     </footer>
   </main>

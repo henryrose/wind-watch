@@ -426,7 +426,7 @@ function render(ctx, opts) {
   const { forecast, now, state } = ctx;
   const page = $('page');
   page.className = `page state-${state.kind}`;
-  document.title = forecast ? `${forecast.location.name} · Wind Watch` : 'Wind Watch';
+  document.title = forecast ? `Wind Watch — ${forecast.location.name}` : 'Wind Watch';
   lastLayoutKey = layoutKey();
 
   if (state.kind === 'firstrun') {
@@ -480,7 +480,7 @@ function render(ctx, opts) {
   $('table-wrap').innerHTML = buildTable(forecast, nowIdx, compact);
   installTableDisclosure();
 
-  $('attribution').innerHTML = `Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km · times in ${esc(tzAbbrev(forecast.start, tz))}`;
+  $('attribution').innerHTML = `Wind Watch · weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km · times in ${esc(tzAbbrev(forecast.start, tz))}`;
   $('footer-right').textContent = '';
 }
 

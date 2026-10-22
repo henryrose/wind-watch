@@ -105,7 +105,7 @@ struct MainView: View {
         }
     }
 
-    /// `Weather data by Open-Meteo.com` in `ink.disabled` 12 (`Phone-Main.dc.html`), with the About
+    /// `Wind Watch · weather data by Open-Meteo.com` in `ink.disabled` 12 (HANDOFF §10a), with the About
     /// link on the right; the first-run spinner replaces the attribution while trying.
     private var footer: some View {
         HStack(spacing: 8) {
@@ -115,7 +115,7 @@ struct MainView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Tokens.inkSecondary(scheme))
             } else {
-                Text("Weather data by Open-Meteo.com")
+                Text("Wind Watch · weather data by Open-Meteo.com")
                     .font(.system(size: 12))
                     .foregroundStyle(Tokens.inkDisabled(scheme))
             }

@@ -11,6 +11,9 @@ struct HeaderView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 3) {
+                // Brand eyebrow (HANDOFF §10a): portrait only; landscape has its own header.
+                BrandLockup(tile: 17, type: 15, gap: 7, scheme: scheme)
+                    .padding(.bottom, 4)
                 Text(model.locationName)
                     .font(.system(size: 22, weight: .bold))
                     .tracking(-0.22)

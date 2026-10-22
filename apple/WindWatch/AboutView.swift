@@ -6,10 +6,8 @@ import WindCore
 struct AboutView: View {
     @Environment(\.colorScheme) private var scheme
 
-    private var version: String {
-        let info = Bundle.main.infoDictionary ?? [:]
-        let short = info["CFBundleShortVersionString"] as? String ?? "0"
-        return "Wind Watch \(short) · built for one bay."
+    private var shortVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
 
     /// Body copy on cards is a touch brighter than `ink.body` in the design (`#E6E9ED`).
@@ -18,7 +16,17 @@ struct AboutView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                BackHeader(title: "About")
+                BackHeader {
+                    // Phone-About.dc.html: centred row, version nudged 4 pt down.
+                    HStack(alignment: .center, spacing: 10) {
+                        BrandLockup(tile: 30, type: 26, gap: 10, scheme: scheme)
+                        Text(shortVersion)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Tokens.inkSecondary(scheme))
+                            .padding(.top, 4)
+                            .accessibilityLabel("version \(shortVersion)")
+                    }
+                }
                 card(spacing: 8) {
                     sectionLabel("The model")
                     Text("HRRR is NOAA's 3 km hourly-updating forecast for the continental US; each run looks 18 hours ahead, and every 6 hours a run looks 48. Wind Watch shows the latest run that reaches furthest, so the chart's horizon moves between about 40 and 47 hours as runs come and go. The run label (\"HRRR 15Z\") is the model's start time in UTC; \"as of\" is when this device last got new data.")
@@ -59,7 +67,7 @@ struct AboutView: View {
                             .foregroundStyle(cardBody)
                     }
                     .font(.system(size: 15))
-                    Text("Sunrise and twilight computed on device. \(version)")
+                    Text("Sunrise and twilight computed on device. Built for one bay.")
                         .font(.system(size: 13).monospacedDigit())
                         .foregroundStyle(Tokens.inkSecondary(scheme))
                 }

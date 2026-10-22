@@ -4,13 +4,17 @@ import WindCore
 /// HANDOFF §7.4 / `Watch-Settings.dc.html`: `Location` Rounded Bold 13 (4 pt side inset), two
 /// full-width buttons (44 pt min, radius 12, plates 14 % / 8 % white, padding 0 10) with a
 /// two-line label (name Semibold 14 · sub Regular 10 secondary), a filled blue check on the
-/// selected row and an empty ring on the other, then `Weather data by Open-Meteo.com`
-/// Regular 10 secondary. Nothing else.
+/// selected row and an empty ring on the other, then the brand footer (HANDOFF §10a): round
+/// mark + `Wind Watch 1.0` Rounded Bold 11 over `Weather data by Open-Meteo.com` Regular 10
+/// secondary. The only place the watch shows the name.
 struct SettingsView: View {
     @Environment(ForecastSession.self) private var session
 
     private var custom: SavedLocation? { session.preferences.custom }
     private var usingCustom: Bool { session.preferences.effectiveUseCustom }
+    private var shortVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -43,10 +47,20 @@ struct SettingsView: View {
                 .accessibilityAddTraits(usingCustom ? .isSelected : [])
             }
             Spacer(minLength: 0)
-            Text("Weather data by Open-Meteo.com")
-                .font(.system(size: 10, weight: .regular))
-                .foregroundStyle(Tokens.inkSecondary(.dark))
-                .padding(.horizontal, 4)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    BrandMark(size: 12, round: true)
+                    Text("Wind Watch \(shortVersion)")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(Tokens.inkBody(.dark))
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Wind Watch \(shortVersion)")
+                Text("Weather data by Open-Meteo.com")
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(Tokens.inkSecondary(.dark))
+            }
+            .padding(.horizontal, 4)
         }
         .padding(.horizontal, 8)
         .padding(.bottom, 12)
