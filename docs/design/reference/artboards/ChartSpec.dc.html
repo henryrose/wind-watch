@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wind Watch chart spec</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B0E12}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 1400px; height: 920px; box-sizing: border-box; padding: 40px 44px; background: #0B0E12; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">Chart grammar — one drawing, three renderers</div>
+    <div style="font-size: 13px; color: #C7CED8; line-height: 1.45">Everything below is a bar, a line, a point/rect or system text. Swift Charts: BarMark + LineMark + RuleMark + PointMark + RectangleMark (shading). SVG: rect, polyline, line, circle, text.</div>
+    <div style="background: #171C23; border-radius: 12px; padding: 24px 20px 16px">
+      <svg width="580" height="330" viewBox="0 0 580 330" role="img" aria-label="Annotated chart anatomy" style="display:block; overflow: visible; font-family: -apple-system, system-ui, sans-serif">
+        <defs><linearGradient id="spec-dn" x1="0" x2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.09"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.09"/><stop offset="0.72" stop-color="#FFFFFF" stop-opacity="0"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient></defs>
+        <!-- plot area -->
+        <rect x="40" y="40" width="440" height="200" fill="url(#spec-dn)"/>
+        <line x1="40" x2="480" y1="140" y2="140" stroke="#FFFFFF" stroke-opacity="0.12"/>
+        <text x="478" y="136" text-anchor="end" font-size="10" fill="#FFFFFF" fill-opacity="0.45">10</text>
+        <line x1="40" x2="480" y1="40" y2="40" stroke="#FFFFFF" stroke-opacity="0.12"/>
+        <text x="478" y="36" text-anchor="end" font-size="10" fill="#FFFFFF" fill-opacity="0.45">20</text>
+        <!-- sun marker -->
+        <circle cx="300" cy="39" r="4" fill="#FFB340"/>
+        <!-- bars: slot 80, bar 57.6 -->
+        <rect x="51.2" y="170" width="57.6" height="70" rx="1.5" fill="#3FC2A0"/>
+        <rect x="131.2" y="130" width="57.6" height="110" rx="1.5" fill="#8DD44A"/>
+        <rect x="211.2" y="110" width="57.6" height="130" rx="1.5" fill="#8DD44A"/>
+        <rect x="291.2" y="90" width="57.6" height="150" rx="1.5" fill="#F2D13D"/>
+        <rect x="371.2" y="120" width="57.6" height="120" rx="1.5" fill="#8DD44A"/>
+        <!-- gust line + caps -->
+        <polyline points="80,120 160,80 240,66 320,50 400,74" fill="none" stroke="#FFFFFF" stroke-opacity="0.75" stroke-width="2"/>
+        <line x1="50.2" x2="109.8" y1="120" y2="120" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <line x1="130.2" x2="189.8" y1="80" y2="80" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <line x1="210.2" x2="269.8" y1="66" y2="66" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <line x1="290.2" x2="349.8" y1="50" y2="50" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <line x1="370.2" x2="429.8" y1="74" y2="74" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <!-- now marker -->
+        <line x1="44" x2="44" y1="34" y2="240" stroke="#FFFFFF" stroke-width="1.5"/>
+        <text x="48" y="31" font-size="11" font-weight="600" fill="#FFFFFF">now</text>
+        <!-- horizon edge -->
+        <line x1="440" x2="440" y1="34" y2="240" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="436" y="31" text-anchor="end" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.7">HRRR ends 05:00</text>
+        <!-- arrows row -->
+        <g transform="translate(80,256) rotate(110)"><path d="M0,-6 L4.5,6 L0,2.4 L-4.5,6 Z" fill="#FFFFFF"/></g>
+        <g transform="translate(160,256) rotate(105)"><path d="M0,-6 L4.5,6 L0,2.4 L-4.5,6 Z" fill="#FFFFFF"/></g>
+        <g transform="translate(240,256) rotate(103)"><path d="M0,-6 L4.5,6 L0,2.4 L-4.5,6 Z" fill="#FFFFFF"/></g>
+        <g transform="translate(320,256) rotate(104)"><path d="M0,-6 L4.5,6 L0,2.4 L-4.5,6 Z" fill="#FFFFFF"/></g>
+        <g transform="translate(400,256) rotate(108)"><path d="M0,-6 L4.5,6 L0,2.4 L-4.5,6 Z" fill="#FFFFFF"/></g>
+        <!-- ticks -->
+        <line x1="80" x2="80" y1="240" y2="243" stroke="#FFFFFF" stroke-opacity="0.5"/>
+        <line x1="320" x2="320" y1="240" y2="243" stroke="#FFFFFF" stroke-opacity="0.5"/>
+        <text x="80" y="278" text-anchor="middle" font-size="11" fill="#FFFFFF" fill-opacity="0.6">21</text>
+        <text x="320" y="278" text-anchor="middle" font-size="11" fill="#FFFFFF" fill-opacity="0.6">00</text>
+        <!-- dimension callouts -->
+        <g stroke="#4FA3D8" stroke-width="1" fill="#4FA3D8" font-size="10">
+          <line x1="131.2" x2="188.8" y1="300" y2="300"/><line x1="131.2" x2="131.2" y1="296" y2="304"/><line x1="188.8" x2="188.8" y1="296" y2="304"/>
+          <text x="160" y="316" text-anchor="middle" stroke="none">bar 0.72 slot</text>
+          <line x1="188.8" x2="211.2" y1="300" y2="300"/><line x1="211.2" x2="211.2" y1="296" y2="304"/>
+          <text x="236" y="316" text-anchor="middle" stroke="none">gap 0.28</text>
+          <line x1="500" x2="500" y1="40" y2="240"/><line x1="496" x2="504" y1="40" y2="40"/><line x1="496" x2="504" y1="240" y2="240"/>
+          <text x="508" y="144" stroke="none">plot h</text>
+          <line x1="500" x2="500" y1="240" y2="272"/><line x1="496" x2="504" y1="272" y2="272"/>
+          <text x="508" y="260" stroke="none">arrows 16</text>
+          <line x1="500" x2="500" y1="14" y2="40"/><line x1="496" x2="504" y1="14" y2="14"/>
+          <text x="508" y="30" stroke="none">inset 22</text>
+          <line x1="290.2" x2="349.8" y1="22" y2="22"/><line x1="290.2" x2="290.2" y1="18" y2="26"/><line x1="349.8" x2="349.8" y1="18" y2="26"/>
+          <text x="320" y="14" text-anchor="middle" stroke="none">cap = bar + 2</text>
+          <text x="300" y="60" text-anchor="middle" stroke="none">sunset: shade 1→0 over set→dusk</text>
+        </g>
+      </svg>
+    </div>
+    <div style="font-size: 12px; color: #9AA4B1; line-height: 1.5">Twilight stops as fractions of the hour axis: at <span style="font-family: ui-monospace, Menlo, monospace">t_set</span> opacity 1·day, at <span style="font-family: ui-monospace, Menlo, monospace">t_dusk</span> 0; at <span style="font-family: ui-monospace, Menlo, monospace">t_dawn</span> 0, at <span style="font-family: ui-monospace, Menlo, monospace">t_rise</span> 1·day. Linear in between; hard-held outside. For this payload: 0.2044 → 0.2163, 0.4918 → 0.5037, 0.7370 → 0.7489, 0.9555 → end. Sun dots at <span style="font-family: ui-monospace, Menlo, monospace">t_rise</span>, <span style="font-family: ui-monospace, Menlo, monospace">t_set</span> only.</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px; font-variant-numeric: tabular-nums">
+    <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">Values per surface (pt; watch in px @2×)</div>
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 0; border: 1px solid #2A2F36; border-radius: 10px; overflow: hidden; line-height: 1.35">
+      <div style="padding: 8px 10px; background: #171C23; color: #9AA4B1">property</div><div style="padding: 8px 10px; background: #171C23; color: #9AA4B1">watch strip</div><div style="padding: 8px 10px; background: #171C23; color: #9AA4B1">iPhone</div><div style="padding: 8px 10px; background: #171C23; color: #9AA4B1">web</div>
+
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">hours shown</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">12 (window)</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">all (≤ 48)</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">all</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">plot width</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">396 px</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">370</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">fluid, ≤ 1120</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">plot height</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">184 px</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">152</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">230 / 162 phone</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">inset top / bottom</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">24 / 22</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">22 / 16</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">28 / 22</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">slot = plot w ÷ hours</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">33 px</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">8.2</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">24.9</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">bar width (0.72 slot, min 3)</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">23.8 px</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">5.9</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">17.9</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">bar corner radius</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">2</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">1.5</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">1.5</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">y domain</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36; grid-column: span 3">0 … ceil((max gust + 3) ÷ 10) × 10, floor 20. Gridlines every 10 kn, white 12 %, label right-aligned 10/11 pt at 45 %.</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">gust line</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">2.5 px, 75 %</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">1.5, 75 %</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">1.5, 75 %</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">tick cap (w × stroke, 100 %)</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">bar+2 × 2.5</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">bar+2 × 1.5</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">bar+2 × 1.5</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">arrow size · cadence</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">14 px · every hour</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">9 · every 3 h</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">10 · hourly ≥ 900 px, else 3 h</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">arrow row centre</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36; grid-column: span 3">plot bottom + bottom inset ÷ 2; rotation = FROM + 180°; fill 90 % white (ink colour in tinted mode)</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">time ticks · labels</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">3 h · 22 px, no day</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">6 h · 11 pt</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">3 h · 12 pt + day at 00</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">day shade (dark / light)</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36; grid-column: span 3">RectangleMark over the plot: white 7 % by day, 0 % by night (light scheme: black 0 % day, 8 % night). Twilight = linear ramp between the two over dawn→rise and set→dusk.</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">sun marker</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">r 5, amber</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">r 3</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36">r 3</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">now marker</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36; grid-column: span 3">RuleMark 1.5 pt white 100 %, from inset-top − 6 to plot bottom; "now" semibold right of it. At x = fractional hour of the current time.</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">horizon edge</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36; grid-column: span 3">RuleMark 1 pt dashed 3/3, 70 %; label "HRRR ends HH:MM" right-aligned to the edge at inset-top − 8. If the edge is within 12 slots of "now", drop "HRRR" and keep "ends HH:MM". Slots after the edge stay empty: the axis still spans the full window on watch (12 h), never on phone/web (plot ends at the edge).</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">complication mini strip</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36; grid-column: span 3">next 6 h; y domain = window max gust rounded up to 5 (relative height); bars 0.72 slot; gust line 2 px; no arrows, no ticks; sun dot kept; past-horizon slots empty.</div>
+      <div style="padding: 7px 10px; border-top: 1px solid #2A2F36">old data (&gt; 6 h)</div><div style="padding: 7px 10px; border-top: 1px solid #2A2F36; grid-column: span 3">whole chart saturation 0.35, opacity 0.7; trust line amber. Never a greyed hero number alone — the trust line always says why.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":920}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

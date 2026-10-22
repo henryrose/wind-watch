@@ -161,4 +161,39 @@ public enum TimeFormat {
     public static func weekdayLong(_ date: Date, tz: TimeZone) -> String {
         formatter("EEEE", tz: tz).string(from: date)
     }
+
+    /// Local hour of day (0…23).
+    public static func hour(_ date: Date, tz: TimeZone) -> Int {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = tz
+        return cal.component(.hour, from: date)
+    }
+
+    /// Chart tick form of an hour (HANDOFF §6.4a): `12am`, `9am`, `noon`, `3pm`.
+    public static func hour12Tick(hour: Int) -> String {
+        hour == 12 ? "noon" : hour12(hour: hour)
+    }
+
+    /// `12am`, `9am`, `12pm`, `5pm`.
+    public static func hour12(hour: Int) -> String {
+        let h = ((hour % 24) + 24) % 24
+        let twelve = h % 12 == 0 ? 12 : h % 12
+        return "\(twelve)" + (h < 12 ? "am" : "pm")
+    }
+
+    /// `Fri 5am` (chart title, edge label, header suffix).
+    public static func weekdayHour12(_ date: Date, tz: TimeZone) -> String {
+        weekdayShort(date, tz: tz) + " " + hour12(hour: hour(date, tz: tz))
+    }
+
+    /// Scrub / tooltip hour label: `Thu 12am · midnight`, `Thu 12pm · noon`, else `Thu 3pm`.
+    public static func scrubLabel(_ date: Date, tz: TimeZone) -> String {
+        let h = hour(date, tz: tz)
+        let base = weekdayHour12(date, tz: tz)
+        switch h {
+        case 0: return base + " · midnight"
+        case 12: return base + " · noon"
+        default: return base
+        }
+    }
 }

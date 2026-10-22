@@ -1,0 +1,60 @@
+<svg width="396" height="230" viewBox="0 0 396 230" role="img" aria-label="Hourly wind chart" style="display:block;overflow:visible">
+<defs><linearGradient id="dnw" x1="0" x2="1" y1="0" y2="0">
+<stop offset="0.0000" stop-color="#FFFFFF" stop-opacity="0.070"/>
+<stop offset="0.7667" stop-color="#FFFFFF" stop-opacity="0.070"/>
+<stop offset="0.8111" stop-color="#FFFFFF" stop-opacity="0.000"/>
+<stop offset="1.0000" stop-color="#FFFFFF" stop-opacity="0.000"/>
+</linearGradient></defs>
+<rect x="0" y="24" width="396.0" height="184.0" fill="url(#dnw)"/>
+<line x1="0" x2="396" y1="146.7" y2="146.7" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1"/>
+<text x="394" y="143.7" text-anchor="end" font-size="21" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">10</text>
+<line x1="0" x2="396" y1="85.3" y2="85.3" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1"/>
+<text x="394" y="82.3" text-anchor="end" font-size="21" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">20</text>
+<circle cx="303.6" cy="23" r="5" fill="#FFB340"/>
+<rect x="4.6" y="189.6" width="23.76" height="18.4" rx="1.5" fill="#5C6B7A"/>
+<rect x="37.6" y="183.5" width="23.76" height="24.5" rx="1.5" fill="#4FA3D8"/>
+<rect x="70.6" y="195.7" width="23.76" height="12.3" rx="1.5" fill="#5C6B7A"/>
+<rect x="103.6" y="189.6" width="23.76" height="18.4" rx="1.5" fill="#5C6B7A"/>
+<rect x="136.6" y="183.5" width="23.76" height="24.5" rx="1.5" fill="#4FA3D8"/>
+<rect x="169.6" y="189.6" width="23.76" height="18.4" rx="1.5" fill="#5C6B7A"/>
+<rect x="202.6" y="189.6" width="23.76" height="18.4" rx="1.5" fill="#5C6B7A"/>
+<rect x="235.6" y="183.5" width="23.76" height="24.5" rx="1.5" fill="#4FA3D8"/>
+<rect x="268.6" y="183.5" width="23.76" height="24.5" rx="1.5" fill="#4FA3D8"/>
+<rect x="301.6" y="183.5" width="23.76" height="24.5" rx="1.5" fill="#4FA3D8"/>
+<rect x="334.6" y="177.3" width="23.76" height="30.7" rx="1.5" fill="#4FA3D8"/>
+<rect x="367.6" y="158.9" width="23.76" height="49.1" rx="1.5" fill="#3FC2A0"/>
+<polyline points="16.5,183.5 49.5,177.3 82.5,189.6 115.5,189.6 148.5,183.5 181.5,195.7 214.5,183.5 247.5,177.3 280.5,171.2 313.5,152.8 346.5,128.3 379.5,116.0" fill="none" stroke="#FFFFFF" stroke-opacity="0.75" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="3.6" x2="29.4" y1="183.5" y2="183.5" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="36.6" x2="62.4" y1="177.3" y2="177.3" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="69.6" x2="95.4" y1="189.6" y2="189.6" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="102.6" x2="128.4" y1="189.6" y2="189.6" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="135.6" x2="161.4" y1="183.5" y2="183.5" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="168.6" x2="194.4" y1="195.7" y2="195.7" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="201.6" x2="227.4" y1="183.5" y2="183.5" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="234.6" x2="260.4" y1="177.3" y2="177.3" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="267.6" x2="293.4" y1="171.2" y2="171.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="300.6" x2="326.4" y1="152.8" y2="152.8" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="333.6" x2="359.4" y1="128.3" y2="128.3" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="366.6" x2="392.4" y1="116.0" y2="116.0" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<g transform="translate(16.5,219.0) rotate(110)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(49.5,219.0) rotate(109)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(82.5,219.0) rotate(133)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(115.5,219.0) rotate(231)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(148.5,219.0) rotate(254)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(181.5,219.0) rotate(246)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(214.5,219.0) rotate(191)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(247.5,219.0) rotate(159)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(280.5,219.0) rotate(145)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(313.5,219.0) rotate(143)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(346.5,219.0) rotate(121)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(379.5,219.0) rotate(115)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<line x1="16.5" x2="16.5" y1="208.0" y2="211.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<line x1="115.5" x2="115.5" y1="208.0" y2="211.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<line x1="214.5" x2="214.5" y1="208.0" y2="211.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<line x1="313.5" x2="313.5" y1="208.0" y2="211.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<text x="115.5" y="240" text-anchor="middle" font-size="22" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">12</text>
+<text x="214.5" y="240" text-anchor="middle" font-size="22" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">15</text>
+<text x="313.5" y="240" text-anchor="middle" font-size="22" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">18</text>
+<line x1="13.2" x2="13.2" y1="18" y2="208.0" stroke="#FFFFFF" stroke-width="1.5"/>
+<text x="17.2" y="16" font-size="22" font-weight="600" fill="#FFFFFF" font-family="-apple-system,system-ui,sans-serif">now</text>
+</svg>

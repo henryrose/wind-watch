@@ -26,32 +26,47 @@ public enum PreviewData {
 }
 
 #Preview("WindChart · phone · all · dark") {
-    WindChart(model: PreviewData.chart(window: .all), style: .phone)
-        .padding(.horizontal, 10)
+    WindChart(model: PreviewData.chart(window: .all), style: .phonePortrait)
+        .padding(.horizontal, 16)
         .frame(width: 402)
         .background(Tokens.card(.dark))
         .environment(\.colorScheme, .dark)
 }
 
 #Preview("WindChart · phone · all · light") {
-    WindChart(model: PreviewData.chart(window: .all, scheme: .light), style: .phone)
-        .padding(.horizontal, 10)
+    WindChart(model: PreviewData.chart(window: .all, scheme: .light), style: .phonePortrait)
+        .padding(.horizontal, 16)
         .frame(width: 402)
         .background(Tokens.card(.light))
         .environment(\.colorScheme, .light)
 }
 
 #Preview("WindChart · watch · next12") {
-    WindChart(model: PreviewData.chart(window: .next12), style: .watch)
+    WindChart(model: PreviewData.chart(window: .next12), style: .watchStrip)
         .frame(width: 198)
         .background(Tokens.groundWatch(.dark))
         .environment(\.colorScheme, .dark)
 }
 
 #Preview("WindChart · watch · short horizon") {
-    WindChart(model: PreviewData.chart(window: .next12, now: PreviewData.lateNow), style: .watch)
+    WindChart(model: PreviewData.chart(window: .next12, now: PreviewData.lateNow), style: .watchStrip)
         .frame(width: 198)
         .background(Tokens.groundWatch(.dark))
+        .environment(\.colorScheme, .dark)
+}
+
+#Preview("WindChart · phone · scrubbing hour 15") {
+    WindChart(model: PreviewData.chart(window: .all), style: .phonePortrait, selection: 15)
+        .padding(.horizontal, 16)
+        .frame(width: 402)
+        .background(Tokens.card(.dark))
+        .environment(\.colorScheme, .dark)
+}
+
+#Preview("WindChart · phone · landscape") {
+    WindChart(model: PreviewData.chart(window: .all), style: .phoneLandscape)
+        .frame(width: 756)
+        .background(Tokens.card(.dark))
         .environment(\.colorScheme, .dark)
 }
 

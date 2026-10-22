@@ -1,12 +1,23 @@
 import Foundation
 import SwiftUI
 
-/// Which hours a chart plots (HANDOFF §6.1).
+/// Which hours a chart plots (HANDOFF §6.1, §6.3).
 public enum ChartWindow: Sendable, Equatable {
     /// Every forecast hour from `start` (phone, web).
     case all
     /// Exactly 12 slots from `floor(nowIndex)` (watch strip); the tail stays empty past the horizon.
     case next12
+    /// Exactly 6 slots from `floor(nowIndex)` (complication mini strip); y domain rounds to 5.
+    case next6
+
+    /// Fixed slot count, or nil for "all hours".
+    public var fixedSlots: Int? {
+        switch self {
+        case .all: nil
+        case .next12: 12
+        case .next6: 6
+        }
+    }
 }
 
 /// One plotted hour.
@@ -33,17 +44,33 @@ public struct HourPoint: Sendable, Hashable, Identifiable {
     }
 }
 
+/// A day-band label: the slot it sits at and the weekday name (HANDOFF §6.4a).
+public struct DayLabel: Sendable, Hashable {
+    public var slot: Int
+    public var name: String
+
+    public init(slot: Int, name: String) {
+        self.slot = slot
+        self.name = name
+    }
+}
+
 /// Everything a chart needs, computed once from a `Forecast`. Views never read the payload.
+/// Mirrors the inputs of `chart_reference.py::svg()`: `start` = `firstIndex`, `n` = `slotCount`,
+/// `ymax`, the twilight stops, sun events, `now` and the horizon edge, all in slot space.
 public struct ChartModel: Sendable {
     public let window: ChartWindow
     public let scheme: ColorScheme
     public let timeZone: TimeZone
+    /// The plotted hours (at most `slotCount`; fewer when the horizon falls inside the window).
     public let points: [HourPoint]
-    /// Window start … last plotted hour + 1 h (`.all`), or exactly 12 h (`.next12`).
-    public let xRange: ClosedRange<Date>
-    /// Number of hour slots across `xRange`.
+    /// Forecast index of slot 0 (`start` in the reference).
+    public let firstIndex: Int
+    /// Number of hour slots across the plot (`n` in the reference).
     public let slotCount: Int
-    /// `0 … yMax` (HANDOFF §6.1), over the plotted hours.
+    /// Window start … window start + `slotCount` hours.
+    public let xRange: ClosedRange<Date>
+    /// `0 … yMax` (HANDOFF §6.1), over the plotted hours; the mini strip rounds to 5 (§6.3).
     public let yMax: Int
     public let twilightStops: [TwilightStop]
     /// Sunrise / sunset instants inside `xRange`.
@@ -51,15 +78,13 @@ public struct ChartModel: Sendable {
     public let nowDate: Date
     /// Fractional hour position of `now` relative to `forecast.start`.
     public let nowIndex: Double
-    /// `lastHour + 1 h` when it lies inside the window, else nil.
-    public let horizonEdge: Date?
-    /// `HRRR ends 05:00`, or `ends 05:00` when the edge is within 12 slots of now; nil when no edge.
-    public let horizonLabel: String?
+    /// Last forecast hour (inclusive).
+    public let horizon: Date
+    /// Slot at which the forecast ends (`lastHour + 1`), when inside the window.
+    public let horizonEdgeSlot: Int?
     public let ageTier: AgeTier
-    /// Draw an arrow on every n-th bar: 1 (watch 12-h strip) or 3 (phone).
-    public let arrowCadence: Int
-    /// Time tick every n hours: 3 (watch) or 6 (phone).
-    public let tickEvery: Int
+    /// First day name at slot 0, then one at each midnight among the plotted hours.
+    public let dayLabels: [DayLabel]
 
     public init(forecast: Forecast, now: Date, window: ChartWindow, scheme: ColorScheme) {
         self.window = window
@@ -68,47 +93,78 @@ public struct ChartModel: Sendable {
         self.nowDate = now
         self.nowIndex = Derivations.nowIndex(forecast: forecast, now: now)
         self.ageTier = AgeTier.compute(fetched: forecast.fetched, now: now)
+        self.horizon = forecast.horizon
 
         let count = forecast.hours.count
         let firstIndex: Int
         let slots: Int
-        switch window {
-        case .all:
+        if let fixed = window.fixedSlots {
+            firstIndex = min(max(Int(nowIndex.rounded(.down)), 0), max(count - 1, 0))
+            slots = fixed
+        } else {
             firstIndex = 0
             slots = count
-            arrowCadence = 3
-            tickEvery = 6
-        case .next12:
-            firstIndex = min(max(Int(nowIndex.rounded(.down)), 0), max(count - 1, 0))
-            slots = 12
-            arrowCadence = 1
-            tickEvery = 3
         }
         let lastExclusive = min(firstIndex + slots, count)
-        let indices = firstIndex < lastExclusive ? Array(firstIndex..<lastExclusive) : []
+        let pastHorizon = window != .all && now > forecast.horizon
+        let indices = (firstIndex < lastExclusive && !pastHorizon) ? Array(firstIndex..<lastExclusive) : []
         self.points = indices.map { i in
             let h = forecast.hours[i]
             return HourPoint(index: i, date: forecast.date(ofHour: i), kn: h.kn, gust: h.gust, dirFrom: h.dirFrom, step: Beaufort.step(kn: h.kn))
         }
+        self.firstIndex = firstIndex
         self.slotCount = slots
         let windowStart = forecast.date(ofHour: firstIndex)
         let range = windowStart...windowStart.addingTimeInterval(TimeInterval(slots) * 3600)
         self.xRange = range
-        self.yMax = Derivations.yDomainMax(hours: indices.map { forecast.hours[$0] })
-        self.twilightStops = Twilight.gradientStops(range: range, sun: forecast.sun)
-        self.sunMarkers = forecast.sun.flatMap { [$0.sunrise, $0.sunset] }.filter { range.contains($0) }.sorted()
-
-        let edge = forecast.horizon.addingTimeInterval(3600)
-        if count > 0, range.contains(edge) {
-            self.horizonEdge = edge
-            let edgeIndex = Double(count)
-            let short = edgeIndex - nowIndex <= 12
-            self.horizonLabel = Derivations.horizonLabel(forecast: forecast, short: short)
+        let plotted = indices.map { forecast.hours[$0] }
+        if window == .next6 {
+            let maxGust = plotted.map(\.gust).max() ?? 0
+            self.yMax = max(5, Int((Double(maxGust) / 5).rounded(.up)) * 5)
         } else {
-            self.horizonEdge = nil
-            self.horizonLabel = nil
+            self.yMax = Derivations.yDomainMax(hours: plotted)
         }
+        // Nothing is drawn past the horizon edge (HANDOFF §6.2: Fri dawn is not drawn): sun days
+        // that begin after the edge are dropped and the shading holds flat.
+        let edgeDate = forecast.horizon.addingTimeInterval(3600)
+        let sun = forecast.sun.filter { $0.civilDawn <= edgeDate }
+        self.twilightStops = Twilight.gradientStops(range: range, sun: sun)
+        self.sunMarkers = sun.flatMap { [$0.sunrise, $0.sunset] }.filter { range.contains($0) && $0 <= edgeDate }.sorted()
+
+        let edgeSlot = count - firstIndex
+        self.horizonEdgeSlot = (count > 0 && edgeSlot >= 0 && edgeSlot <= slots) ? edgeSlot : nil
+
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = forecast.timeZone
+        var days: [DayLabel] = []
+        for (slot, i) in indices.enumerated() {
+            let date = forecast.date(ofHour: i)
+            if slot == 0 || cal.component(.hour, from: date) == 0 {
+                days.append(DayLabel(slot: slot, name: TimeFormat.weekdayShort(date, tz: forecast.timeZone)))
+            }
+        }
+        self.dayLabels = days
     }
+
+    /// Fractional slot position of an instant (0 at the window start).
+    public func slot(of date: Date) -> Double {
+        date.timeIntervalSince(xRange.lowerBound) / 3600
+    }
+
+    /// Hour start at a slot.
+    public func date(ofSlot slot: Int) -> Date {
+        xRange.lowerBound.addingTimeInterval(TimeInterval(slot) * 3600)
+    }
+
+    /// Local hour of day (0…23) of a slot's hour start.
+    public func hourOfDay(slot: Int) -> Int {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = timeZone
+        return cal.component(.hour, from: date(ofSlot: slot))
+    }
+
+    /// `now` in slot space.
+    public var nowSlot: Double { slot(of: nowDate) }
 
     /// Whether the now marker falls inside the plotted range.
     public var showsNow: Bool { xRange.contains(nowDate) }
@@ -125,5 +181,10 @@ public struct ChartModel: Sendable {
                 : Color.black.opacity(0.08 * (1 - stop.value))
             return Gradient.Stop(color: color, location: stop.fraction)
         }
+    }
+
+    /// Point for a forecast index, when plotted.
+    public func point(index: Int) -> HourPoint? {
+        points.first { $0.index == index }
     }
 }

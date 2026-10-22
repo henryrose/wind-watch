@@ -32,9 +32,20 @@ public enum Derivations {
         return short ? "ends \(time)" : "HRRR ends \(time)"
     }
 
-    /// `ends Fri 05:00` — the phone header's trailing horizon fragment.
+    /// `ends Fri 5am` — the phone/web header suffix and chart edge label (HANDOFF §6.4a).
     public static func horizonWeekdayLabel(forecast: Forecast, tz: TimeZone? = nil) -> String {
-        "ends " + TimeFormat.weekdayHHMM(forecast.horizon, tz: tz ?? forecast.timeZone)
+        "ends " + TimeFormat.weekdayHour12(forecast.horizon, tz: tz ?? forecast.timeZone)
+    }
+
+    /// Chart card title: `Wed 9am → Fri 5am` (HANDOFF §6.4a).
+    public static func chartTitle(forecast: Forecast, tz: TimeZone? = nil) -> String {
+        let zone = tz ?? forecast.timeZone
+        return TimeFormat.weekdayHour12(forecast.start, tz: zone) + " → " + TimeFormat.weekdayHour12(forecast.horizon, tz: zone)
+    }
+
+    /// Scrub readout label for hour `index`: `Thu 12am · midnight`.
+    public static func scrubLabel(forecast: Forecast, index: Int, tz: TimeZone? = nil) -> String {
+        TimeFormat.scrubLabel(forecast.date(ofHour: index), tz: tz ?? forecast.timeZone)
     }
 
     /// Period of the local day used by `relativeTimePhrase`.

@@ -16,7 +16,7 @@ let package = Package(
         .testTarget(
             name: "WindCoreTests",
             dependencies: ["WindCore"],
-            resources: [.copy("Resources/payload-reference.json")],
+            resources: [.copy("Resources/payload-reference.json"), .copy("Resources/charts")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
     ]

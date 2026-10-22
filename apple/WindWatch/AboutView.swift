@@ -1,60 +1,65 @@
 import SwiftUI
 import WindCore
 
-/// HANDOFF §8.4: model explanation, Beaufort legend, attribution.
+/// HANDOFF §8.4 / `Phone-About.dc.html`: three cards — the model, the Beaufort legend
+/// (step · swatch bar · knots), attribution with the version line.
 struct AboutView: View {
     @Environment(\.colorScheme) private var scheme
 
     private var version: String {
         let info = Bundle.main.infoDictionary ?? [:]
         let short = info["CFBundleShortVersionString"] as? String ?? "0"
-        let build = info["CFBundleVersion"] as? String ?? "0"
-        return "Wind Watch \(short) (\(build))"
+        return "Wind Watch \(short) · built for one bay."
     }
+
+    /// Body copy on cards is a touch brighter than `ink.body` in the design (`#E6E9ED`).
+    private var cardBody: Color { scheme == .dark ? Color(hex: "#E6E9ED") : Tokens.inkPrimary(scheme) }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("About")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(Tokens.inkPrimary(scheme))
-                card {
-                    Text("The model")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Tokens.inkPrimary(scheme))
-                    Text("HRRR is NOAA's 3 km hourly forecast model, refreshed every hour and reaching 18 hours ahead, 48 at 00, 06, 12 and 18 UTC. Open-Meteo serves the grid point over Port Townsend Bay, picked so the wind is for water rather than shore. The app shows the latest run as it is and stops where the run ends; it never pads or blends.")
-                        .font(.system(size: 15))
-                        .foregroundStyle(Tokens.inkBody(scheme))
+            VStack(alignment: .leading, spacing: 18) {
+                BackHeader(title: "About")
+                card(spacing: 8) {
+                    sectionLabel("The model")
+                    Text("HRRR is NOAA's 3 km hourly-updating forecast for the continental US; each run looks 18 hours ahead, and every 6 hours a run looks 48. Wind Watch shows the latest run that reaches furthest, so the chart's horizon moves between about 40 and 47 hours as runs come and go. The run label (\"HRRR 15Z\") is the model's start time in UTC; \"as of\" is when this device last got new data.")
+                        .font(.system(size: 17))
+                        .lineSpacing(3)
+                        .foregroundStyle(cardBody)
                 }
-                card {
-                    Text("Beaufort colours")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Tokens.inkPrimary(scheme))
-                    ForEach(legendSteps, id: \.self) { step in
-                        HStack(spacing: 12) {
-                            BeaufortChip(step: step, scheme: scheme)
-                                .frame(width: 36, alignment: .leading)
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(Beaufort.color(step: step, scheme: scheme))
-                                .frame(width: 40, height: 12)
-                            Text(Beaufort.rangeText(step: step) + " kn")
-                                .font(.system(size: 15).monospacedDigit())
-                                .foregroundStyle(Tokens.inkBody(scheme))
-                            Spacer()
+                card(spacing: 10) {
+                    sectionLabel("Beaufort colours · sustained wind, knots")
+                    Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 6) {
+                        ForEach(legendRows, id: \.label) { row in
+                            GridRow {
+                                Text(row.label)
+                                    .font(.system(size: 15, weight: .bold).monospacedDigit())
+                                    .foregroundStyle(Tokens.inkPrimary(scheme))
+                                    .frame(width: 36, alignment: .leading)
+                                swatch(step: row.step)
+                                Text(row.range)
+                                    .font(.system(size: 15).monospacedDigit())
+                                    .foregroundStyle(Tokens.inkSecondary(scheme))
+                                    .frame(width: 70, alignment: .trailing)
+                            }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Beaufort \(row.label), \(row.range) knots")
                         }
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("Beaufort \(step), \(Beaufort.rangeText(step: step)) knots")
                     }
-                    Text("Bars are sustained wind in knots, coloured by Beaufort step. The line with tick caps is the gust. Arrows point where the wind blows to; text says where it comes from.")
+                    Text("Gusts are the white line with a cap over each bar. Arrows point where the wind is going.")
                         .font(.system(size: 13))
                         .foregroundStyle(Tokens.inkSecondary(scheme))
-                        .padding(.top, 4)
                 }
-                card {
-                    Text("Weather data by Open-Meteo.com · CC BY 4.0")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Tokens.inkPrimary(scheme))
-                    Text(version)
+                card(spacing: 6) {
+                    HStack(spacing: 0) {
+                        Text("Weather data by ")
+                            .foregroundStyle(cardBody)
+                        Link("Open-Meteo.com", destination: URL(string: "https://open-meteo.com")!)
+                            .foregroundStyle(Color(hex: "#9BB7D4"))
+                        Text(" · CC BY 4.0")
+                            .foregroundStyle(cardBody)
+                    }
+                    .font(.system(size: 15))
+                    Text("Sunrise and twilight computed on device. \(version)")
                         .font(.system(size: 13).monospacedDigit())
                         .foregroundStyle(Tokens.inkSecondary(scheme))
                 }
@@ -63,14 +68,40 @@ struct AboutView: View {
             .padding(.bottom, 24)
         }
         .background(Tokens.ground(scheme))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Tokens.ground(scheme), for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
-    private var legendSteps: [Int] { [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
+    private struct LegendRow { let label: String; let step: Int; let range: String }
 
-    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private var legendRows: [LegendRow] {
+        [LegendRow(label: "0–1", step: 1, range: "< 4")]
+            + (2...9).map { LegendRow(label: "\($0)", step: $0, range: Beaufort.rangeText(step: $0)) }
+            + [LegendRow(label: "10+", step: 10, range: "48+")]
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(.system(size: 13, weight: .semibold))
+            .tracking(0.8)
+            .foregroundStyle(Tokens.inkSecondary(scheme))
+    }
+
+    /// Full-width 18 pt swatch bar, radius 5; `bft.10` keeps its 2 pt `bft.8` inset stroke.
+    private func swatch(step: Int) -> some View {
+        let token = Beaufort.colorToken(step: step)
+        return RoundedRectangle(cornerRadius: 5, style: .continuous)
+            .fill(token.color(for: scheme))
+            .overlay {
+                if let stroke = token.strokeColor(for: scheme) {
+                    RoundedRectangle(cornerRadius: 5, style: .continuous).inset(by: 1).stroke(stroke, lineWidth: 2)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 18)
+    }
+
+    private func card<Content: View>(spacing: CGFloat, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: spacing) {
             content()
         }
         .padding(16)

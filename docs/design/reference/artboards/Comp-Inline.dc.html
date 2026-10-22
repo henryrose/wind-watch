@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inline complication states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#000000}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 760px; height: 640px; box-sizing: border-box; padding: 32px 36px; background: #000000; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px">
+  <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">accessoryInline · one Text + one Image · 8-point compass arrows (SF Symbols arrow.*)</div>
+
+  <div style="display: flex; flex-direction: column; gap: 18px">
+    <!-- each shown inside a mock face top band -->
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="width: 416px; height: 72px; box-sizing: border-box; border-radius: 36px 36px 10px 10px; background: #0E1116; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 28px; line-height: 32px; font-weight: 600; font-variant-numeric: tabular-nums; font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <svg width="26" height="26" viewBox="-13 -13 26 26" aria-hidden="true"><g transform="rotate(90)"><path d="M0,-11 L8.4,11 L0,4.4 L-8.4,11 Z" fill="#FFFFFF"/></g></svg>
+          <span>15 G25 kn</span>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #9AA4B1">Fresh — "arrow.right 15 G25 kn". 283° from → blowing to 103° → snaps to E.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="width: 416px; height: 72px; box-sizing: border-box; border-radius: 36px 36px 10px 10px; background: #0E1116; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 28px; line-height: 32px; font-weight: 600; font-variant-numeric: tabular-nums; font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <svg width="26" height="26" viewBox="-13 -13 26 26" aria-hidden="true"><g transform="rotate(90)"><path d="M0,-11 L8.4,11 L0,4.4 L-8.4,11 Z" fill="#FFFFFF"/></g></svg>
+          <span>15 G25 kn · 13:05</span>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #9AA4B1">Stale 2 h — the fetch time is appended. Inline is single-colour on most faces, so the words do the amber's job.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="width: 416px; height: 72px; box-sizing: border-box; border-radius: 36px 36px 10px 10px; background: #0E1116; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 28px; line-height: 32px; font-weight: 600; font-variant-numeric: tabular-nums; color: #B8BEC7; font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <svg width="26" height="26" viewBox="-13 -13 26 26" aria-hidden="true"><g transform="rotate(90)"><path d="M0,-11 L8.4,11 L0,4.4 L-8.4,11 Z" fill="#B8BEC7"/></g></svg>
+          <span>15 G25 kn · Tue 13:05</span>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #9AA4B1">Old 8 h — day name added; 72 % ink where the face allows it.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="width: 416px; height: 72px; box-sizing: border-box; border-radius: 36px 36px 10px 10px; background: #0E1116; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 28px; line-height: 32px; font-weight: 600; color: #9AA4B1; font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M4,13 Q13,4 22,13" fill="none" stroke="#9AA4B1" stroke-width="2.5" stroke-linecap="round"/><path d="M8,17 Q13,12 18,17" fill="none" stroke="#9AA4B1" stroke-width="2.5" stroke-linecap="round"/><circle cx="13" cy="21.5" r="2" fill="#9AA4B1"/></svg>
+          <span>Wind — open app</span>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #9AA4B1">Past horizon — no numbers. The word "Wind" is the only place the product name appears on a face.</div>
+    </div>
+  </div>
+
+  <div style="font-size: 12px; color: #9AA4B1; line-height: 1.5; max-width: 660px">Why 8 points: inline complications can't rotate an Image, so the arrow snaps to the nearest 45° using the arrow.up / arrow.up.right / arrow.right… symbol family. The rectangular and circular rotate a Path to the exact degree. Both point TO.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

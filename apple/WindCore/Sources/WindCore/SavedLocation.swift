@@ -28,7 +28,7 @@ public struct SavedLocation: Codable, Sendable, Hashable {
 
     public static func coordinateText(lat: Double, lon: Double) -> String {
         func f(_ v: Double) -> String {
-            let s = String(format: "%.2f", abs(v))
+            let s = String(format: "%.3f", abs(v))
             return v < 0 ? "\u{2212}" + s : s
         }
         return "\(f(lat)), \(f(lon))"

@@ -23,6 +23,7 @@
 		489A22C83A7CA9794A022654 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDEBA8472F1941D436D61CB4 /* AboutView.swift */; };
 		511B228A64B8B935F87BE831 /* HourTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BC4826A662A28196C080F90 /* HourTable.swift */; };
 		519D6E660E8B5007C90178CE /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5BBA5569E5CE275A4A381608 /* WindCore */; };
+		52CB4FBB699EB6A9749DAE5F /* BackHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED2CD3A442733A184A5A226 /* BackHeader.swift */; };
 		61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
 		716B8BAB0159431760EAA5FF /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
 		722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */; };
@@ -37,6 +38,7 @@
 		B8306C8D45C5605DF91F7058 /* ComplicationsDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA2B74083CD5079D262BBAD /* ComplicationsDebugView.swift */; };
 		CC06D82569E978FD7657CF65 /* WindEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3080A509D70312CE6DCFE398 /* WindEntry.swift */; };
 		CC1F63308295E0255808820B /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 000CADC025E3E5FA5D702086 /* WindCore */; };
+		D30BE4A2406DE3ACE044F407 /* LandscapeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A455B00C00944E83C98B66 /* LandscapeView.swift */; };
 		E2C4CB2F8686BDA23195A78F /* CircularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */; };
 		E89AB377FED9C9186DFAA7DA /* LocationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */; };
 		EB23BF4BA21F5D58CBB6D66F /* RectangularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */; };
@@ -92,8 +94,10 @@
 		2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		3080A509D70312CE6DCFE398 /* WindEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindEntry.swift; sourceTree = "<group>"; };
 		3BC4826A662A28196C080F90 /* HourTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HourTable.swift; sourceTree = "<group>"; };
+		42A455B00C00944E83C98B66 /* LandscapeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeView.swift; sourceTree = "<group>"; };
 		4343CAF9F8A29B107D6A3259 /* StripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripView.swift; sourceTree = "<group>"; };
 		4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularComplicationView.swift; sourceTree = "<group>"; };
+		4ED2CD3A442733A184A5A226 /* BackHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackHeader.swift; sourceTree = "<group>"; };
 		5A731493680C28DF215DADD4 /* WindCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WindCore; path = WindCore; sourceTree = SOURCE_ROOT; };
 		5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangularComplicationView.swift; sourceTree = "<group>"; };
 		6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineComplicationView.swift; sourceTree = "<group>"; };
@@ -220,9 +224,11 @@
 			children = (
 				CDEBA8472F1941D436D61CB4 /* AboutView.swift */,
 				8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */,
+				4ED2CD3A442733A184A5A226 /* BackHeader.swift */,
 				19FB8ABF9DBA6ED958ABFEB5 /* HeaderView.swift */,
 				3BC4826A662A28196C080F90 /* HourTable.swift */,
 				87B59470AFA17D03F69749A0 /* Info.plist */,
+				42A455B00C00944E83C98B66 /* LandscapeView.swift */,
 				D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */,
 				87E90582FC4E07F44513EF7A /* MainView.swift */,
 				96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */,
@@ -427,8 +433,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				489A22C83A7CA9794A022654 /* AboutView.swift in Sources */,
+				52CB4FBB699EB6A9749DAE5F /* BackHeader.swift in Sources */,
 				B43579891702CA7D0145B38D /* HeaderView.swift in Sources */,
 				511B228A64B8B935F87BE831 /* HourTable.swift in Sources */,
+				D30BE4A2406DE3ACE044F407 /* LandscapeView.swift in Sources */,
 				E89AB377FED9C9186DFAA7DA /* LocationSettingsView.swift in Sources */,
 				61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */,
 				73B96DE1EA8356B696B6A71A /* MainView.swift in Sources */,
@@ -460,7 +468,7 @@
 				CODE_SIGN_ENTITLEMENTS = WindWatch/WindWatch.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = WindWatch/Info.plist;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -479,7 +487,7 @@
 				CODE_SIGN_ENTITLEMENTS = WindWatch/WindWatch.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = WindWatch/Info.plist;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

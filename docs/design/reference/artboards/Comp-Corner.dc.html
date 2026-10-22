@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Corner complication gauge</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#000000}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 760px; height: 640px; box-sizing: border-box; padding: 32px 36px; background: #000000; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px">
+  <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">accessoryCorner · inner label + outer Beaufort gauge (stepped segments) · nice-to-have</div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, 208px); gap: 20px 24px">
+    <!-- fresh: corner piece of a 46mm face, top-left -->
+    <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+      <svg width="208" height="208" viewBox="0 0 208 208" role="img" aria-label="Corner gauge, 15 knots Beaufort 4" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+        <path d="M0,208 L0,96 Q0,0 96,0 L208,0 L208,208 Z" fill="#0E1116"/>
+        <!-- 12 stepped segments on an arc r=88 centred (104,104), from 180° to 270° (left to top) -->
+        <path d="M18,104 A86,86 0 0 1 20.9,82.4" fill="none" stroke="#5C6B7A" stroke-width="7" stroke-linecap="butt"/>
+        <path d="M22.5,78 A86,86 0 0 1 30.6,58.1" fill="none" stroke="#5C6B7A" stroke-width="7"/>
+        <path d="M33,54.5 A86,86 0 0 1 45.7,41.7" fill="none" stroke="#4FA3D8" stroke-width="7"/>
+        <path d="M49,38.5 A86,86 0 0 1 64.6,27.2" fill="none" stroke="#3FC2A0" stroke-width="7"/>
+        <path d="M68.5,25 A86,86 0 0 1 86.2,19.8" fill="none" stroke="#8DD44A" stroke-width="7"/>
+        <path d="M90.5,19 A86,86 0 0 1 104,18" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="7"/>
+        <path d="M104,18 A86,86 0 0 1 126,20.8" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="7"/>
+        <path d="M130,22 A86,86 0 0 1 146,30" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="7"/>
+        <!-- pointer at B4 end -->
+        <circle cx="88" cy="19.5" r="6" fill="#FFFFFF"/>
+        <text x="62" y="86" text-anchor="middle" font-size="40" font-weight="800" fill="#FFFFFF">15</text>
+        <g transform="translate(62,108) rotate(103)"><path d="M0,-8 L6,8 L0,3.2 L-6,8 Z" fill="#FFFFFF"/></g>
+        <text x="62" y="138" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF" fill-opacity="0.85">G25</text>
+      </svg>
+      <div style="font-size: 12px; color: #9AA4B1; text-align: center">Fresh — 8 visible steps (B0–7), white dot = now</div>
+    </div>
+
+    <!-- stale -->
+    <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+      <svg width="208" height="208" viewBox="0 0 208 208" role="img" aria-label="Corner gauge, stale" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+        <path d="M0,208 L0,96 Q0,0 96,0 L208,0 L208,208 Z" fill="#0E1116"/>
+        <path d="M18,104 A86,86 0 0 1 146,30" fill="none" stroke="#FFB340" stroke-width="7" stroke-dasharray="8 7"/>
+        <circle cx="88" cy="19.5" r="6" fill="#FFB340"/>
+        <text x="62" y="86" text-anchor="middle" font-size="40" font-weight="800" fill="#FFFFFF">15</text>
+        <g transform="translate(62,108) rotate(103)"><path d="M0,-8 L6,8 L0,3.2 L-6,8 Z" fill="#FFFFFF"/></g>
+        <text x="62" y="138" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF" fill-opacity="0.85">G25</text>
+      </svg>
+      <div style="font-size: 12px; color: #9AA4B1; text-align: center">Stale / old — gauge collapses to an amber dashed arc, dot keeps the value</div>
+    </div>
+
+    <!-- past horizon -->
+    <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+      <svg width="208" height="208" viewBox="0 0 208 208" role="img" aria-label="Corner gauge, no forecast" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+        <path d="M0,208 L0,96 Q0,0 96,0 L208,0 L208,208 Z" fill="#0E1116"/>
+        <path d="M18,104 A86,86 0 0 1 146,30" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="7"/>
+        <text x="62" y="86" text-anchor="middle" font-size="40" font-weight="800" fill="#5C6B7A">—</text>
+        <text x="62" y="122" text-anchor="middle" font-size="16" font-weight="700" fill="#9AA4B1" font-family="-apple-system, system-ui, sans-serif">open app</text>
+      </svg>
+      <div style="font-size: 12px; color: #9AA4B1; text-align: center">Past horizon</div>
+    </div>
+  </div>
+
+  <div style="font-size: 12px; color: #9AA4B1; line-height: 1.5; max-width: 680px">Gauge = 8 equal arc segments for B0–7 (B8+ is off the gauge on purpose: if the dot ever pins at the end, that is the alarm). Stepped segments make the ramp itself the scale, so the colour, the dot position and the number all agree. In tinted mode the segments become 8 tint steps of increasing opacity; the dot stays full ink.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

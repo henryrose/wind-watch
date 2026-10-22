@@ -2,7 +2,8 @@ import MapKit
 import SwiftUI
 import WindCore
 
-/// HANDOFF §8.3. The default card is always one tap and never moves.
+/// HANDOFF §8.3 / `Phone-Location.dc.html`. The default card is always one tap and never moves;
+/// the custom card holds the name, the selection ring, the search field, the map and the legend.
 struct LocationSettingsView: View {
     @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
@@ -26,33 +27,18 @@ struct LocationSettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Location")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(Tokens.inkPrimary(scheme))
+            VStack(alignment: .leading, spacing: 16) {
+                BackHeader(title: "Location")
                 defaultCard
-                Text("The default is the HRRR grid point over Port Townsend Bay, chosen so the forecast is for water, not the shore.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Tokens.inkSecondary(scheme))
+                caption("One custom location. Pick the default above at any time with one tap; it never moves.")
                 customCard
-                searchField
-                if let searchError {
-                    Text(searchError)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Tokens.trustAmber(scheme))
-                }
-                map
-                legend
-                Text("Snapped to the nearest HRRR cell on save.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Tokens.inkSecondary(scheme))
+                caption("The custom point is snapped to the nearest HRRR grid cell (3 km) when saved; the name is yours.")
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
         }
         .background(Tokens.ground(scheme))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Tokens.ground(scheme), for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             if let custom = model.preferences.custom {
                 camera = .region(MKCoordinateRegion(
@@ -91,55 +77,73 @@ struct LocationSettingsView: View {
     }
 
     private var customCard: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                if let custom {
-                    Text(custom.name)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Tokens.inkPrimary(scheme))
-                        .lineLimit(1)
-                    Text("Custom · \(custom.coordinateText)")
-                        .font(.system(size: 13).monospacedDigit())
-                        .foregroundStyle(Tokens.inkSecondary(scheme))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    if let custom {
+                        Text(custom.name)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Tokens.inkPrimary(scheme))
+                            .lineLimit(1)
+                        Text(custom.coordinateText)
+                            .font(.system(size: 13).monospacedDigit())
+                            .foregroundStyle(Tokens.inkSecondary(scheme))
+                    } else {
+                        Text("Custom location")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Tokens.inkDisabled(scheme))
+                        Text("Search below or long-press the map")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Tokens.inkSecondary(scheme))
+                    }
+                }
+                Spacer()
+                if hasUnsavedCandidate, let candidate {
+                    Button("Save") { model.saveCustom(candidate); self.candidate = nil }
+                        .font(.system(size: 15, weight: .semibold))
+                        .buttonStyle(.borderedProminent)
+                        .tint(Tokens.trustAmber(scheme))
+                        .foregroundStyle(Color.black)
+                        .frame(minHeight: 44)
                 } else {
-                    Text("Custom location")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Tokens.inkDisabled(scheme))
-                    Text("Search below or long-press the map")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                    Button {
+                        model.selectCustom()
+                    } label: {
+                        selectionMark(selected: customIsSelected)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(model.preferences.custom == nil)
+                    .accessibilityLabel(custom.map { "Use \($0.name)" } ?? "Use custom location")
                 }
             }
-            Spacer()
-            if hasUnsavedCandidate, let candidate {
-                Button("Save") { model.saveCustom(candidate); self.candidate = nil }
-                    .font(.system(size: 15, weight: .semibold))
-                    .buttonStyle(.borderedProminent)
-                    .tint(Tokens.trustAmber(scheme))
-                    .foregroundStyle(Color.black)
-                    .frame(minHeight: 44)
-            } else {
-                Button {
-                    model.selectCustom()
-                } label: {
-                    selectionMark(selected: customIsSelected)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(model.preferences.custom == nil)
-                .accessibilityLabel("Use custom location")
+            searchField
+            if let searchError {
+                Text(searchError)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Tokens.trustAmber(scheme))
             }
+            map
+            legend
         }
         .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
+    private func caption(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13))
+            .foregroundStyle(Tokens.inkSecondary(scheme))
+            .padding(.horizontal, 4)
+    }
+
+    /// Filled check in the default blue (`bft.2`) when selected, an empty ring otherwise.
     private func selectionMark(selected: Bool) -> some View {
         Image(systemName: selected ? "checkmark.circle.fill" : "circle")
             .font(.system(size: 24, weight: .semibold))
-            .foregroundStyle(selected ? Tokens.trustAmber(scheme) : Tokens.inkDisabled(scheme))
+            .foregroundStyle(selected ? Self.defaultBlue : Tokens.inkSecondary(scheme))
     }
 
     // MARK: Search
@@ -159,7 +163,6 @@ struct LocationSettingsView: View {
         .padding(.horizontal, 12)
         .frame(height: 44)
         .background(Tokens.ground(scheme), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Tokens.hairline(scheme), lineWidth: 1))
     }
 
     private func search() async {
@@ -241,11 +244,11 @@ struct LocationSettingsView: View {
         .overlay(alignment: .bottomLeading) {
             Text("Long-press to pin")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(Tokens.inkBody(.dark))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.black.opacity(0.6), in: Capsule())
-                .padding(10)
+                .background(Tokens.ground(.dark).opacity(0.85), in: Capsule())
+                .padding(12)
         }
         .accessibilityLabel("Map. Long-press to drop a custom pin.")
     }
@@ -259,14 +262,14 @@ struct LocationSettingsView: View {
     }
 
     private var legend: some View {
-        HStack(spacing: 16) {
-            HStack(spacing: 6) {
+        HStack(spacing: 18) {
+            HStack(spacing: 10) {
                 Circle().fill(Self.defaultBlue).frame(width: 10, height: 10)
-                Text("Default")
+                Text("default")
             }
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 Circle().fill(Tokens.trustAmber(.dark)).frame(width: 10, height: 10)
-                Text("Custom")
+                Text("custom pin")
             }
         }
         .font(.system(size: 13))

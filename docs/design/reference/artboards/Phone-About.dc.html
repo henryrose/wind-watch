@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iPhone about screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B0E12}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 402px; height: 874px; box-sizing: border-box; padding: 62px 16px 0 16px; background: #0B0E12; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+  <div style="display: flex; align-items: center; gap: 8px">
+    <a href="Phone-Location.dc.html" aria-label="Back" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><path d="M10,2 L2,10 L10,18" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <div style="font-size: 28px; line-height: 34px; font-weight: 700">About</div>
+  </div>
+
+  <div style="border-radius: 14px; background: #171C23; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+    <div style="font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">The model</div>
+    <div style="font-size: 17px; line-height: 23px; color: #E6E9ED">HRRR is NOAA's 3 km hourly-updating forecast for the continental US; each run looks 18 hours ahead, and every 6 hours a run looks 48. Wind Watch shows the latest run that reaches furthest, so the chart's horizon moves between about 40 and 47 hours as runs come and go. The run label ("HRRR 15Z") is the model's start time in UTC; "as of" is when this device last got new data.</div>
+  </div>
+
+  <div style="border-radius: 14px; background: #171C23; padding: 16px; display: flex; flex-direction: column; gap: 10px; font-variant-numeric: tabular-nums">
+    <div style="font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">Beaufort colours · sustained wind, knots</div>
+    <div style="display: grid; grid-template-columns: 36px 1fr 70px; gap: 6px 10px; align-items: center; font-size: 15px">
+      <span style="font-weight: 700">0–1</span><span style="height: 18px; border-radius: 5px; background: #5C6B7A"></span><span style="color: #9AA4B1; text-align: right">&lt; 4</span>
+      <span style="font-weight: 700">2</span><span style="height: 18px; border-radius: 5px; background: #4FA3D8"></span><span style="color: #9AA4B1; text-align: right">4–6</span>
+      <span style="font-weight: 700">3</span><span style="height: 18px; border-radius: 5px; background: #3FC2A0"></span><span style="color: #9AA4B1; text-align: right">7–10</span>
+      <span style="font-weight: 700">4</span><span style="height: 18px; border-radius: 5px; background: #8DD44A"></span><span style="color: #9AA4B1; text-align: right">11–16</span>
+      <span style="font-weight: 700">5</span><span style="height: 18px; border-radius: 5px; background: #F2D13D"></span><span style="color: #9AA4B1; text-align: right">17–21</span>
+      <span style="font-weight: 700">6</span><span style="height: 18px; border-radius: 5px; background: #F59A2B"></span><span style="color: #9AA4B1; text-align: right">22–27</span>
+      <span style="font-weight: 700">7</span><span style="height: 18px; border-radius: 5px; background: #EC5A2A"></span><span style="color: #9AA4B1; text-align: right">28–33</span>
+      <span style="font-weight: 700">8</span><span style="height: 18px; border-radius: 5px; background: #E0245E"></span><span style="color: #9AA4B1; text-align: right">34–40</span>
+      <span style="font-weight: 700">9</span><span style="height: 18px; border-radius: 5px; background: #A32CD1"></span><span style="color: #9AA4B1; text-align: right">41–47</span>
+      <span style="font-weight: 700">10+</span><span style="height: 18px; border-radius: 5px; background: #F5F5F7; box-shadow: inset 0 0 0 2px #E0245E"></span><span style="color: #9AA4B1; text-align: right">48+</span>
+    </div>
+    <div style="font-size: 13px; line-height: 18px; color: #9AA4B1">Gusts are the white line with a cap over each bar. Arrows point where the wind is going.</div>
+  </div>
+
+  <div style="border-radius: 14px; background: #171C23; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+    <div style="font-size: 15px; line-height: 20px; color: #E6E9ED">Weather data by <a href="https://open-meteo.com" style="color: #9BB7D4; text-decoration: none">Open-Meteo.com</a> · CC BY 4.0</div>
+    <div style="font-size: 13px; line-height: 18px; color: #9AA4B1">Sunrise and twilight computed on device. Wind Watch 1.0 · built for one bay.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

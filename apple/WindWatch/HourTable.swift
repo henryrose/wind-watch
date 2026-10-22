@@ -1,8 +1,9 @@
 import SwiftUI
 import WindCore
 
-/// HANDOFF §8.1 item 5: columns `56 | 56 | 56 | 1fr | 36`, 44 pt rows, hairlines, a sticky day
-/// header at each day change. From AX1 the row reflows to two lines.
+/// HANDOFF §8.1 item 5 / `Phone-Main.dc.html`: columns `56 | 56 | 56 | 1fr | 36` (gap 8, 8 pt
+/// inner padding), 44 pt rows, row rules in `card`, a sticky day header (`Wed · kn · gust · from
+/// · B`) at each day change. From AX1 the row reflows to two lines (`Phone-Table-LargeType`).
 struct HourTable: View {
     let forecast: Forecast
     let now: Date
@@ -44,7 +45,7 @@ struct HourTable: View {
                     row(index: i)
                         .overlay(alignment: .bottom) {
                             Rectangle()
-                                .fill(Tokens.hairline(scheme))
+                                .fill(Tokens.card(scheme))
                                 .frame(height: 1)
                         }
                 }
@@ -56,21 +57,26 @@ struct HourTable: View {
     }
 
     private func header(_ day: Day) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
             Text(day.name).frame(width: reflow ? nil : 56, alignment: .leading)
             if !reflow {
-                Text("kn").frame(width: 56, alignment: .leading)
-                Text("gust").frame(width: 56, alignment: .leading)
-                Text("from").frame(maxWidth: .infinity, alignment: .leading)
-                Text("Bft").frame(width: 36, alignment: .trailing)
+                Text("kn").frame(width: 56, alignment: .trailing)
+                Text("gust").frame(width: 56, alignment: .trailing)
+                Text("from").padding(.leading, 10).frame(maxWidth: .infinity, alignment: .leading)
+                Text("B").frame(width: 36, alignment: .trailing)
             } else {
                 Spacer()
             }
         }
         .font(Tokens.tableHeaderFont)
         .foregroundStyle(Tokens.inkSecondary(scheme))
-        .frame(minHeight: 28)
+        .padding(.horizontal, 8)
+        .padding(.top, 2)
+        .padding(.bottom, 6)
         .background(Tokens.ground(scheme))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Tokens.hairline(scheme)).frame(height: 1)
+        }
     }
 
     @ViewBuilder
@@ -82,31 +88,41 @@ struct HourTable: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(TimeFormat.weekdayHHMM(date, tz: forecast.timeZone))
-                        .font(.system(.body, design: .default, weight: .regular).monospacedDigit())
+                        .font(.system(.body, weight: .medium).monospacedDigit())
                         .foregroundStyle(Tokens.inkSecondary(scheme))
                     Spacer()
-                    BeaufortChip(step: step, scheme: scheme)
+                    Text("\(step)")
+                        .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
+                        .foregroundStyle(Color.black)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .frame(minWidth: 44)
+                        .background(Beaufort.color(step: step, scheme: scheme), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .oldStateDesaturation(tier)
+                        .accessibilityLabel("Beaufort \(step)")
                 }
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     Text("\(h.kn) kn")
-                        .font(.system(.body, design: .rounded, weight: .bold).monospacedDigit())
+                        .font(.system(.body, design: .rounded, weight: .heavy).monospacedDigit())
                         .foregroundStyle(numberInk)
                     Text("G \(h.gust)")
-                        .font(.system(.body).monospacedDigit())
+                        .font(.system(.body, weight: .semibold).monospacedDigit())
                         .foregroundStyle(Tokens.inkBody(scheme))
-                    HStack(spacing: 4) {
-                        ArrowView(dirFrom: h.dirFrom, size: 14, color: numberInk)
+                    Spacer()
+                    HStack(spacing: 8) {
+                        ArrowView(dirFrom: h.dirFrom, size: 18, color: numberInk)
                         Text(Compass.label(from: h.dirFrom))
                             .font(.system(.body, weight: .semibold))
                             .foregroundStyle(numberInk)
                     }
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(rowLabel(h, date))
         } else {
-            HStack(spacing: 0) {
+            HStack(spacing: 8) {
                 Text(TimeFormat.hhmm(date, tz: forecast.timeZone))
                     .font(.system(.body).monospacedDigit())
                     .foregroundStyle(Tokens.inkSecondary(scheme))
@@ -114,22 +130,24 @@ struct HourTable: View {
                 Text("\(h.kn)")
                     .font(.system(.body, design: .rounded, weight: .bold).monospacedDigit())
                     .foregroundStyle(numberInk)
-                    .frame(width: 56, alignment: .leading)
+                    .frame(width: 56, alignment: .trailing)
                 Text("\(h.gust)")
                     .font(.system(.body).monospacedDigit())
                     .foregroundStyle(Tokens.inkBody(scheme))
-                    .frame(width: 56, alignment: .leading)
-                HStack(spacing: 6) {
+                    .frame(width: 56, alignment: .trailing)
+                HStack(spacing: 8) {
                     ArrowView(dirFrom: h.dirFrom, size: 14, color: numberInk)
-                    Text(Compass.fromText(dirFrom: h.dirFrom))
-                        .font(.system(.body, weight: .semibold))
+                    Text(Compass.label(from: h.dirFrom))
+                        .font(.system(.body))
                         .foregroundStyle(numberInk)
                 }
+                .padding(.leading, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 BeaufortChip(step: step, scheme: scheme)
                     .oldStateDesaturation(tier)
                     .frame(width: 36, alignment: .trailing)
             }
+            .padding(.horizontal, 8)
             .frame(minHeight: 44)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(rowLabel(h, date))

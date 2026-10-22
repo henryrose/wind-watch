@@ -39,7 +39,7 @@ struct ReferenceValueTests {
         #expect(Derivations.horizonLabel(forecast: f, tz: Fixture.la) == "HRRR ends 05:00")
         #expect(f.horizonLabel == "HRRR ends 05:00")
         #expect(Derivations.horizonLabel(forecast: f, short: true) == "ends 05:00")
-        #expect(Derivations.horizonWeekdayLabel(forecast: f) == "ends Fri 05:00")
+        #expect(Derivations.horizonWeekdayLabel(forecast: f) == "ends Fri 5am")
     }
 
     @Test func peakGustChip() throws {

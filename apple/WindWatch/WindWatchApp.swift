@@ -45,6 +45,13 @@ struct WindWatchApp: App {
                                 WidgetCenter.shared.reloadAllTimelines()
                             }
                         }
+                        #if DEBUG
+                        // `WW_LANDSCAPE=1` rotates the scene for landscape screenshots in a headless simulator.
+                        if ProcessInfo.processInfo.environment["WW_LANDSCAPE"] != nil,
+                           let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first {
+                            scene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
+                        }
+                        #endif
                     }
                 }
         }

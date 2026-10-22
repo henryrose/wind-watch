@@ -1,0 +1,38 @@
+<svg width="396" height="230" viewBox="0 0 396 230" role="img" aria-label="Hourly wind chart" style="display:block;overflow:visible">
+<defs><linearGradient id="dns" x1="0" x2="1" y1="0" y2="0">
+<stop offset="0.0000" stop-color="#FFFFFF" stop-opacity="0.000"/>
+<stop offset="1.0000" stop-color="#FFFFFF" stop-opacity="0.000"/>
+</linearGradient></defs>
+<rect x="0" y="24" width="396.0" height="184.0" fill="url(#dns)"/>
+<line x1="0" x2="396" y1="146.7" y2="146.7" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1"/>
+<text x="394" y="143.7" text-anchor="end" font-size="21" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">10</text>
+<line x1="0" x2="396" y1="85.3" y2="85.3" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1"/>
+<text x="394" y="82.3" text-anchor="end" font-size="21" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">20</text>
+<rect x="4.6" y="146.7" width="23.76" height="61.3" rx="1.5" fill="#3FC2A0"/>
+<rect x="37.6" y="152.8" width="23.76" height="55.2" rx="1.5" fill="#3FC2A0"/>
+<rect x="70.6" y="152.8" width="23.76" height="55.2" rx="1.5" fill="#3FC2A0"/>
+<rect x="103.6" y="146.7" width="23.76" height="61.3" rx="1.5" fill="#3FC2A0"/>
+<rect x="136.6" y="140.5" width="23.76" height="67.5" rx="1.5" fill="#8DD44A"/>
+<rect x="169.6" y="140.5" width="23.76" height="67.5" rx="1.5" fill="#8DD44A"/>
+<polyline points="16.5,85.3 49.5,97.6 82.5,97.6 115.5,85.3 148.5,79.2 181.5,79.2" fill="none" stroke="#FFFFFF" stroke-opacity="0.75" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="3.6" x2="29.4" y1="85.3" y2="85.3" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="36.6" x2="62.4" y1="97.6" y2="97.6" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="69.6" x2="95.4" y1="97.6" y2="97.6" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="102.6" x2="128.4" y1="85.3" y2="85.3" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="135.6" x2="161.4" y1="79.2" y2="79.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="168.6" x2="194.4" y1="79.2" y2="79.2" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<g transform="translate(16.5,219.0) rotate(109)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(49.5,219.0) rotate(109)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(82.5,219.0) rotate(109)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(115.5,219.0) rotate(112)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(148.5,219.0) rotate(113)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(181.5,219.0) rotate(116)"><path d="M0,-7.00 L5.32,7.00 L0,2.80 L-5.32,7.00 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<line x1="16.5" x2="16.5" y1="208.0" y2="211.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<line x1="115.5" x2="115.5" y1="208.0" y2="211.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<text x="16.5" y="240" text-anchor="middle" font-size="22" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">00</text>
+<text x="115.5" y="240" text-anchor="middle" font-size="22" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">03</text>
+<line x1="3.3" x2="3.3" y1="18" y2="208.0" stroke="#FFFFFF" stroke-width="1.5"/>
+<text x="7.3" y="16" font-size="22" font-weight="600" fill="#FFFFFF" font-family="-apple-system,system-ui,sans-serif">now</text>
+<line x1="198.0" x2="198.0" y1="18" y2="208.0" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="194.0" y="16" text-anchor="end" font-size="22" font-weight="600" fill="#FFFFFF" fill-opacity="0.7" font-family="-apple-system,system-ui,sans-serif">ends 05:00</text>
+</svg>

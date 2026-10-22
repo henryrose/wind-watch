@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Circular complication states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#000000}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 980px; height: 640px; box-sizing: border-box; padding: 32px 36px; background: #000000; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px">
+  <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">accessoryCircular · 104×104 px @2× · Beaufort ring (0–12 → 0–100 %) · fixed two-digit frame, tabular figures</div>
+
+  <div style="display: flex; gap: 36px; align-items: flex-start">
+    <!-- magnified fresh -->
+    <div style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+      <svg width="208" height="208" viewBox="0 0 104 104" role="img" aria-label="15 knots gusting 25 from the west, Beaufort 4" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif; font-variant-numeric: tabular-nums">
+        <circle cx="52" cy="52" r="46" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+        <circle cx="52" cy="52" r="46" fill="none" stroke="#8DD44A" stroke-width="6" stroke-linecap="round" stroke-dasharray="96 289" transform="rotate(-90 52 52)"/>
+        <g transform="translate(52,21) rotate(103)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#FFFFFF"/></g>
+        <rect x="30" y="33" width="44" height="34" fill="none" stroke="#4FA3D8" stroke-width="0.75" stroke-dasharray="2 2"/>
+        <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#FFFFFF">15</text>
+        <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF" fill-opacity="0.85">G25</text>
+      </svg>
+      <div style="font-size: 12px; color: #9AA4B1; text-align: center; max-width: 220px; line-height: 1.4">2× zoom. Dashed box = the 44×34 numeral frame: "8" and "15" both centre in it, so the arrow and gust never move.</div>
+    </div>
+
+    <!-- 4 states -->
+    <div style="display: grid; grid-template-columns: repeat(4, 150px); gap: 18px 20px">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="15 knots gusting 25, fresh" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+          <circle cx="52" cy="52" r="46" fill="none" stroke="#8DD44A" stroke-width="6" stroke-linecap="round" stroke-dasharray="96 289" transform="rotate(-90 52 52)"/>
+          <g transform="translate(52,21) rotate(103)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#FFFFFF"/></g>
+          <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#FFFFFF">15</text>
+          <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF" fill-opacity="0.85">G25</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">Fresh</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="15 knots gusting 25, two hours old" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+          <circle cx="52" cy="52" r="46" fill="none" stroke="#FFB340" stroke-width="6" stroke-linecap="round" stroke-dasharray="7 6" transform="rotate(-90 52 52)"/>
+          <g transform="translate(52,21) rotate(103)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#FFFFFF"/></g>
+          <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#FFFFFF">15</text>
+          <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF" fill-opacity="0.85">G25</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">Stale 2 h — ring goes amber and dashed</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="15 knots gusting 25, eight hours old" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+          <circle cx="52" cy="52" r="46" fill="none" stroke="#FFB340" stroke-width="6" stroke-linecap="round" stroke-dasharray="7 6" transform="rotate(-90 52 52)"/>
+          <g transform="translate(52,21) rotate(103)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#B8BEC7"/></g>
+          <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#B8BEC7">15</text>
+          <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#B8BEC7" fill-opacity="0.85">G25</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">Old 8 h — plus 72 % ink</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="No forecast, open app" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+          <text x="52" y="60" text-anchor="middle" font-size="36" font-weight="800" fill="#5C6B7A">—</text>
+          <text x="52" y="84" text-anchor="middle" font-size="13" font-weight="700" fill="#9AA4B1" font-family="-apple-system, system-ui, sans-serif">open app</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">Past horizon</div>
+      </div>
+
+      <!-- tinted row -->
+      <div style="grid-column: span 4; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600; margin-top: 10px">Tinted rendering (face tint: Sky) — ramp dropped, ring length and dash carry the meaning</div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="15 knots gusting 25, tinted" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(143,182,232,0.14)" stroke="rgba(143,182,232,0.28)" stroke-width="6"/>
+          <circle cx="52" cy="52" r="46" fill="none" stroke="#8FB6E8" stroke-width="6" stroke-linecap="round" stroke-dasharray="96 289" transform="rotate(-90 52 52)"/>
+          <g transform="translate(52,21) rotate(103)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#8FB6E8"/></g>
+          <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#8FB6E8">15</text>
+          <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#8FB6E8" fill-opacity="0.85">G25</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">Fresh</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="stale, tinted" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(143,182,232,0.14)" stroke="rgba(143,182,232,0.28)" stroke-width="6"/>
+          <circle cx="52" cy="52" r="46" fill="none" stroke="#8FB6E8" stroke-width="6" stroke-linecap="round" stroke-dasharray="7 6" transform="rotate(-90 52 52)"/>
+          <g transform="translate(52,21) rotate(103)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#8FB6E8"/></g>
+          <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#8FB6E8">15</text>
+          <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#8FB6E8" fill-opacity="0.85">G25</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">Stale — dashed ring survives tint</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="old, tinted" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(143,182,232,0.14)" stroke="rgba(143,182,232,0.28)" stroke-width="6"/>
+          <circle cx="52" cy="52" r="46" fill="none" stroke="#8FB6E8" stroke-opacity="0.6" stroke-width="6" stroke-linecap="round" stroke-dasharray="7 6" transform="rotate(-90 52 52)"/>
+          <g transform="translate(52,21) rotate(103)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#8FB6E8" fill-opacity="0.6"/></g>
+          <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#8FB6E8" fill-opacity="0.6">15</text>
+          <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#8FB6E8" fill-opacity="0.5">G25</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">Old — 60 % ink</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="8 knots, one digit, tinted" style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+          <circle cx="52" cy="52" r="46" fill="rgba(143,182,232,0.14)" stroke="rgba(143,182,232,0.28)" stroke-width="6"/>
+          <circle cx="52" cy="52" r="46" fill="none" stroke="#8FB6E8" stroke-width="6" stroke-linecap="round" stroke-dasharray="72 289" transform="rotate(-90 52 52)"/>
+          <g transform="translate(52,21) rotate(115)"><path d="M0,-7 L5.3,7 L0,2.8 L-5.3,7 Z" fill="#8FB6E8"/></g>
+          <text x="52" y="63" text-anchor="middle" font-size="36" font-weight="800" fill="#8FB6E8">8</text>
+          <text x="52" y="87" text-anchor="middle" font-size="16" font-weight="700" fill="#8FB6E8" fill-opacity="0.85">G15</text>
+        </svg>
+        <div style="font-size: 12px; color: #9AA4B1; text-align: center">One digit — same frame</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size: 12px; color: #9AA4B1; line-height: 1.5; max-width: 900px">Ring = Beaufort gauge: arc length B ÷ 12 of the circle from 12 o'clock, stroke 6 px, colour = ramp step. Numbers are always ink, never ramp-coloured, so the face's tint can't hide them. Gust is "G" + integer, 16 px bold, 85 % ink. No "kn" on the circular: the unit is the app's identity and the slot is too small; it reappears on the rectangular's text row.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":980,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

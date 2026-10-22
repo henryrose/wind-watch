@@ -13,20 +13,20 @@ struct ChartModelTests {
         #expect(m.points.first?.index == 0 && m.points.last?.index == 44)
         #expect(m.points[15] == HourPoint(index: 15, date: f.date(ofHour: 15), kn: 15, gust: 25, dirFrom: 283, step: 4))
         #expect(m.xRange == f.start...f.horizon.addingTimeInterval(3600))
+        #expect(m.firstIndex == 0)
         #expect(m.slotCount == 45)
         #expect(m.yMax == 30)
-        #expect(m.horizonEdge == Fixture.la(2026, 10, 23, 6))
-        #expect(m.horizonLabel == "HRRR ends 05:00")
+        #expect(m.horizonEdgeSlot == 45)
         #expect(m.sunMarkers == [f.sun[0].sunset, f.sun[1].sunrise, f.sun[1].sunset])
-        #expect(m.arrowCadence == 3)
-        #expect(m.tickEvery == 6)
         #expect(m.nowDate == now && m.showsNow)
-        #expect(m.nowIndex == 0.5)
+        #expect(m.nowIndex == 0.5 && m.nowSlot == 0.5)
         #expect(m.ageTier == .fresh)
         #expect(m.twilightStops == Twilight.gradientStops(range: m.xRange, sun: f.sun))
         #expect(m.twilightStops.count == 8)
         #expect(m.maxGust == 25)
         #expect(m.timeZone.identifier == "America/Los_Angeles")
+        #expect(m.dayLabels == [DayLabel(slot: 0, name: "Wed"), DayLabel(slot: 15, name: "Thu"), DayLabel(slot: 39, name: "Fri")])
+        #expect(m.hourOfDay(slot: 0) == 9 && m.hourOfDay(slot: 15) == 0)
     }
 
     @Test func next12MidForecast() throws {
@@ -34,16 +34,14 @@ struct ChartModelTests {
         let now = Fixture.la(2026, 10, 21, 23, 30) // index 14.5
         let m = ChartModel(forecast: f, now: now, window: .next12, scheme: .dark)
         #expect(m.points.map(\.index) == Array(14...25))
+        #expect(m.firstIndex == 14)
         #expect(m.xRange == f.date(ofHour: 14)...f.date(ofHour: 26))
-        #expect(m.xRange.upperBound.timeIntervalSince(m.xRange.lowerBound) == 12 * 3600)
         #expect(m.slotCount == 12)
-        #expect(m.horizonEdge == nil)
-        #expect(m.horizonLabel == nil)
-        #expect(m.arrowCadence == 1)
-        #expect(m.tickEvery == 3)
+        #expect(m.horizonEdgeSlot == nil)
         #expect(m.yMax == 30) // max gust 25 in hours 14…25
         #expect(m.sunMarkers == [f.sun[1].sunrise]) // Thu 07:41 within 23:00…11:00
-        #expect(m.showsNow)
+        #expect(m.showsNow && m.nowSlot == 0.5)
+        #expect(m.dayLabels == [DayLabel(slot: 0, name: "Wed"), DayLabel(slot: 1, name: "Thu")])
     }
 
     @Test func next12NearHorizon() throws {
@@ -54,19 +52,33 @@ struct ChartModelTests {
         #expect(m.points.count == 8)
         #expect(m.xRange == f.date(ofHour: 37)...f.date(ofHour: 49))
         #expect(m.slotCount == 12)
-        #expect(m.horizonEdge == f.horizon.addingTimeInterval(3600))
-        #expect(m.horizonLabel == "ends 05:00")
+        #expect(m.horizonEdgeSlot == 8)
         #expect(m.yMax == 30) // gusts 20,20,20,18,18,20,21,21 → ceil(24/10)*10 = 30
         #expect(m.ageTier == .old)
     }
 
-    @Test func allWindowShortLabelWhenEdgeNearNow() throws {
+    @Test func next6RoundsToFiveAndEmptiesPastHorizon() throws {
         let f = try Fixture.forecast()
-        let now = f.date(ofHour: 40)
-        let m = ChartModel(forecast: f, now: now, window: .all, scheme: .light)
-        #expect(m.horizonLabel == "ends 05:00") // edge at 45, now at 40 → within 12 slots
-        #expect(m.points.count == 45)
-        #expect(m.ageTier == .old)
+        let w = ChartModel(forecast: f, now: f.start.addingTimeInterval(13.9 * 3600), window: .next6, scheme: .dark)
+        #expect(w.firstIndex == 13)
+        #expect(w.points.map(\.index) == [13, 14, 15, 16, 17, 18])
+        #expect(w.yMax == 25)
+        #expect(w.xRange == f.date(ofHour: 13)...f.date(ofHour: 19))
+        #expect(w.sunMarkers.isEmpty)
+        #expect(w.ageTier == .old)
+        let early = ChartModel(forecast: f, now: f.start, window: .next6, scheme: .dark)
+        #expect(early.points.map(\.gust) == [4, 5, 3, 3, 4, 2])
+        #expect(early.yMax == 5)
+        let w2 = ChartModel(forecast: f, now: f.date(ofHour: 9), window: .next6, scheme: .dark)
+        #expect(w2.points.map(\.gust) == [9, 13, 15, 18, 19, 24])
+        #expect(w2.yMax == 25)
+        #expect(w2.sunMarkers == [f.sun[0].sunset]) // 18:12 inside 18:00…24:00
+        let tail = ChartModel(forecast: f, now: f.date(ofHour: 42), window: .next6, scheme: .dark)
+        #expect(tail.points.map(\.index) == [42, 43, 44])
+        #expect(tail.horizonEdgeSlot == 3)
+        let gone = ChartModel(forecast: f, now: f.horizon.addingTimeInterval(1), window: .next6, scheme: .dark)
+        #expect(gone.points.isEmpty)
+        #expect(gone.yMax == 5)
     }
 
     @Test func oldTier() throws {
@@ -94,48 +106,74 @@ struct ChartModelTests {
         let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(-3600), window: .next12, scheme: .dark)
         #expect(m.points.map(\.index) == Array(0...11))
         #expect(!m.showsNow)
-    }
-
-    @Test func capWidthGeometry() {
-        // Phone: 45 slots over 370 pt → slot 8.22 pt; cap = 0.72 h + 2 pt (0.243 h) → half 0.4817 h.
-        let half = ChartStyle.phone.capHalfWidthSeconds(slots: 45) / 3600
-        #expect(abs(half - (0.72 + 2 / (370.0 / 45)) / 2) < 1e-9)
-        #expect(ChartStyle.watch.slotWidth(slots: 12) == 198.0 / 12)
+        #expect(ChartGeometry(model: m, style: .watchStrip, width: 198).nowX == nil)
     }
 }
 
-@Suite("MiniStrip window (HANDOFF §6.3)")
-struct MiniStripTests {
-    @Test func sixHoursFromFloorOfNow() throws {
+@Suite("ChartGeometry labels and selection")
+struct ChartGeometryTests {
+    @Test func phoneTicksAndLabels() throws {
         let f = try Fixture.forecast()
-        let w = MiniStrip.window(forecast: f, now: f.start.addingTimeInterval(13.9 * 3600))
-        #expect(w.firstIndex == 13)
-        #expect(w.points.map(\.index) == [13, 14, 15, 16, 17, 18])
-        #expect(w.yMax == 25) // max gust 25 → already a multiple of 5
-        #expect(w.range == f.date(ofHour: 13)...f.date(ofHour: 19))
-        #expect(w.sunMarkers.isEmpty)
-        #expect(w.ageTier == .old)
+        let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(0.4 * 3600), window: .all, scheme: .dark)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
+        #expect(g.tickPoints.map(\.index) == [0, 6, 12, 18, 24, 30, 36, 42])
+        #expect(g.tickPoints.map { g.tickLabel($0) } == ["9am", "3pm", "9pm", "3am", "9am", "3pm", "9pm", "3am"])
+        #expect(g.arrowPoints.map(\.index) == Array(stride(from: 0, through: 42, by: 3)))
+        #expect(g.edgeLabel == "ends Fri 5am")
+        #expect(g.dayMarks.map(\.name) == ["Wed", "Thu", "Fri"])
+        #expect(g.dayMarks.map(\.divider) == [false, true, true])
+        #expect(g.gridValues == [10, 20])
+        #expect(g.height == 275)
+        let land = ChartGeometry(model: m, style: .phoneLandscape, width: 756)
+        #expect(land.tickPoints.map { land.tickLabel($0) }.prefix(5) == ["9am", "noon", "3pm", "6pm", "9pm"])
+        #expect(land.tickPoints.map(\.index).contains(15))
+        #expect(land.tickLabel(m.points[15]) == "12am")
+        #expect(land.arrowPoints.count == 45)
     }
 
-    @Test func roundsUpToFive() throws {
+    @Test func watchTicksAndEdge() throws {
         let f = try Fixture.forecast()
-        let w = MiniStrip.window(forecast: f, now: f.start)
-        #expect(w.points.map(\.gust) == [4, 5, 3, 3, 4, 2])
-        #expect(w.yMax == 5)
-        let w2 = MiniStrip.window(forecast: f, now: f.date(ofHour: 9))
-        #expect(w2.points.map(\.gust) == [9, 13, 15, 18, 19, 24])
-        #expect(w2.yMax == 25)
-        #expect(w2.sunMarkers == [f.sun[0].sunset]) // 18:12 inside 18:00…24:00
+        let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(0.4 * 3600), window: .next12, scheme: .dark)
+        let g = ChartGeometry(model: m, style: .watchStrip, width: 198)
+        #expect(g.tickPoints.map { g.tickLabel($0) } == ["09", "12", "15", "18"])
+        #expect(g.edgeX == nil && g.edgeLabel == nil)
+        #expect(g.dayMarks.isEmpty)
+        #expect(g.slot == 198.0 / 12)
+        let short = ChartModel(forecast: f, now: f.date(ofHour: 39).addingTimeInterval(360), window: .next12, scheme: .dark)
+        let gs = ChartGeometry(model: short, style: .watchStrip, width: 198)
+        #expect(gs.tickPoints.map { gs.tickLabel($0) } == ["00", "03"])
+        #expect(gs.edgeLabel == "ends 05:00")
+        #expect(gs.edgeX == 6 * gs.slot)
+        let mini = ChartGeometry(model: ChartModel(forecast: f, now: f.date(ofHour: 15), window: .next6, scheme: .dark), style: .mini, width: 75)
+        #expect(mini.tickPoints.isEmpty && mini.arrowPoints.isEmpty && mini.gridValues.isEmpty && mini.edgeLabel == nil)
+        #expect(mini.height == 31)
     }
 
-    @Test func pastHorizonSlotsEmpty() throws {
+    @Test func selectionAndHitTesting() throws {
         let f = try Fixture.forecast()
-        let w = MiniStrip.window(forecast: f, now: f.date(ofHour: 42))
-        #expect(w.points.map(\.index) == [42, 43, 44])
-        #expect(w.range == f.date(ofHour: 42)...f.date(ofHour: 48))
-        let gone = MiniStrip.window(forecast: f, now: f.horizon.addingTimeInterval(1))
-        #expect(gone.points.isEmpty)
-        #expect(gone.yMax == 5)
+        let m = ChartModel(forecast: f, now: f.start, window: .all, scheme: .dark)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
+        #expect(g.index(atX: 0) == 0)
+        #expect(g.index(atX: 15 * g.slot + 1) == 15)
+        #expect(g.index(atX: -40) == 0)
+        #expect(g.index(atX: 10_000) == 44)
+        let p = m.points[15]
+        let bar = g.barRect(p)
+        let outline = g.selectionOutline(p)
+        #expect(outline.minX == bar.minX - 1.5 && outline.width == bar.width + 3)
+        #expect(outline.minY == bar.minY - 1.5 && outline.height == bar.height + 1.5)
+        #expect(g.selectionRuleX(index: 15) == g.centreX(index: 15))
+        let empty = ChartModel(forecast: f, now: f.horizon.addingTimeInterval(3600), window: .next6, scheme: .dark)
+        #expect(ChartGeometry(model: empty, style: .mini, width: 75).index(atX: 10) == nil)
+    }
+
+    @Test func zeroKnotStub() throws {
+        var f = try Fixture.forecast()
+        f.hours[0] = Forecast.Hour(kn: 0, gust: 2, dirFrom: 90)
+        let m = ChartModel(forecast: f, now: f.start, window: .all, scheme: .dark)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
+        #expect(g.barRect(m.points[0]).height == 1)
+        #expect(m.points[0].step == 0)
     }
 }
 
@@ -144,9 +182,9 @@ struct ViewSmokeTests {
     @Test @MainActor func viewsConstruct() throws {
         let f = try Fixture.forecast()
         let now = f.start.addingTimeInterval(30 * 60)
-        let chart = WindChart(model: ChartModel(forecast: f, now: now, window: .all, scheme: .dark), style: .phone)
+        let chart = WindChart(model: ChartModel(forecast: f, now: now, window: .all, scheme: .dark), style: .phonePortrait, selection: 15, onScrub: { _ in })
         _ = chart.body
-        let watchChart = WindChart(model: ChartModel(forecast: f, now: now, window: .next12, scheme: .dark), style: .watch)
+        let watchChart = WindChart(model: ChartModel(forecast: f, now: now, window: .next12, scheme: .dark), style: .watchStrip)
         _ = watchChart.body
         let strip = MiniStrip(forecast: f, now: now)
         _ = strip.body
@@ -192,15 +230,25 @@ struct ViewSmokeTests {
     }
 }
 
-@Suite("TrustLineView suffix")
-struct TrustLineSuffixTests {
-    @Test func suffixOnlyOnAsOfLines() throws {
+@Suite("12-hour labels (HANDOFF §6.4a)")
+struct TwelveHourLabelTests {
+    @Test func hourForms() throws {
+        #expect(TimeFormat.hour12Tick(hour: 0) == "12am")
+        #expect(TimeFormat.hour12Tick(hour: 9) == "9am")
+        #expect(TimeFormat.hour12Tick(hour: 12) == "noon")
+        #expect(TimeFormat.hour12Tick(hour: 15) == "3pm")
+        #expect(TimeFormat.hour12(hour: 12) == "12pm")
+        #expect(TimeFormat.hour12(hour: 23) == "11pm")
         let f = try Fixture.forecast()
         let now = f.start.addingTimeInterval(1800)
-        let ends = Derivations.horizonWeekdayLabel(forecast: f)
-        #expect(TrustLineView(state: .fresh, forecast: f, now: now, suffix: ends).text == "as of 09:00 · HRRR 15Z · ends Fri 05:00")
-        #expect(TrustLineView(state: .offlineCached, forecast: f, now: now, suffix: ends).text == "Couldn't reach server · showing data from 09:00")
-        #expect(TrustLineView(state: .pastHorizon, forecast: f, now: f.horizon.addingTimeInterval(60), suffix: ends).text == "No forecast · last run HRRR 15Z Wed")
-        #expect(TrustLineView(state: .firstRun, forecast: nil, now: now, suffix: ends).text == "No data yet. Needs cellular or Wi-Fi once.")
+        #expect(Derivations.chartTitle(forecast: f) == "Wed 9am → Fri 5am")
+        #expect(Derivations.horizonWeekdayLabel(forecast: f) == "ends Fri 5am")
+        #expect(Derivations.scrubLabel(forecast: f, index: 15) == "Thu 12am · midnight")
+        #expect(Derivations.scrubLabel(forecast: f, index: 27) == "Thu 12pm · noon")
+        #expect(Derivations.scrubLabel(forecast: f, index: 30) == "Thu 3pm")
+        #expect(TrustLineView(state: .fresh, forecast: f, now: now, suffix: Derivations.horizonWeekdayLabel(forecast: f)).text == "as of 09:00 · HRRR 15Z · ends Fri 5am")
+        #expect(TrustLineView(state: .offlineCached, forecast: f, now: now, suffix: "ends Fri 5am").text == "Couldn't reach server · showing data from 09:00")
+        #expect(TrustLineView(state: .pastHorizon, forecast: f, now: f.horizon.addingTimeInterval(60), suffix: "x").text == "No forecast · last run HRRR 15Z Wed")
+        #expect(TrustLineView(state: .firstRun, forecast: nil, now: now, suffix: "x").text == "No data yet. Needs cellular or Wi-Fi once.")
     }
 }

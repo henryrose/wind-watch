@@ -13,8 +13,8 @@ struct SavedLocationTests {
     }
 
     @Test func coordinateText() {
-        #expect(SavedLocation.portTownsendBay.coordinateText == "48.09, \u{2212}122.78")
-        #expect(SavedLocation.coordinateText(lat: -33.8688, lon: 151.2093) == "\u{2212}33.87, 151.21")
+        #expect(SavedLocation.portTownsendBay.coordinateText == "48.091, \u{2212}122.777")
+        #expect(SavedLocation.coordinateText(lat: -33.8688, lon: 151.2093) == "\u{2212}33.869, 151.209")
     }
 
     @Test func parsesPastedCoordinates() {
