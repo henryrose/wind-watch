@@ -47,6 +47,17 @@ struct ReferenceValueTests {
         #expect(Derivations.peakGustChipText(forecast: f, now: f.start) == "25 kn gusts around midnight")
     }
 
+    @Test func readoutAndTableLabels() throws {
+        let f = try Fixture.forecast()
+        let now = f.start.addingTimeInterval(25 * 60)
+        #expect(Derivations.nowLabel(now: now, tz: Fixture.la) == "Now · Wed 9:25am")
+        #expect(Derivations.nowLabel(now: Fixture.la(2026, 10, 22, 12, 5), tz: Fixture.la) == "Now · Thu 12:05pm")
+        #expect(Derivations.nowLabel(now: Fixture.la(2026, 10, 22, 0, 0), tz: Fixture.la) == "Now · Thu 12:00am")
+        #expect(Derivations.tableHourCount(forecast: f, now: now) == 45)
+        #expect(Derivations.tableCaption(forecast: f, now: now) == "45 hours · Wed 9am → Fri 5am")
+        #expect(Derivations.tableCaption(forecast: f, now: f.start.addingTimeInterval(43 * 3600 + 1800)) == "2 hours · Fri 4am → Fri 5am")
+    }
+
     @Test func heroAccessibility() throws {
         let f = try Fixture.forecast()
         #expect(Derivations.heroAccessibilityLabel(hour: f.hours[15], forecast: f) == "15 knots, gusting 25, from the west, as of 09:00")

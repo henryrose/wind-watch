@@ -1,11 +1,11 @@
 import SwiftUI
 import WindCore
 
-/// Vertical pages: Now → 12-h strip → Settings (HANDOFF §7.2–7.4).
-/// `WW_PAGE=now|strip|settings` selects the initial page (screenshots).
+/// Vertical pages: 12-h strip (the launch screen, HANDOFF §6.4d) → Now detail → Settings
+/// (§7.2–7.4). `WW_PAGE=strip|now|settings` selects the initial page (screenshots).
 enum Page: Hashable {
-    case now
     case strip
+    case now
     case settings
 }
 
@@ -14,9 +14,9 @@ struct RootView: View {
 
     init() {
         switch ProcessInfo.processInfo.environment["WW_PAGE"] {
-        case "strip": _page = State(initialValue: .strip)
+        case "now": _page = State(initialValue: .now)
         case "settings": _page = State(initialValue: .settings)
-        default: _page = State(initialValue: .now)
+        default: _page = State(initialValue: .strip)
         }
     }
 
@@ -34,8 +34,8 @@ struct RootView: View {
 
     private var pages: some View {
         TabView(selection: $page) {
-            NowView().tag(Page.now)
             StripView().tag(Page.strip)
+            NowView().tag(Page.now)
             SettingsView().tag(Page.settings)
         }
         .tabViewStyle(.verticalPage)

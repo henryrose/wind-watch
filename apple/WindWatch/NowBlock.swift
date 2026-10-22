@@ -1,10 +1,13 @@
 import SwiftUI
 import WindCore
 
-/// Readout row (`Phone-Main.dc.html`, HANDOFF §6.4): hero 60 + `kn`, `G 4` over arrow + `from W`,
-/// peak-gust chip over the Beaufort pill. While scrubbing (`scrub != nil`) the row shows that hour
-/// on a `card` plate with a 1.5 pt white inset stroke: `Thu 12am · midnight`, `15 kn`, `G 25`,
-/// `from W · 283°`, the Beaufort chip, and `now 3 kn` as the anchor. Past horizon / first run: `—`.
+/// Readout row (HANDOFF §6.4d, `Phone-Main.dc.html` / `Phone-Main-Scrub.dc.html`): a fixed 96 pt
+/// `card` plate (radius 12, padding 10/12) with the same structure in both states so nothing
+/// above the chart moves while a finger is down. Top row: a 13 pt label line (`Now · Wed 9:25am`
+/// with a blue 2 pt bar, or `Thu 12am · midnight` with a white one) and, right, the peak-gust
+/// text (`now 3 kn` while scrubbing). Bottom row: the 56 pt hero + `kn`, `G 4` over arrow +
+/// `from W · 290°`, the Beaufort chip + `Beaufort`. Scrubbing adds a 1.5 pt white
+/// inset ring. Every text is single-line (`lineLimit(1)`, `minimumScaleFactor(0.85)`).
 struct NowBlock: View {
     var scrub: Int?
 
@@ -12,155 +15,148 @@ struct NowBlock: View {
     @Environment(\.colorScheme) private var scheme
 
     private var numberInk: Color { Tokens.numberInk(scheme, tier: model.ageTier) }
-    private var rounded: Font.Design { .rounded }
+
+    /// The scrubbed hour when `scrub` is a valid index, else nil.
+    private var scrubbed: (index: Int, hour: Forecast.Hour)? {
+        guard let forecast = model.forecast, let index = scrub, forecast.hours.indices.contains(index) else { return nil }
+        return (index, forecast.hours[index])
+    }
 
     var body: some View {
-        Group {
-            if let forecast = model.forecast, let index = scrub, forecast.hours.indices.contains(index), let hero = model.hero {
-                scrubRow(forecast: forecast, index: index, hero: hero)
-            } else {
-                nowRow
+        let shown = scrubbed?.hour ?? model.hero
+        VStack(alignment: .leading, spacing: 4) {
+            // Top row: the label line left, the peak-gust text (or `now 3 kn`) right. The
+            // artboard stacks the right text over the chip in a third column, which does not fit
+            // 354 pt beside the 138 pt label column (the render clips it); one shared row keeps
+            // every string on one line without changing the plate height.
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                labelLine
+                Spacer(minLength: 4)
+                Text(rightText)
+                    .font(.system(size: 12, weight: .medium).monospacedDigit())
+                    .foregroundStyle(Tokens.inkSecondary(scheme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .truncationMode(.tail)
+            }
+            .frame(height: 16)
+            HStack(alignment: .bottom, spacing: 12) {
+                heroNumber(shown?.kn)
+                    .frame(width: 110, alignment: .leading)
+                if let shown {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .lastTextBaseline, spacing: 4) {
+                            Text("G")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Tokens.inkSecondary(scheme))
+                            Text("\(shown.gust)")
+                                .font(.system(size: 24, weight: .bold, design: .rounded).monospacedDigit())
+                                .foregroundStyle(numberInk)
+                        }
+                        .frame(height: 26)
+                        HStack(spacing: 6) {
+                            ArrowView(dirFrom: shown.dirFrom, size: 16, color: numberInk)
+                            Text("\(Compass.fromText(dirFrom: shown.dirFrom)) · \(shown.dirFrom)°")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(numberInk)
+                                .minimumScaleFactor(0.85)
+                        }
+                        .frame(height: 20)
+                    }
+                    .lineLimit(1)
+                    .padding(.bottom, 2)
+                    Spacer(minLength: 4)
+                    HStack(spacing: 6) {
+                        BeaufortChip(step: Beaufort.step(kn: shown.kn), scheme: scheme)
+                            .oldStateDesaturation(model.ageTier)
+                        Text("Beaufort")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Tokens.inkSecondary(scheme))
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
+                    .frame(height: 20)
+                    .padding(.bottom, 2)
+                } else {
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 96)
+        .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            if scrubbed != nil {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .inset(by: 0.75)
+                    .stroke(Tokens.inkPrimary(scheme), lineWidth: 1.5)
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
     }
 
-    // MARK: Now
-
-    private var nowRow: some View {
-        HStack(alignment: .bottom, spacing: 12) {
-            heroNumber(model.hero?.kn)
-            if let hero = model.hero {
-                gustColumn(gust: hero.gust, dirFrom: hero.dirFrom, degrees: false)
-                    .padding(.bottom, 3)
-                Spacer(minLength: 8)
-                VStack(alignment: .trailing, spacing: 5) {
-                    if let forecast = model.forecast { peakChip(forecast) }
-                    BeaufortPill(step: Beaufort.step(kn: hero.kn), width: 48, height: 6, scheme: scheme)
-                        .oldStateDesaturation(model.ageTier)
-                }
-                .layoutPriority(1)
-                .padding(.bottom, 3)
-            } else {
-                Spacer()
-            }
-        }
-    }
-
-    // MARK: Scrub
-
-    private func scrubRow(forecast: Forecast, index: Int, hero: Forecast.Hour) -> some View {
-        let h = forecast.hours[index]
-        return HStack(alignment: .bottom, spacing: 8) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    RoundedRectangle(cornerRadius: 1)
-                        .fill(Tokens.inkPrimary(scheme))
-                        .frame(width: 2, height: 14)
-                    Text(Derivations.scrubLabel(forecast: forecast, index: index))
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Tokens.inkPrimary(scheme))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-                }
-                heroNumber(h.kn)
-            }
-            .layoutPriority(1)
-            gustColumn(gust: h.gust, dirFrom: h.dirFrom, degrees: true)
-                .padding(.bottom, 3)
-            Spacer(minLength: 0)
-            VStack(alignment: .trailing, spacing: 5) {
-                Text("now \(hero.kn) kn")
-                    .font(.system(size: 12, weight: .medium).monospacedDigit())
-                    .foregroundStyle(Tokens.inkSecondary(scheme))
-                HStack(spacing: 6) {
-                    BeaufortChip(step: Beaufort.step(kn: h.kn), scheme: scheme)
-                    Text("Beaufort")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Tokens.inkSecondary(scheme))
-                }
-            }
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.bottom, 3)
-        }
-        .padding(.top, 8)
-        .padding(.bottom, 10)
-        .padding(.horizontal, 12)
-        .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).inset(by: 0.75).stroke(Tokens.inkPrimary(scheme), lineWidth: 1.5))
-    }
-
     // MARK: Pieces
 
+    /// `Now · Wed 9:25am` (blue bar) or `Thu 12am · midnight` (white bar); 13 Bold on a 16 pt line.
+    private var labelLine: some View {
+        let scrubbing = scrubbed != nil
+        let text: String = {
+            if let forecast = model.forecast, let s = scrubbed { return Derivations.scrubLabel(forecast: forecast, index: s.index) }
+            return Derivations.nowLabel(now: model.now, tz: model.forecast?.timeZone ?? .current)
+        }()
+        return HStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 1)
+                .fill(scrubbing ? Tokens.inkPrimary(scheme) : Tokens.nowBar(scheme))
+                .frame(width: 2, height: 14)
+            Text(text)
+                .font(.system(size: 13, weight: .bold).monospacedDigit())
+                .foregroundStyle(Tokens.inkPrimary(scheme))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .frame(height: 16)
+    }
+
+    /// 56 pt Rounded Heavy on a 52 pt line, `kn` 18 Semibold 5 pt right on the baseline.
     private func heroNumber(_ kn: Int?) -> some View {
         HStack(alignment: .lastTextBaseline, spacing: 5) {
             if let kn {
                 Text("\(kn)")
-                    .font(.system(size: 60, weight: .heavy, design: rounded).monospacedDigit())
-                    .tracking(-1.8)
+                    .font(.system(size: 56, weight: .heavy, design: .rounded).monospacedDigit())
+                    .tracking(-0.03 * 56)
                     .foregroundStyle(numberInk)
                 Text("kn")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Tokens.inkSecondary(scheme))
             } else {
                 Text("—")
-                    .font(.system(size: 60, weight: .heavy, design: rounded))
+                    .font(.system(size: 56, weight: .heavy, design: .rounded))
                     .foregroundStyle(Tokens.inkDisabled(scheme))
             }
         }
         .lineLimit(1)
         .fixedSize()
+        .frame(height: 52)
     }
 
-    private func gustColumn(gust: Int, dirFrom: Int, degrees: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text("G")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Tokens.inkSecondary(scheme))
-                Text("\(gust)")
-                    .font(.system(size: 24, weight: .bold, design: rounded).monospacedDigit())
-                    .foregroundStyle(numberInk)
-            }
-            HStack(spacing: 6) {
-                ArrowView(dirFrom: dirFrom, size: degrees ? 16 : 18, color: numberInk)
-                Text(degrees ? "\(Compass.fromText(dirFrom: dirFrom)) · \(dirFrom)°" : Compass.fromText(dirFrom: dirFrom))
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(numberInk)
-            }
-        }
-        .lineLimit(1)
-        .fixedSize()
-    }
-
-    private func peakChip(_ forecast: Forecast) -> some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(Beaufort.color(step: Beaufort.step(kn: forecast.peakGust.kn), scheme: scheme))
-                .frame(width: 9, height: 9)
-            Text(Derivations.peakGustChipText(forecast: forecast, now: model.now))
-                .font(.system(size: 12, weight: .semibold).monospacedDigit())
-                .foregroundStyle(Tokens.inkPrimary(scheme))
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-        }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
-        .background(Tokens.card(scheme), in: Capsule())
-        .oldStateDesaturation(model.ageTier)
+    /// Right column top line: the peak-gust text at rest, `now 3 kn` while scrubbing.
+    private var rightText: String {
+        if scrubbed != nil, let hero = model.hero { return "now \(hero.kn) kn" }
+        if let forecast = model.forecast { return Derivations.peakGustChipText(forecast: forecast, now: model.now) }
+        return ""
     }
 
     private var accessibilityText: String {
         guard let hero = model.hero, let forecast = model.forecast else {
             return model.trustState == .firstRun ? TrustLine.firstRunText : "No forecast"
         }
-        if let index = scrub, forecast.hours.indices.contains(index) {
-            let h = forecast.hours[index]
-            let date = forecast.date(ofHour: index)
-            return "\(TimeFormat.weekdayLong(date, tz: forecast.timeZone)) \(TimeFormat.hhmm(date, tz: forecast.timeZone)), \(h.kn) knots gusting \(h.gust) \(Compass.spokenFromText(dirFrom: h.dirFrom)), Beaufort \(Beaufort.step(kn: h.kn))"
+        if let s = scrubbed {
+            let date = forecast.date(ofHour: s.index)
+            return "\(TimeFormat.weekdayLong(date, tz: forecast.timeZone)) \(TimeFormat.hhmm(date, tz: forecast.timeZone)), \(s.hour.kn) knots gusting \(s.hour.gust) \(Compass.spokenFromText(dirFrom: s.hour.dirFrom)), Beaufort \(Beaufort.step(kn: s.hour.kn)), now \(hero.kn) knots"
         }
-        return Derivations.heroAccessibilityLabel(hour: hero, forecast: forecast)
+        return Derivations.heroAccessibilityLabel(hour: hero, forecast: forecast) + ", " + Derivations.peakGustChipText(forecast: forecast, now: model.now)
     }
 }

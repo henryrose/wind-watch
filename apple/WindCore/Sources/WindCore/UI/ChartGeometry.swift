@@ -109,17 +109,22 @@ public struct ChartGeometry: Sendable {
     /// Baseline y of the tick labels (`H + 10` in the reference).
     public var labelBaselineY: CGFloat { boxHeight + style.labelBaseline }
 
-    /// A day-band mark: label x (`X(i) + 5`), the divider x, and whether a divider is drawn
-    /// (never for the first day).
+    /// A day-band mark: the divider x, whether a divider is drawn (never for the first day), and
+    /// the label's x (`X(i) + 5`, or `+ 4` on the first day, which has no divider to clear).
     public struct DayMark: Sendable, Equatable {
         public var x: CGFloat
         public var name: String
         public var divider: Bool
+        public var labelX: CGFloat
     }
 
     public var dayMarks: [DayMark] {
         guard style.showsDays else { return [] }
-        return model.dayLabels.map { DayMark(x: x(slot: Double($0.slot)), name: $0.name, divider: $0.slot > 0) }
+        return model.dayLabels.map {
+            let x = x(slot: Double($0.slot))
+            let divider = $0.slot > 0
+            return DayMark(x: x, name: $0.name, divider: divider, labelX: x + (divider ? 5 : 4) * style.unit)
+        }
     }
 
     /// `ends 05:00` / `ends Fri 5am` per the style, when the edge is drawn.

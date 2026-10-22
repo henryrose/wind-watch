@@ -39,7 +39,8 @@ Last updated: 2026-10-21 evening (design package reconciliation G1–G5 done; ot
 
 Henry dropped the Claude Design package into `docs/design/` (README → DESIGN-HANDOFF → renders,
 artboards, `chart_reference.py`). `docs/design/GAP-ANALYSIS.md` records the render-vs-build audit
-made before any change. The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict subset and is gone.
+made before any change (removed by the round-two package; it is in git history at `da65590`).
+The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict subset and is gone.
 
 | ID | Screen(s) | Task | Status | Verification | Notes |
 |---|---|---|---|---|---|
@@ -47,6 +48,8 @@ made before any change. The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict 
 | G2 | iPhone main, scrub, landscape, trust states, AX table, location, about | Header 22 + card gear; readout 60 with scrub plate; full-bleed chart card with title + hint; summary under the chart; table `W` / `B`; landscape view; AX reflow; Location/About to the artboards | done | iOS build; `docs/screenshots/d6-iphone-*.png` reviewed against `Phone-*.png` | `WW_SCRUB`, `WW_LANDSCAPE` DEBUG env; landscape orientations enabled in Info.plist |
 | G3 | Watch Now, strip, settings; rectangular dash | Hero 84, artboard rhythm, `ViewThatFits` summary (3 → 2 → 1 lines), first-run copy split, two-line settings labels + blue check, 42 mm metrics preset, 40×5 dash | done | watch + iOS builds, 122 package tests; `d6-watch-now-{fresh,stale,offline,firstrun,updating}.png`, `-42` variants, `d6-watch-strip-{fresh,short}.png`, `d6-watch-settings-fresh.png`, `d6-watch-complications-rectangular*.png` reviewed against `Watch-*.png` / `Comp-Rectangular.png` | orchestrator rebuilt and reviewed the screenshots |
 | G5 | All | Acceptance checklist §11 walked line by line | done | "Acceptance checklist" below: 14 pass, item 11 pass/held (Smart Stack) | |
+| G6 | Round two (§6.4d) | Fixed 96 pt readout plate on iPhone (`Now · Wed 9:25am` label, same structure while scrubbing, ring only), edge-to-edge 402 pt chart, collapsible hourly table (`@AppStorage("hourlyTableExpanded")`, 52/60 pt row), footer attribution; landscape 48 pt header with the now label, plot = screen − 40 (834); watch strip is the launch page with the compact hero line; web `<details>` table remembered in `localStorage`; first day label at x + 4 and never hidden | done | 123 package tests (`phonebig`/`phonesel`/`land` re-copied at 402/834 and day-label x checked), 38 web tests (`webhover.svg` regenerated from the round-two script: only `Wed` moved 5 → 4); `d7-iphone-*`, `d7-watch-*`, `web-d7-*` reviewed against the round-two renders | readout top row shares label + peak text (artboard's third column overflows 354 pt; the render clips it); 42 mm strip plot 74 pt |
+| G7 | Brand (§10a) | "Wake" app icon from `reference/brand_icon.py` (full/small/tiny tiers, Icon Composer layers, round watch icon), wordmark lockups on iPhone main eyebrow / About / web header, favicon + apple-touch-icon, footers "Wind Watch · weather data by Open-Meteo.com", watch Settings footer; About and Watch-Settings artboards revised | pending | | design added 2026-10-22, not implemented |
 | G4 | Web desktop + phone | Port `svg()` to JS (`webhover` / `webphone` geometry), hover tooltip + keyboard, legend, table, header/footer, phone layout | done | `cd web && node --test` (37; `chart.test.js` vs `webhover.svg` / `webphone48.svg`); `web-d6-desktop-{dark,light,hover}.png`, `web-d6-phone-dark.png` reviewed against `Web-Desktop.png` / `Web-Phone.png` | orchestrator re-ran tests and reviewed all four screenshots |
 
 ## Needs the other machine (from plan §7)
@@ -138,4 +141,5 @@ made before any change. The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict 
 - `docs/screenshots/d6-iphone-<name>.png`: post-design-package iPhone set — main, scrub (hour 15), land / land-idle (landscape), ax (AX3), old, offline, light, location, about. From G2.
 - `docs/screenshots/d6-watch-<page>-<state>[-42].png`: watch Now (fresh, stale, offline, firstrun, updating; 42 mm fresh/firstrun), strip (fresh, short horizon), settings, rectangular complication rows. From G3.
 - `docs/screenshots/web-d6-{desktop-dark,desktop-light,desktop-hover,phone-dark}.png`: web after the design package (hover = `?hover=15`). From G4.
+- `docs/screenshots/d7-iphone-{main,scrub,table-open,ax3,landscape,landscape-scrub}.png`, `d7-watch-{strip,strip-short,strip-42mm,now}.png`, `web-d7-{desktop-hover-table,phone-dark}.png`: round two (§6.4d). From G6.
 - `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.

@@ -25,6 +25,8 @@ public enum Tokens {
     public static func inkOld(_ scheme: ColorScheme) -> Color { pick(scheme, "#B8BEC7", "#7A8390") }
     /// `—` placeholder.
     public static func inkDisabled(_ scheme: ColorScheme) -> Color { pick(scheme, "#5C6B7A", "#A0A8B2") }
+    /// The readout's `Now ·` label bar (§6.4d): the Beaufort 2 blue; white while scrubbing.
+    public static func nowBar(_ scheme: ColorScheme) -> Color { pick(scheme, "#4FA3D8", "#2A86C4") }
     /// Stale / old / offline trust line.
     public static func trustAmber(_ scheme: ColorScheme) -> Color { pick(scheme, "#FFB340", "#B86E00") }
     /// Sun markers.

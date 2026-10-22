@@ -185,6 +185,16 @@ public enum TimeFormat {
         return "\(twelve)" + (h < 12 ? "am" : "pm")
     }
 
+    /// `9:25am`, `12:05pm` (the readout's now label, HANDOFF §6.4d).
+    public static func hourMinute12(_ date: Date, tz: TimeZone) -> String {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = tz
+        let c = cal.dateComponents([.hour, .minute], from: date)
+        let h = c.hour ?? 0, m = c.minute ?? 0
+        let twelve = h % 12 == 0 ? 12 : h % 12
+        return "\(twelve):" + String(format: "%02d", m) + (h < 12 ? "am" : "pm")
+    }
+
     /// `Fri 5am` (chart title, edge label, header suffix).
     public static func weekdayHour12(_ date: Date, tz: TimeZone) -> String {
         weekdayShort(date, tz: tz) + " " + hour12(hour: hour(date, tz: tz))

@@ -48,6 +48,26 @@ public enum Derivations {
         TimeFormat.scrubLabel(forecast.date(ofHour: index), tz: tz ?? forecast.timeZone)
     }
 
+    /// The readout's idle label (HANDOFF §6.4d): `Now · Wed 9:25am`.
+    public static func nowLabel(now: Date, tz: TimeZone) -> String {
+        "Now · " + TimeFormat.weekdayShort(now, tz: tz) + " " + TimeFormat.hourMinute12(now, tz: tz)
+    }
+
+    /// Rows the hourly table shows: the hero hour to the horizon (0 past the horizon).
+    public static func tableHourCount(forecast: Forecast, now: Date) -> Int {
+        guard let first = heroIndex(forecast: forecast, now: now) else { return 0 }
+        return max(forecast.hours.count - first, 0)
+    }
+
+    /// The table disclosure caption (§6.4d): `45 hours · Wed 9am → Fri 5am`.
+    public static func tableCaption(forecast: Forecast, now: Date, tz: TimeZone? = nil) -> String {
+        let zone = tz ?? forecast.timeZone
+        let n = tableHourCount(forecast: forecast, now: now)
+        let hours = n == 1 ? "1 hour" : "\(n) hours"
+        guard let first = heroIndex(forecast: forecast, now: now) else { return hours }
+        return hours + " · " + TimeFormat.weekdayHour12(forecast.date(ofHour: first), tz: zone) + " → " + TimeFormat.weekdayHour12(forecast.horizon, tz: zone)
+    }
+
     /// Period of the local day used by `relativeTimePhrase`.
     public enum DayPeriod: Sendable, Equatable {
         case morning      // 05:00–11:59

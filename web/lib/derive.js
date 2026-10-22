@@ -292,6 +292,18 @@ export function horizonLabel(forecast) {
   return `ends ${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}`;
 }
 
+// Hourly-table disclosure caption (HANDOFF §6.4d): "45 hours · Wed 9am → Fri 5am",
+// counted from the now hour; the phone layout shows only "45 hours".
+export function tableCaption(forecast, nowIdx, { compact = false } = {}) {
+  const tz = forecast.location.tz;
+  const first = Math.min(Math.max(0, Math.floor(nowIdx)), forecast.hours.length);
+  const n = forecast.hours.length - first;
+  const hours = n === 1 ? '1 hour' : `${n} hours`;
+  if (compact || n <= 0) return hours;
+  const t = hourAt(forecast, first);
+  return `${hours} · ${shortDay(t, tz)} ${hour12At(t, tz)} → ${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}`;
+}
+
 // Chart card title: "Wed 9am → Fri 5am".
 export function chartTitle(forecast) {
   const tz = forecast.location.tz;
@@ -439,7 +451,7 @@ export function chartLayout(forecast, style, { nowIdx = null } = {}) {
         i,
         x: X(i),
         name: shortDay(t, tz),
-        labelX: X(i) + 5,
+        labelX: X(i) + (i > 0 ? 5 : 4),
         labelY: top - 22,
         divider: i > 0 ? { x: X(i), y1: top - 18, y2: plotBottom } : null,
         hidden: false,
@@ -451,8 +463,6 @@ export function chartLayout(forecast, style, { nowIdx = null } = {}) {
   if (nowIdx != null && nowIdx >= 0 && nowIdx <= n) {
     const x = X(nowIdx);
     now = { x, y1: top - 6, y2: plotBottom, labelX: x + 4, labelY: top - 8, text: 'now' };
-    // README nit: hide the first day's name when "now" would sit under it.
-    if (days.length && days[0].i === 0 && now.labelX < days[0].labelX + font * 2.6) days[0].hidden = true;
   }
 
   const ex = X(n);

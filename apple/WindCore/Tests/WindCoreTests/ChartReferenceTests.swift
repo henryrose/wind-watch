@@ -46,6 +46,14 @@ struct ChartReferenceTests {
         var stops: [(Double, Double)] { numbers(##"<stop offset="([\d.]+)" stop-color="#FFFFFF" stop-opacity="([\d.]+)"/>"##).map { ($0[0], $0[1]) } }
         var arrows: [(x: Double, y: Double, rot: Double)] { numbers(##"<g transform="translate\(([\d.]+),([\d.]+)\) rotate\((\d+)\)">"##).map { ($0[0], $0[1], $0[2]) } }
         var ticks: [Double] { numbers(##"<line x1="([\d.]+)" x2="[\d.]+" y1="[\d.]+" y2="[\d.]+" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>"##).map { $0[0] } }
+        /// Day-band names: `<text x y font-size font-weight="700" fill="#FFFFFF" fill-opacity="0.75">`.
+        var dayLabels: [(x: Double, name: String)] {
+            let re = try! NSRegularExpression(pattern: ##"<text x="([\d.]+)" y="[\d.-]+" font-size="\d+" font-weight="700" fill="#FFFFFF" fill-opacity="0.75"[^>]*>(\w+)</text>"##)
+            return re.matches(in: text, range: NSRange(text.startIndex..., in: text)).compactMap { m in
+                guard let xr = Range(m.range(at: 1), in: text), let nr = Range(m.range(at: 2), in: text), let x = Double(text[xr]) else { return nil }
+                return (x, String(text[nr]))
+            }
+        }
         var dayDividers: [Double] { numbers(##"<line x1="([\d.]+)" x2="[\d.]+" y1="[\d.-]+" y2="[\d.]+" stroke="#FFFFFF" stroke-opacity="0.28""##).map { $0[0] } }
         var selectionOutline: (x: Double, y: Double, w: Double, h: Double)? { numbers(##"<rect x="([\d.-]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)" rx="2.5" fill="none""##).first.map { ($0[0], $0[1], $0[2], $0[3]) } }
     }
@@ -133,13 +141,18 @@ struct ChartReferenceTests {
         for (d, mark) in zip(dividers, mineDividers) {
             #expect(close(d, mark.x, scale: scale), "day divider", sourceLocation: sourceLocation)
         }
+        let labels = svg.dayLabels
+        #expect(labels.count == g.dayMarks.count, sourceLocation: sourceLocation)
+        for (l, mark) in zip(labels, g.dayMarks) {
+            #expect(l.name == mark.name && close(l.x, mark.labelX, scale: scale), "day label \(mark.name): \(l.x) vs \(mark.labelX)", sourceLocation: sourceLocation)
+        }
     }
 
-    @Test("phonebig: iPhone portrait, 370×262, now 0.4") func phoneBig() throws {
+    @Test("phonebig: iPhone portrait, 402×262, now 0.4") func phoneBig() throws {
         let f = try Fixture.forecast()
         let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(0.4 * 3600), window: .all, scheme: .dark)
-        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
-        #expect(g.slot == 370.0 / 45 && g.barWidth == 5.92 && g.capWidth == 7.92 && g.unit == 1)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 402)
+        #expect(g.slot == 402.0 / 45 && g.barWidth == 6.43 && g.capWidth == 8.43 && g.unit == 1)
         #expect(g.plotTop == 38 && g.plotBottom == 244 && g.boxHeight == 262)
         compare(try SVG("phonebig"), g, scale: 1)
         #expect(g.edgeLabel == "ends Fri 5am")
@@ -148,7 +161,7 @@ struct ChartReferenceTests {
     @Test("phonesel: selection at hour 15") func phoneSelected() throws {
         let f = try Fixture.forecast()
         let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(0.4 * 3600), window: .all, scheme: .dark)
-        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 402)
         let svg = try SVG("phonesel")
         compare(svg, g, scale: 1)
         let outline = try #require(svg.selectionOutline)
@@ -156,10 +169,10 @@ struct ChartReferenceTests {
         #expect(close(outline.x, mine.minX) && close(outline.y, mine.minY) && close(outline.w, mine.width) && close(outline.h, mine.height))
     }
 
-    @Test("land: iPhone landscape, 756×296") func landscape() throws {
+    @Test("land: iPhone landscape, 834×296") func landscape() throws {
         let f = try Fixture.forecast()
         let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(0.4 * 3600), window: .all, scheme: .dark)
-        let g = ChartGeometry(model: m, style: .phoneLandscape, width: 756)
+        let g = ChartGeometry(model: m, style: .phoneLandscape, width: 834)
         #expect(g.boxHeight == 296)
         compare(try SVG("land"), g, scale: 1)
     }

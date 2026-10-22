@@ -115,7 +115,7 @@ struct ChartGeometryTests {
     @Test func phoneTicksAndLabels() throws {
         let f = try Fixture.forecast()
         let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(0.4 * 3600), window: .all, scheme: .dark)
-        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 402)
         #expect(g.tickPoints.map(\.index) == [0, 6, 12, 18, 24, 30, 36, 42])
         #expect(g.tickPoints.map { g.tickLabel($0) } == ["9am", "3pm", "9pm", "3am", "9am", "3pm", "9pm", "3am"])
         #expect(g.arrowPoints.map(\.index) == Array(stride(from: 0, through: 42, by: 3)))
@@ -124,7 +124,7 @@ struct ChartGeometryTests {
         #expect(g.dayMarks.map(\.divider) == [false, true, true])
         #expect(g.gridValues == [10, 20])
         #expect(g.height == 275)
-        let land = ChartGeometry(model: m, style: .phoneLandscape, width: 756)
+        let land = ChartGeometry(model: m, style: .phoneLandscape, width: 834)
         #expect(land.tickPoints.map { land.tickLabel($0) }.prefix(5) == ["9am", "noon", "3pm", "6pm", "9pm"])
         #expect(land.tickPoints.map(\.index).contains(15))
         #expect(land.tickLabel(m.points[15]) == "12am")
@@ -152,7 +152,7 @@ struct ChartGeometryTests {
     @Test func selectionAndHitTesting() throws {
         let f = try Fixture.forecast()
         let m = ChartModel(forecast: f, now: f.start, window: .all, scheme: .dark)
-        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 402)
         #expect(g.index(atX: 0) == 0)
         #expect(g.index(atX: 15 * g.slot + 1) == 15)
         #expect(g.index(atX: -40) == 0)
@@ -171,7 +171,7 @@ struct ChartGeometryTests {
         var f = try Fixture.forecast()
         f.hours[0] = Forecast.Hour(kn: 0, gust: 2, dirFrom: 90)
         let m = ChartModel(forecast: f, now: f.start, window: .all, scheme: .dark)
-        let g = ChartGeometry(model: m, style: .phonePortrait, width: 370)
+        let g = ChartGeometry(model: m, style: .phonePortrait, width: 402)
         #expect(g.barRect(m.points[0]).height == 1)
         #expect(m.points[0].step == 0)
     }

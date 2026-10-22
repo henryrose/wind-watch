@@ -90,7 +90,7 @@ public struct ChartStyle: Sendable, Equatable {
     /// Full view height including the tick-label band.
     public var totalHeight: CGFloat { boxHeight + labelBand }
 
-    /// iPhone portrait (`phonebig`): 370×262, top 38 / bottom 18, arrows every 3 h, 6-h 12-hour
+    /// iPhone portrait (`phonebig`): 402×262 (edge to edge, §6.4d), top 38 / bottom 18, arrows every 3 h, 6-h 12-hour
     /// labels, day band, `ends Fri 5am` (HANDOFF §6.4, §6.4a).
     public static let phonePortrait = ChartStyle(
         plotHeight: 206, topInset: 38, bottomInset: 18, labelBaseline: 10, labelBand: 13,
@@ -98,7 +98,7 @@ public struct ChartStyle: Sendable, Equatable {
         arrowEvery: 3, tickEvery: 6, labelFormat: .hour12, showsGrid: true, showsDays: true,
         sunRadius: 3, edgeLabel: .weekday12, isWatch: false)
 
-    /// iPhone landscape (`land`): 756×296, top 38 / bottom 22, arrows every hour, 3-h labels (§6.4b).
+    /// iPhone landscape (`land`): 834×296 (screen − 40, §6.4d), top 38 / bottom 22, arrows every hour, 3-h labels (§6.4b).
     public static let phoneLandscape = ChartStyle(
         plotHeight: 236, topInset: 38, bottomInset: 22, labelBaseline: 10, labelBand: 14,
         barCornerRadius: 1.5, gustLineWidth: 1.5, fontSize: 12, arrowSize: 9,

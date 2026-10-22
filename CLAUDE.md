@@ -32,7 +32,7 @@ forecast for Port Townsend Bay, WA. One user. Watch complications are the primar
 - `docs/design/` — the UI design package. Read `README.md` first, then `DESIGN-HANDOFF.md`
   (the contract: tokens, chart spec, scrub, per-surface layouts, acceptance checklist; wins over
   the renders), `reference/renders/*.png`, `reference/artboards/*.dc.html` (exact values),
-  `reference/chart_reference.py` (chart maths). `GAP-ANALYSIS.md` is the render-vs-build audit.
+  `reference/chart_reference.py` (chart maths). §6.4d (round two) supersedes anything above it.
 - `docs/IMPLEMENTATION_PLAN.md` — multi-agent task breakdown. §0 reconciles the two docs above.
 - `docs/LOOP_PROMPT.md` — orchestrator prompt.
 
@@ -56,8 +56,8 @@ cd apple && ./build.sh gen      # regenerate WindWatch.xcodeproj from project.ym
 ./build.sh watch                # WindWatchWatch scheme → Apple Watch Series 12 (46mm) simulator
 ./build.sh all                  # gen + swift test + ios + watch
 # Run with fixture data: launch with env WW_FIXTURE=1 (+ WW_STATE=stale|old|offline|horizon|firstrun|updating,
-# WW_NOW=<ISO8601>, WW_TYPE_SIZE=ax3, WW_SCREEN=location|about, WW_SCRUB=<hour index>, WW_LANDSCAPE=1 on iPhone;
-# WW_PAGE=now|strip|settings|complications on watch). Wait ~7 s before a screenshot (first frame compiles a gradient).
+# WW_NOW=<ISO8601>, WW_TYPE_SIZE=ax3, WW_SCREEN=location|about, WW_SCRUB=<hour index>, WW_LANDSCAPE=1,
+# WW_TABLE=1|0 (hourly table open/closed) on iPhone; WW_PAGE=strip|now|settings|complications on watch, strip is the default). Wait ~7 s before a screenshot (first frame compiles a gradient).
 # Always address simulators by UDID when two are booted (`xcrun simctl list devices`).
 
 # Web (static page, no build step)
@@ -73,7 +73,7 @@ python3 -m http.server 8080     # from the repo root, then open http://localhost
 - `apple/Config/Shared.xcconfig` (tracked) + `Local.xcconfig` (untracked: team id, bundle prefix).
 - `web/` — `index.html`, `app.js`, `lib/derive.js` (pure derivations), `config.js` (API base).
 - `fixtures/` — captured Open-Meteo responses and `payload-reference.json` (shared by all tests and previews).
-- `docs/` — `DESIGN.md`, `design/` (UI package), implementation plan, screenshots (`d6-*` and `web-d6-*` are the post-design-package set), `HANDOFF-OTHER-MACHINE.md`.
+- `docs/` — `DESIGN.md`, `design/` (UI package), implementation plan, screenshots (`d7-*` and `web-d7-*` are the round-two design set; `d6-*` the first pass), `HANDOFF-OTHER-MACHINE.md`.
 
 ## Rules
 

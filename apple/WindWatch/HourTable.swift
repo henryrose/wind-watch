@@ -1,6 +1,68 @@
 import SwiftUI
 import WindCore
 
+/// The collapsible table (HANDOFF §6.4d): a 52 pt disclosure row (`Hourly table` Semibold 17 ·
+/// `45 hours · Wed 9am → Fri 5am` 13 secondary · chevron) on a `card` plate, radius 12, margin 12;
+/// tapping expands `HourTable` in place with a spring. Collapsed by default; the state persists in
+/// `@AppStorage("hourlyTableExpanded")`. At accessibility sizes the row is 60 pt with a 32 pt label
+/// and no caption (`Phone-Table-LargeType.dc.html`).
+struct HourTableDisclosure: View {
+    static let storageKey = "hourlyTableExpanded"
+
+    let forecast: Forecast
+    let now: Date
+    let tier: AgeTier
+
+    @AppStorage(HourTableDisclosure.storageKey) private var expanded = false
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var ax: Bool { typeSize.isAccessibilitySize }
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(duration: 0.35, bounce: 0.15)) { expanded.toggle() }
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text("Hourly table")
+                        .font(.system(size: ax ? 32 : 17, weight: .semibold))
+                        .foregroundStyle(Tokens.inkPrimary(scheme))
+                    if !ax {
+                        Text(Derivations.tableCaption(forecast: forecast, now: now))
+                            .font(.system(size: 13).monospacedDigit())
+                            .foregroundStyle(Tokens.inkSecondary(scheme))
+                    }
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: ax ? 17 : 12, weight: .bold))
+                    .foregroundStyle(Tokens.inkSecondary(scheme))
+                    .rotationEffect(.degrees(expanded ? 180 : 0))
+                    .frame(width: ax ? 20 : 14, height: ax ? 20 : 14)
+            }
+            .padding(.leading, 16)
+            .padding(.trailing, 14)
+            .frame(minHeight: ax ? 60 : 52)
+            .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 12)
+        .accessibilityLabel("Hourly table, \(Derivations.tableCaption(forecast: forecast, now: now))")
+        .accessibilityValue(expanded ? "expanded" : "collapsed")
+        .accessibilityAddTraits(.isButton)
+        if expanded {
+            HourTable(forecast: forecast, now: now, tier: tier)
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+    }
+}
+
 /// HANDOFF §8.1 item 5 / `Phone-Main.dc.html`: columns `56 | 56 | 56 | 1fr | 36` (gap 8, 8 pt
 /// inner padding), 44 pt rows, row rules in `card`, a sticky day header (`Wed · kn · gust · from
 /// · B`) at each day change. From AX1 the row reflows to two lines (`Phone-Table-LargeType`).
@@ -50,7 +112,8 @@ struct HourTable: View {
                         }
                 }
             } header: {
-                header(day)
+                // AX rows carry `Wed 21:00` themselves; no day header (`Phone-Table-LargeType`).
+                if !reflow { header(day) }
             }
         }
         .accessibilityLabel("Hourly forecast table")

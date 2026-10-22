@@ -23,6 +23,7 @@ import {
   scrubLabel,
   selectionGeometry,
   shortDay,
+  tableCaption,
   toForecast,
   trustLine,
   trustState,
@@ -338,6 +339,25 @@ function installChartInteraction() {
 
 // --- Table ----------------------------------------------------------------
 
+// HANDOFF §6.4d: the table is a <details>, closed by default; open/closed is
+// remembered per browser. `?table=1|0` presets it for screenshots.
+const TABLE_KEY = 'ww.hourlyTableExpanded';
+let tableDisclosureInstalled = false;
+function installTableDisclosure() {
+  const d = $('table-card');
+  if (tableDisclosureInstalled) return;
+  tableDisclosureInstalled = true;
+  const forced = new URLSearchParams(location.search).get('table');
+  let open = false;
+  if (forced != null) open = forced === '1';
+  else { try { open = localStorage.getItem(TABLE_KEY) === '1'; } catch { /* storage blocked */ } }
+  d.open = open;
+  d.addEventListener('toggle', () => {
+    try { localStorage.setItem(TABLE_KEY, d.open ? '1' : '0'); } catch { /* ignore */ }
+  });
+}
+
+
 function buildTable(forecast, nowIdx, compact) {
   const tz = forecast.location.tz;
   const nowRow = Math.floor(nowIdx);
@@ -418,7 +438,7 @@ function render(ctx, opts) {
       ? 'No data yet. The server has not baked a forecast yet.'
       : 'No data yet. Needs cellular or Wi-Fi once.';
     $('chart-card').classList.add('hidden');
-    $('table-wrap').classList.add('hidden');
+    $('table-card').classList.add('hidden');
     $('footer-right').innerHTML = `<span class="trying"><span class="ring" aria-hidden="true"></span>trying…</span>`;
     chartState.layout = null;
     return;
@@ -454,8 +474,10 @@ function render(ctx, opts) {
   installChartInteraction();
   if (opts.hover != null) setSelection(opts.hover);
 
-  $('table-wrap').classList.remove('hidden');
+  $('table-card').classList.remove('hidden');
+  $('table-caption').textContent = tableCaption(forecast, nowIdx, { compact });
   $('table-wrap').innerHTML = buildTable(forecast, nowIdx, compact);
+  installTableDisclosure();
 
   $('attribution').innerHTML = `Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km · times in ${esc(tzAbbrev(forecast.start, tz))}`;
   $('footer-right').textContent = '';

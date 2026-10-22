@@ -7,9 +7,10 @@ enum Screen: Hashable {
     case about
 }
 
-/// iPhone main screen (HANDOFF §6.4, §8.1, `Phone-Main.dc.html`): header, readout row (now, or
-/// the scrubbed hour), full-bleed chart card, summary, table; everything scrolls together.
-/// Landscape (`verticalSizeClass == .compact`) swaps to `LandscapeView` (§6.4b).
+/// iPhone main screen (HANDOFF §6.4, §6.4d, §8.1, `Phone-Main.dc.html`): header, the fixed-height
+/// readout plate (now, or the scrubbed hour), the edge-to-edge chart, summary, the collapsible
+/// hourly table, footer; everything scrolls together. Landscape (`verticalSizeClass == .compact`)
+/// swaps to `LandscapeView` (§6.4b).
 struct MainView: View {
     @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
@@ -19,15 +20,19 @@ struct MainView: View {
     @State private var scrub = ScrubState()
 
     init() {
-        switch ProcessInfo.processInfo.environment["WW_SCREEN"] {
+        let env = ProcessInfo.processInfo.environment
+        switch env["WW_SCREEN"] {
         case "location": _path = State(initialValue: [.location])
         case "about": _path = State(initialValue: [.about])
         default: _path = State(initialValue: [])
         }
         #if DEBUG
-        // `WW_SCRUB=<hour index>` pins the scrub state for screenshots.
-        if let s = ProcessInfo.processInfo.environment["WW_SCRUB"], let i = Int(s) {
+        // `WW_SCRUB=<hour index>` pins the scrub state; `WW_TABLE=1|0` presets the table disclosure.
+        if let s = env["WW_SCRUB"], let i = Int(s) {
             _scrub = State(initialValue: ScrubState(index: i, pinned: true))
+        }
+        if let t = env["WW_TABLE"] {
+            UserDefaults.standard.set(t == "1", forKey: HourTableDisclosure.storageKey)
         }
         #endif
     }
@@ -60,19 +65,18 @@ struct MainView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
                 NowBlock(scrub: scrub.index)
-                    .padding(.horizontal, scrub.index == nil ? 16 : 12)
+                    .padding(.horizontal, 12)
                     .padding(.bottom, 12)
                 if let forecast = model.forecast, model.trustState.showsNumbers {
-                    ChartCard(forecast: forecast, scrub: $scrub, style: typeSize.isAccessibilitySize ? .phoneClamped : .phonePortrait)
+                    ChartCard(forecast: forecast, scrub: $scrub, clamped: typeSize.isAccessibilitySize)
                         .padding(.bottom, 12)
                     Text(forecast.summary)
                         .font(Tokens.summaryFont(watch: false))
                         .foregroundStyle(Tokens.inkBody(scheme))
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 16)
-                        .padding(.bottom, 12)
-                    HourTable(forecast: forecast, now: model.now, tier: model.ageTier)
-                        .padding(.horizontal, 16)
+                        .padding(.bottom, 14)
+                    HourTableDisclosure(forecast: forecast, now: model.now, tier: model.ageTier)
                 } else {
                     emptyBody
                         .padding(.horizontal, 16)
@@ -101,6 +105,8 @@ struct MainView: View {
         }
     }
 
+    /// `Weather data by Open-Meteo.com` in `ink.disabled` 12 (`Phone-Main.dc.html`), with the About
+    /// link on the right; the first-run spinner replaces the attribution while trying.
     private var footer: some View {
         HStack(spacing: 8) {
             if model.trustState == .firstRun {
@@ -108,17 +114,21 @@ struct MainView: View {
                 Text(TrustLine.firstRunFooterText)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Tokens.inkSecondary(scheme))
+            } else {
+                Text("Weather data by Open-Meteo.com")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Tokens.inkDisabled(scheme))
             }
             Spacer()
             NavigationLink(value: Screen.about) {
-                Label("About", systemImage: "info.circle")
-                    .font(.system(size: 13, weight: .semibold))
+                Text("About")
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Tokens.inkSecondary(scheme))
             }
             .frame(minHeight: 44)
             .accessibilityLabel("About Wind Watch")
         }
-        .padding(.top, 8)
+        .padding(.top, 10)
     }
 }
 
@@ -139,34 +149,48 @@ struct ScrubState {
     }
 }
 
-/// Full-bleed chart card (`Phone-Main.dc.html`): `card` fill, padding 12/16/10, title row
-/// `Wed 9am → Fri 5am` + hint, then the chart.
+/// The chart block. Default sizes (`Phone-Main.dc.html`, §6.4d): edge to edge — `card` fill with
+/// no radius, padding 12 top / 8 bottom, the title row (`Wed 9am → Fri 5am` + hint) keeps the
+/// 16 pt inset, the plot is the full screen width and ignores the horizontal safe area. At
+/// accessibility sizes (`Phone-Table-LargeType.dc.html`) it is the inset rounded card (radius 14,
+/// padding 8/0/10) with the clamped 152 pt plot and no title row.
 struct ChartCard: View {
     let forecast: Forecast
     @Binding var scrub: ScrubState
-    let style: ChartStyle
+    let clamped: Bool
 
     @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         let chart = ChartModel(forecast: forecast, now: model.now, window: .all, scheme: scheme)
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(Derivations.chartTitle(forecast: forecast))
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Tokens.inkPrimary(scheme))
-                Spacer()
-                Text(scrub.index == nil ? "touch a bar for that hour" : "release to return to now")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Tokens.inkSecondary(scheme))
+        if clamped {
+            WindChart(model: chart, style: .phoneClamped, selection: scrub.index, onScrub: { scrub.apply($0) })
+                .padding(.top, 8)
+                .padding(.bottom, 10)
+                .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .padding(.horizontal, 16)
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(Derivations.chartTitle(forecast: forecast))
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Tokens.inkPrimary(scheme))
+                    Spacer()
+                    Text(scrub.index == nil ? "touch a bar for that hour" : "release to return to now")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                }
+                .lineLimit(1)
+                .padding(.horizontal, 16)
+                WindChart(model: chart, style: .phonePortrait, selection: scrub.index, onScrub: { scrub.apply($0) })
+                    .ignoresSafeArea(.container, edges: .horizontal)
             }
-            WindChart(model: chart, style: style, selection: scrub.index, onScrub: { scrub.apply($0) })
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+            .background(Tokens.card(scheme))
+            .ignoresSafeArea(.container, edges: .horizontal)
         }
-        .padding(.top, 12)
-        .padding(.bottom, 10)
-        .padding(.horizontal, 16)
-        .background(Tokens.card(scheme))
     }
 }
 

@@ -139,18 +139,17 @@ public struct WindChart: View {
         }
 
         // Day band: name at the left of each day; dotted divider at midnight (never the first day).
-        // The first day's label is hidden when the `now` label would sit under it (README nit).
+        // The first day's name sits at `X + 4` on the line above `now` (round two), so both show.
         let nowX = g.nowX
-        for (i, mark) in g.dayMarks.enumerated() {
+        for mark in g.dayMarks {
             if mark.divider {
                 var line = Path()
                 line.move(to: CGPoint(x: mark.x, y: g.plotTop - 18 * u))
                 line.addLine(to: CGPoint(x: mark.x, y: g.plotBottom))
                 ctx.stroke(line, with: .color(ink.opacity(0.28)), style: StrokeStyle(lineWidth: u, dash: [2 * u, 3 * u]))
             }
-            if i == 0, let nowX, nowX < mark.x + 5 * u + 3 * style.fontSize { continue }
             drawText(&ctx, mark.name, font: .system(size: style.fontSize, weight: .bold), color: ink.opacity(0.75),
-                     x: mark.x + 5 * u, baseline: g.plotTop - 22 * u, anchor: .leading)
+                     x: mark.labelX, baseline: g.plotTop - 22 * u, anchor: .leading)
         }
 
         // Now marker: 1.5 pt rule from `top − 6`, label 4 pt right of it.

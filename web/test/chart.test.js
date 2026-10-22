@@ -19,6 +19,7 @@ import {
   hourAtX,
   scrubLabel,
   selectionGeometry,
+  tableCaption,
   tickLabel,
   toForecast,
 } from '../lib/derive.js';
@@ -153,7 +154,7 @@ test('ticks every 3 h (hour-of-day), 3 tall; labels at H + 10 in 12-hour text', 
   assert.deepEqual(L.labels.slice(0, 8).map((l) => l.text), ['9am', 'noon', '3pm', '6pm', '9pm', '12am', '3am', '6am']);
 });
 
-test('day band: name at x + 5 / top − 22, dotted divider at each midnight but not the first day', () => {
+test('day band: name at x + 5 (first day x + 4) / top − 22, dotted divider at each midnight but not the first day', () => {
   const refDays = [...ref.matchAll(/<text x="([\d.]+)" y="18"[^>]*>(\w+)<\/text>/g)].map((m) => [num(m[1]), m[2]]);
   const refDividers = tags('line').map(attrs).filter((a) => a['stroke-dasharray'] === '2 3');
   assert.deepEqual(refDays.map((d) => d[1]), ['Wed', 'Thu', 'Fri']);
@@ -170,11 +171,8 @@ test('day band: name at x + 5 / top − 22, dotted divider at each midnight but 
     assert.equal(d.divider.y1, 22);
     assert.equal(d.divider.y2, 278);
   });
-  // README nit: "now" at 0.4 h would sit under "Wed", so Wed is hidden.
-  assert.equal(L.days[0].hidden, true);
-  assert.equal(L.days[1].hidden, false);
-  const later = chartLayout(forecast, CHART_STYLES.desktop, { nowIdx: 3.5 });
-  assert.equal(later.days[0].hidden, false, 'Wed shows again once now has moved right');
+  // Round two: the first day's name sits at x + 4 on the line above "now"; never hidden.
+  assert.ok(L.days.every((d) => !d.hidden));
 });
 
 test('now rule at x(0.4) with its label at x + 4 / top − 8', () => {
@@ -271,4 +269,11 @@ test('12-hour labels: ticks, title, edge, scrub', () => {
   assert.equal(scrubLabel(hourAt(forecast, 30), TZ), 'Thu 3pm');
   assert.equal(scrubLabel(hourAt(forecast, 0), TZ), 'Wed 9am');
   assert.equal(hourAt(forecast, 44).getTime(), forecast.start.getTime() + 44 * HOUR_MS);
+});
+
+test('table caption: "45 hours · Wed 9am → Fri 5am", phone "45 hours" (§6.4d)', () => {
+  assert.equal(tableCaption(forecast, 0.4), '45 hours · Wed 9am → Fri 5am');
+  assert.equal(tableCaption(forecast, 0.4, { compact: true }), '45 hours');
+  assert.equal(tableCaption(forecast, 43.5), '2 hours · Fri 4am → Fri 5am');
+  assert.equal(tableCaption(forecast, 44.2), '1 hour · Fri 5am → Fri 5am');
 });

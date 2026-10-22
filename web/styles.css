@@ -347,6 +347,33 @@ h1 {
 .legend-item .sundot { width: 8px; height: 8px; border-radius: 50%; background: var(--sun); }
 
 /* --- Table (Web-Desktop / Web-Phone artboards) ---------------------------- */
+/* HANDOFF §6.4d: a <details> card, closed by default, 52 px summary row. */
+.table-card { background: var(--card); border-radius: 10px; min-width: 0; }
+.table-card > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  min-height: 52px;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+.table-card > summary::-webkit-details-marker { display: none; }
+.table-card > summary:focus-visible { outline: 2px solid var(--ink-primary); outline-offset: 2px; }
+.table-summary { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.table-title { font-size: 16px; font-weight: 700; color: var(--ink-primary); white-space: nowrap; }
+.table-caption { font-size: 13px; color: var(--ink-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.table-card .chev { color: var(--ink-secondary); flex: none; transition: transform 0.2s ease; }
+.table-card[open] .chev { transform: rotate(180deg); }
+.table-card .table-wrap { padding: 0 12px 12px; }
+.table-card th { background: var(--card); }
+@media (prefers-reduced-motion: no-preference) {
+  .table-card[open] .table-wrap { animation: table-open 0.25s ease-out; }
+}
+@keyframes table-open { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; min-width: 0; }
 table {
   border-collapse: collapse;
@@ -448,5 +475,11 @@ table.compact tr.day-row th { padding-top: 14px; }
   .chip-peak { white-space: normal; }
   .card { padding: 10px 0 12px; }
   .chart-head, .legend { display: none; }
+  .table-card > summary { padding: 14px 16px; }
+  .table-summary { gap: 10px; }
+  .table-card .table-wrap { padding: 0 8px 12px; }
   .tip { gap: 6px 12px; padding: 8px 12px; flex-wrap: wrap; justify-content: center; width: max-content; max-width: 100%; }
 }
+/* Inside the table card the row rules switch from `card` to `hairline` so they stay visible. */
+.table-card td { border-bottom-color: color-mix(in srgb, var(--hairline) 60%, transparent); }
+.table-card tr.now td { background: color-mix(in srgb, var(--ground) 40%, transparent); }
