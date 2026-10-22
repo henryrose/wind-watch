@@ -77,7 +77,7 @@ struct RectangularComplicationView: View {
             HStack(alignment: .center, spacing: 8) {
                 Capsule()
                     .fill(isTinted ? Color.primary.opacity(0.5) : Tokens.inkDisabled(.dark))
-                    .frame(width: 26, height: 5)
+                    .frame(width: 40, height: 5)
                 Text(entry.trust == .firstRun ? "No data yet" : "No forecast")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(secondary)

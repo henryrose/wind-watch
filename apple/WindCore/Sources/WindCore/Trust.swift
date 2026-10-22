@@ -70,8 +70,12 @@ public enum TrustLine {
     public static let pastHorizonComplicationText = "No forecast — open app"
     /// Inline complication text for the past-horizon state.
     public static let pastHorizonInlineText = "Wind — open app"
-    /// First-run body text.
+    /// First-run body text (one line; also the accessibility label of the first-run screen).
     public static let firstRunText = "No data yet. Needs cellular or Wi-Fi once."
+    /// First-run title on the watch Now screen (`Watch-Now-States`, third panel).
+    public static let firstRunTitle = "No data yet."
+    /// First-run body under the title on the watch Now screen.
+    public static let firstRunBody = "Needs cellular or Wi-Fi once. It will keep the last forecast after that."
     /// First-run footer text (next to the only permitted spinner).
     public static let firstRunFooterText = "trying…"
 
