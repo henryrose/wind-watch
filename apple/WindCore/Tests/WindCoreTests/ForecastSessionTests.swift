@@ -32,6 +32,21 @@ struct ForecastSessionTests {
         #expect(session("updating").hero == f.hours[0])
     }
 
+    @Test func welcomeOnlyOnTrueFirstLaunch() {
+        #expect(Welcome.shouldShow(done: false, hasCustom: false, hasCache: false))
+        #expect(!Welcome.shouldShow(done: true, hasCustom: false, hasCache: false))
+        #expect(!Welcome.shouldShow(done: false, hasCustom: true, hasCache: false))
+        #expect(!Welcome.shouldShow(done: false, hasCustom: false, hasCache: true))
+    }
+
+    @Test func welcomeInFixtureModeOnlyWhenForced() {
+        #expect(!session("firstrun").needsWelcome)
+        let s = session("firstrun", extra: ["WW_WELCOME": "1"])
+        #expect(s.needsWelcome)
+        s.completeWelcome()
+        #expect(!s.needsWelcome)
+    }
+
     @Test func fixtureClockIsFrozen() async {
         let s = session("stale")
         let before = s.now

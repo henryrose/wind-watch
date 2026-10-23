@@ -24,6 +24,7 @@
 		511B228A64B8B935F87BE831 /* HourTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BC4826A662A28196C080F90 /* HourTable.swift */; };
 		519D6E660E8B5007C90178CE /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5BBA5569E5CE275A4A381608 /* WindCore */; };
 		52CB4FBB699EB6A9749DAE5F /* BackHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED2CD3A442733A184A5A226 /* BackHeader.swift */; };
+		539598641F46C2ADB0A1C453 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF9BC3E5E40045ECEE7039F /* WelcomeView.swift */; };
 		61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
 		716B8BAB0159431760EAA5FF /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
 		722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */; };
@@ -89,6 +90,7 @@
 /* Begin PBXFileReference section */
 		02607DDEE138EA8A5D0F038E /* WindWatchComplications.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindWatchComplications.entitlements; sourceTree = "<group>"; };
 		19FB8ABF9DBA6ED958ABFEB5 /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+		1EF9BC3E5E40045ECEE7039F /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		291C8EEB6BFF99649425D463 /* CornerComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerComplicationView.swift; sourceTree = "<group>"; };
 		2AA2B74083CD5079D262BBAD /* ComplicationsDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationsDebugView.swift; sourceTree = "<group>"; };
 		2EA33202A46135A3BA7D7D81 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
@@ -232,6 +234,7 @@
 				D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */,
 				87E90582FC4E07F44513EF7A /* MainView.swift */,
 				96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */,
+				1EF9BC3E5E40045ECEE7039F /* WelcomeView.swift */,
 				F32627786F49BCD4FE518DB9 /* WindWatch.entitlements */,
 				B968EE644A9F48069E6AD893 /* WindWatchApp.swift */,
 			);
@@ -441,6 +444,7 @@
 				61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */,
 				73B96DE1EA8356B696B6A71A /* MainView.swift in Sources */,
 				B19DFB68BD943E2B9F8CAAE0 /* NowBlock.swift in Sources */,
+				539598641F46C2ADB0A1C453 /* WelcomeView.swift in Sources */,
 				3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -582,7 +586,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "$(WW_TEAM_ID)";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -641,7 +645,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "$(WW_TEAM_ID)";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

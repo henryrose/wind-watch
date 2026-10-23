@@ -20,6 +20,13 @@ struct LocationSettingsView: View {
         )
     )
 
+    /// Called after a custom location is saved (the Welcome chooser closes on it).
+    private let onSaved: (() -> Void)?
+
+    init(onSaved: (() -> Void)? = nil) {
+        self.onSaved = onSaved
+    }
+
     private static let defaultBlue = Color(hex: "#4FA3D8")
 
     private var custom: SavedLocation? { candidate ?? model.preferences.custom }
@@ -239,6 +246,7 @@ struct LocationSettingsView: View {
         case .saved:
             candidate = nil
             searchError = nil
+            onSaved?()
         case .outsideCoverage:
             searchError = HRRRCoverage.outsideText
         }

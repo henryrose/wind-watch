@@ -21,6 +21,8 @@ public final class ForecastSession {
     public private(set) var isUpdating = false
     public private(set) var preferences: LocationSettings.Preferences
     public private(set) var typeSizeOverride: DynamicTypeSize?
+    /// iPhone first launch: show the Welcome location chooser (`Welcome`).
+    public private(set) var needsWelcome = false
     /// Called after a local preference edit (`saveCustom`, `selectDefault`, `selectCustom`); the
     /// iPhone app uses it to push the context to the watch. WindCore stays free of WatchConnectivity.
     @ObservationIgnored public var onPreferencesChanged: (@MainActor (LocationSettings.Preferences) -> Void)?
@@ -79,6 +81,22 @@ public final class ForecastSession {
             if mirrorFixtureToGroup { FixtureFlag.set(false, in: defaults) }
         }
         if let pinnedNow { now = pinnedNow }
+
+        // `WW_WELCOME=1` forces the chooser (screenshots); fixture mode otherwise never shows it.
+        if environment["WW_WELCOME"] == "1" {
+            needsWelcome = true
+        } else if !isFixture {
+            needsWelcome = Welcome.shouldShow(done: Welcome.isDone(in: defaults),
+                                              hasCustom: preferences.custom != nil, hasCache: cached != nil)
+            // Someone upgrading with data already on device has effectively chosen; never ask later.
+            if !needsWelcome { Welcome.markDone(in: defaults) }
+        }
+    }
+
+    /// Ends the Welcome chooser; the choice itself is made with `selectDefault` / `trySaveCustom`.
+    public func completeWelcome() {
+        needsWelcome = false
+        if !isFixture { Welcome.markDone(in: defaults) }
     }
 
     /// Copies the fixture cache (payload + meta) into the real group store and raises the flag.
@@ -296,4 +314,17 @@ public enum FixtureFlag {
     public static func set(_ value: Bool, in defaults: UserDefaults) {
         defaults.set(value, forKey: key)
     }
+}
+
+/// The iPhone's one-time location chooser. Shown only on a true first launch: no flag, no custom
+/// location, nothing cached. Stored in the App Group defaults beside the location preference.
+public enum Welcome {
+    public static let key = "ww.welcomeDone"
+
+    public static func shouldShow(done: Bool, hasCustom: Bool, hasCache: Bool) -> Bool {
+        !done && !hasCustom && !hasCache
+    }
+
+    public static func isDone(in defaults: UserDefaults) -> Bool { defaults.bool(forKey: key) }
+    public static func markDone(in defaults: UserDefaults) { defaults.set(true, forKey: key) }
 }
