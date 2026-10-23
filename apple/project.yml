@@ -56,6 +56,7 @@ targets:
         CFBundleDisplayName: Wind Watch
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         WWAPIBase: $(WW_API_BASE)
@@ -83,6 +84,7 @@ targets:
         CFBundleDisplayName: Wind Watch
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         WKApplication: true
         WKCompanionAppBundleIdentifier: $(WW_BUNDLE_PREFIX).windwatch
         WKRunsIndependentlyOfCompanionApp: true
@@ -108,6 +110,7 @@ targets:
         CFBundleDisplayName: Wind Watch
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         WWAPIBase: $(WW_API_BASE)
