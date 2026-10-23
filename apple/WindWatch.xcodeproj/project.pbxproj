@@ -16,6 +16,8 @@
 		2B4EEBFE809271677224442B /* CircularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */; };
 		30D7A52C482358091BCC2644 /* WindWatchWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 89D9EC4BEC6E2C799098D32D /* WindWatchWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		32B4F0E801FFA91016188508 /* CornerComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291C8EEB6BFF99649425D463 /* CornerComplicationView.swift */; };
+		332D7EDAC8A49F25C4235133 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 47946FC795E604D1D99CB40E /* PrivacyInfo.xcprivacy */; };
+		3AF009214EF0A2AA5948A4B8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E0409C6DDFD25D26AF356086 /* PrivacyInfo.xcprivacy */; };
 		3BB1979C3D4C84FD9774A534 /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = D118EB126FC6404CFFB2840E /* WindCore */; };
 		3E1E559B46DE0DFE1B01D159 /* InlineComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */; };
 		3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B968EE644A9F48069E6AD893 /* WindWatchApp.swift */; };
@@ -26,6 +28,7 @@
 		52CB4FBB699EB6A9749DAE5F /* BackHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED2CD3A442733A184A5A226 /* BackHeader.swift */; };
 		539598641F46C2ADB0A1C453 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF9BC3E5E40045ECEE7039F /* WelcomeView.swift */; };
 		61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
+		6BF471AD87B909B1BBED7218 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 74B9937BB82832949D6C22DC /* PrivacyInfo.xcprivacy */; };
 		716B8BAB0159431760EAA5FF /* LocationSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99C960818A399362EF9E02F /* LocationSync.swift */; };
 		722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8DC6EEA9E9499E94FA30E1A2 /* Assets.xcassets */; };
 		726DC8D942D5F1E9C5FB2B8A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9912859D54146B54B9E84827 /* RootView.swift */; };
@@ -99,12 +102,14 @@
 		42A455B00C00944E83C98B66 /* LandscapeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeView.swift; sourceTree = "<group>"; };
 		4343CAF9F8A29B107D6A3259 /* StripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripView.swift; sourceTree = "<group>"; };
 		4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularComplicationView.swift; sourceTree = "<group>"; };
+		47946FC795E604D1D99CB40E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4ED2CD3A442733A184A5A226 /* BackHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackHeader.swift; sourceTree = "<group>"; };
 		5A731493680C28DF215DADD4 /* WindCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WindCore; path = WindCore; sourceTree = SOURCE_ROOT; };
 		5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangularComplicationView.swift; sourceTree = "<group>"; };
 		6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineComplicationView.swift; sourceTree = "<group>"; };
 		6824B339471D125681F8D7FC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		725A4B9D252F50A7C1A8A47F /* WindWatch.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WindWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		74B9937BB82832949D6C22DC /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		865CC0FED12CA8C718A55AC7 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		87B59470AFA17D03F69749A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		87E90582FC4E07F44513EF7A /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
@@ -121,6 +126,7 @@
 		D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSettingsView.swift; sourceTree = "<group>"; };
 		DA6C2B2900F3E8D0B0D0E3AF /* Local.xcconfig.example */ = {isa = PBXFileReference; path = Local.xcconfig.example; sourceTree = "<group>"; };
 		DE376BB46BAF294AAB5E65FB /* build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = build.sh; sourceTree = "<group>"; };
+		E0409C6DDFD25D26AF356086 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E0F02E132C949642493A89C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E4FBB0E70AD12866419B4529 /* WindWatchWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WindWatchWatch.entitlements; sourceTree = "<group>"; };
 		ED20FA8FFF7330F3D2C2BCF3 /* project.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = project.yml; sourceTree = "<group>"; };
@@ -215,6 +221,7 @@
 			isa = PBXGroup;
 			children = (
 				6824B339471D125681F8D7FC /* Info.plist */,
+				74B9937BB82832949D6C22DC /* PrivacyInfo.xcprivacy */,
 				02607DDEE138EA8A5D0F038E /* WindWatchComplications.entitlements */,
 				CC9DC83D2DFECBB672B78EE0 /* WindWatchComplications.swift */,
 			);
@@ -234,6 +241,7 @@
 				D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */,
 				87E90582FC4E07F44513EF7A /* MainView.swift */,
 				96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */,
+				E0409C6DDFD25D26AF356086 /* PrivacyInfo.xcprivacy */,
 				1EF9BC3E5E40045ECEE7039F /* WelcomeView.swift */,
 				F32627786F49BCD4FE518DB9 /* WindWatch.entitlements */,
 				B968EE644A9F48069E6AD893 /* WindWatchApp.swift */,
@@ -257,6 +265,7 @@
 				2AA2B74083CD5079D262BBAD /* ComplicationsDebugView.swift */,
 				E0F02E132C949642493A89C0 /* Info.plist */,
 				8BEBA269A7EC279F059FBC8C /* NowView.swift */,
+				47946FC795E604D1D99CB40E /* PrivacyInfo.xcprivacy */,
 				9912859D54146B54B9E84827 /* RootView.swift */,
 				865CC0FED12CA8C718A55AC7 /* SettingsView.swift */,
 				4343CAF9F8A29B107D6A3259 /* StripView.swift */,
@@ -274,6 +283,7 @@
 			buildConfigurationList = C569CF635670248FE657D897 /* Build configuration list for PBXNativeTarget "WindWatchComplications" */;
 			buildPhases = (
 				7CD505EA91AEB9DA006D7291 /* Sources */,
+				B6675CED308DF14EF955A6E8 /* Resources */,
 				8ED2A02A06977D275735901D /* Frameworks */,
 			);
 			buildRules = (
@@ -385,6 +395,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				722FFAB2822DA9CF230414EF /* Assets.xcassets in Resources */,
+				3AF009214EF0A2AA5948A4B8 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B6675CED308DF14EF955A6E8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6BF471AD87B909B1BBED7218 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,6 +412,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				12D35C50B70B02A2FFFEB7A6 /* Assets.xcassets in Resources */,
+				332D7EDAC8A49F25C4235133 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
