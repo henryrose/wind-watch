@@ -26,15 +26,15 @@ struct WindWatchApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainView()
-                // First launch: choose the location before the forecast (`WelcomeView`).
-                .fullScreenCover(isPresented: Binding(get: { model.needsWelcome }, set: { if !$0 { model.completeWelcome() } })) {
+            // First launch: choose the location before the forecast (`WelcomeView`). A root swap,
+            // not a cover presented at launch, which can leave a blank window on device.
+            Group {
+                if model.needsWelcome {
                     WelcomeView()
-                        .environment(model)
-                        .transformEnvironment(\.dynamicTypeSize) { size in
-                            if let forced = model.typeSizeOverride { size = forced }
-                        }
+                } else {
+                    MainView()
                 }
+            }
                 .environment(model)
                 .transformEnvironment(\.dynamicTypeSize) { size in
                     if let forced = model.typeSizeOverride { size = forced }
