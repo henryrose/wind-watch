@@ -122,6 +122,12 @@ Before archiving: `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` in `apple/proj
 (currently 0.1.0 / 1), real app icons in the two `Assets.xcassets` (the sets are empty), and
 the About screen's attribution is already in place.
 
+External testers or an App Store listing need a privacy policy URL and support contact:
+`https://windwatch.wilder-roses.com/privacy.html` (`web/privacy.html`) and
+`windwatch@wilder-roses.com` (Squarespace forwarding). App Privacy answers to match the page:
+no tracking; Usage Data and Coarse Location (custom spot, rounded to 0.01°) collected, not
+linked to the user, used for app functionality and analytics.
+
 ## 8. Rows in `progress.md` marked other-machine
 
 | Item | Verified by |

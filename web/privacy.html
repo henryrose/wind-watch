@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Google Analytics (same property as wilder-roses.com) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3P7RP8K70"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-D3P7RP8K70');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Wind Watch — Privacy</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .policy { max-width: 680px; color: var(--ink-body); font-size: 16px; line-height: 1.55; }
+    .policy h1 { color: var(--ink-primary); font-size: 28px; margin: 8px 0 4px; }
+    .policy h2 { color: var(--ink-primary); font-size: 18px; margin: 28px 0 6px; }
+    .policy .updated { color: var(--ink-secondary); font-size: 14px; margin: 0 0 16px; }
+    .policy a { color: var(--link); }
+    .policy ul { padding-left: 20px; }
+    .policy li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="brand-row">
+      <a class="brand" href="./" aria-label="Wind Watch home" style="text-decoration:none"><svg class="brand-tile" width="28" height="28" viewBox="0 0 180 180" aria-hidden="true"><defs><clipPath id="wk-tile"><rect width="180" height="180" rx="40"/></clipPath></defs><g clip-path="url(#wk-tile)"><rect width="180" height="180" fill="#0B0E12"/></g><g transform="translate(116.8,102.2) rotate(103)"><line x1="-16" x2="-16" y1="62" y2="86" stroke="#4FA3D8" stroke-width="18" stroke-linecap="round"/><line x1="16" x2="16" y1="62" y2="92" stroke="#8DD44A" stroke-width="18" stroke-linecap="round"/><path d="M0,-50 L37.5,50 L0,20.0 L-37.5,50 Z" fill="#FFFFFF"/></g></svg><span class="wordmark" aria-hidden="true">Wind<span class="wordmark-watch"> Watch</span></span></a>
+    </div>
+
+    <article class="policy">
+      <h1>Privacy</h1>
+      <p class="updated">Last updated 22 October 2026</p>
+
+      <p>Wind Watch is a small wind-forecast app for iPhone and Apple Watch, plus this website. It has no accounts and no ads, and it does not sell or share data with anyone.</p>
+
+      <h2>What the apps send</h2>
+      <ul>
+        <li><strong>Forecast requests.</strong> The iPhone app, watch app, watch complications and website fetch the forecast from the Wind Watch server. Each request includes which part of Wind Watch made it (for example “watch”) and its version number.</li>
+        <li><strong>Custom locations.</strong> If you pick your own spot instead of Port Townsend Bay, its coordinates (rounded to about 1 km) are sent to the server to get that forecast. The server keeps the forecast for that point in a short-lived cache (about 10 minutes) and may record the coordinates in an error log if fetching the forecast fails. Your saved spot is stored only on your devices.</li>
+        <li><strong>Place search.</strong> Searching for a place on iPhone uses Apple Maps, under <a href="https://www.apple.com/legal/privacy/" rel="noopener">Apple’s privacy policy</a>. Wind Watch does not use your device’s GPS location.</li>
+      </ul>
+
+      <h2>What is counted</h2>
+      <p>To see how much Wind Watch is used, the server keeps a count of forecast requests, recording only: which part of Wind Watch made the request, its version, whether it was for the default or a custom location, the response status, and the country Cloudflare reports for the connection. It does not record IP addresses, coordinates, device identifiers or anything else that identifies you. The counts are kept for up to 90 days.</p>
+
+      <h2>This website</h2>
+      <p>This website uses Google Analytics to count visits, which sets cookies and is covered by <a href="https://policies.google.com/privacy" rel="noopener">Google’s privacy policy</a>. The iPhone and Apple Watch apps do not use Google Analytics or any other third-party analytics.</p>
+
+      <h2>Service providers</h2>
+      <ul>
+        <li><strong>Cloudflare</strong> runs the Wind Watch server and this website.</li>
+        <li><strong>Open-Meteo</strong> supplies the weather data. Only the Wind Watch server contacts it, never your device.</li>
+      </ul>
+
+      <h2>Children</h2>
+      <p>Wind Watch is not aimed at children and does not knowingly collect information from anyone.</p>
+
+      <h2>Changes</h2>
+      <p>If this policy changes, the new version will be posted here with a new date.</p>
+
+      <h2>Contact</h2>
+      <p>Questions or requests: <a href="mailto:windwatch@wilder-roses.com">windwatch@wilder-roses.com</a></p>
+    </article>
+
+    <footer class="footer">
+      <span>Wind Watch · <a href="./">Forecast</a> · <a href="mailto:windwatch@wilder-roses.com">windwatch@wilder-roses.com</a></span>
+    </footer>
+  </main>
+</body>
+</html>

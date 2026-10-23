@@ -6,6 +6,9 @@ import WindCore
 struct AboutView: View {
     @Environment(\.colorScheme) private var scheme
 
+    static let contactEmail = "windwatch@wilder-roses.com"
+    static let privacyURL = URL(string: "https://windwatch.wilder-roses.com/privacy.html")!
+
     private var shortVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
@@ -70,6 +73,14 @@ struct AboutView: View {
                     Text("Sunrise and twilight computed on device. Built for one bay.")
                         .font(.system(size: 13).monospacedDigit())
                         .foregroundStyle(Tokens.inkSecondary(scheme))
+                    HStack(spacing: 0) {
+                        Link("Privacy", destination: Self.privacyURL)
+                        Text(" · ").foregroundStyle(Tokens.inkSecondary(scheme))
+                        Link(Self.contactEmail, destination: URL(string: "mailto:\(Self.contactEmail)")!)
+                    }
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(hex: "#9BB7D4"))
+                    .padding(.top, 4)
                 }
             }
             .padding(.horizontal, 16)
