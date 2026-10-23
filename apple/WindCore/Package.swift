@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "WindCore",
-    platforms: [.iOS(.v26), .watchOS(.v26), .macOS(.v26)],
+    platforms: [.iOS(.v18), .watchOS(.v11), .macOS(.v15)],
     products: [
         .library(name: "WindCore", targets: ["WindCore"]),
     ],

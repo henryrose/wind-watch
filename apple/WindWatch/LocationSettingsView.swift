@@ -208,7 +208,12 @@ struct LocationSettingsView: View {
                 searchError = "No place found for “\(text)”."
                 return
             }
-            let coordinate = item.location.coordinate
+            let coordinate: CLLocationCoordinate2D
+            if #available(iOS 26, *) {
+                coordinate = item.location.coordinate
+            } else {
+                coordinate = item.placemark.coordinate
+            }
             propose(SavedLocation(
                 name: item.name ?? text,
                 lat: coordinate.latitude, lon: coordinate.longitude,
@@ -230,10 +235,16 @@ struct LocationSettingsView: View {
         var name = "Dropped pin"
         var tz = TimeZone.current.identifier
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        if let request = MKReverseGeocodingRequest(location: location),
-           let item = try? await request.mapItems.first {
-            name = item.name ?? item.address?.shortAddress ?? name
-            tz = item.timeZone?.identifier ?? tz
+        if #available(iOS 26, *) {
+            if let request = MKReverseGeocodingRequest(location: location),
+               let item = try? await request.mapItems.first {
+                name = item.name ?? item.address?.shortAddress ?? name
+                tz = item.timeZone?.identifier ?? tz
+            }
+        } else if let mark = try? await CLGeocoder().reverseGeocodeLocation(location).first {
+            // iOS 18–25: the pre-26 geocoder gives the same name and time zone.
+            name = mark.name ?? mark.locality ?? name
+            tz = mark.timeZone?.identifier ?? tz
         }
         propose(SavedLocation(name: name, lat: coordinate.latitude, lon: coordinate.longitude, tz: tz))
     }

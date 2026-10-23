@@ -4,8 +4,8 @@ name: WindWatch
 options:
   xcodeVersion: "27.0"
   deploymentTarget:
-    iOS: "26.0"
-    watchOS: "26.0"
+    iOS: "18.0"
+    watchOS: "11.0"
   createIntermediateGroups: true
   generateEmptyDirectories: false
   groupSortPosition: top

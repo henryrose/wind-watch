@@ -1,8 +1,8 @@
 // Shared, tracked build settings. Machine-specific values (team id, bundle prefix) live in
 // Local.xcconfig (untracked; see Local.xcconfig.example) and override the defaults below.
 
-IPHONEOS_DEPLOYMENT_TARGET = 26.0
-WATCHOS_DEPLOYMENT_TARGET = 26.0
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
+WATCHOS_DEPLOYMENT_TARGET = 11.0
 SWIFT_VERSION = 6.0
 SWIFT_STRICT_CONCURRENCY = complete
 CODE_SIGN_STYLE = Automatic
