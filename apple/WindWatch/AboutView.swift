@@ -70,7 +70,7 @@ struct AboutView: View {
                             .foregroundStyle(cardBody)
                     }
                     .font(.system(size: 15))
-                    Text("Sunrise and twilight computed on device. Built for one bay.")
+                    Text("Sunrise and twilight computed on device. Built for Port Townsend Bay; works anywhere HRRR covers.")
                         .font(.system(size: 13).monospacedDigit())
                         .foregroundStyle(Tokens.inkSecondary(scheme))
                     HStack(spacing: 0) {

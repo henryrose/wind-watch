@@ -104,7 +104,7 @@ struct WindComplication: Widget {
             WindComplicationEntryView(entry: entry)
         }
         .configurationDisplayName("Wind")
-        .description("Sustained, gusts and direction for Port Townsend Bay")
+        .description("Sustained wind, gusts and direction, hour by hour")
         .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner])
     }
 }

@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-21 evening (design package reconciliation G1–G5 done; other-machine rows unchanged; see docs/HANDOFF-OTHER-MACHINE.md)
+Last updated: 2026-10-23 (App Store submission readiness evaluated, tasks H1–H9; Worker, signing and TestFlight done on the deploy Mac; device matrix still open)
 
 
 ## Tasks
@@ -52,17 +52,49 @@ The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict subset and is gone.
 | G7 | Brand (§10a) | "Wake" app icon from `reference/brand_icon.py` (full/small/tiny tiers, Icon Composer layers, round watch icon), wordmark lockups on iPhone main eyebrow / About / web header, favicon + apple-touch-icon, footers "Wind Watch · weather data by Open-Meteo.com", watch Settings footer; About and Watch-Settings artboards revised | done | deploy Mac | 2026-10-22. `apple/scripts/render_icons.swift` renders every PNG from the brand_icon.py geometry (square, no alpha; iPhone 20 pt tiny, 29/40 pt small, 60 pt + 1024 full; watch 1024 full, clipped by watchOS; web favicon 16/32 tiny, apple-touch 180 full). `WindCore/UI/Brand.swift`: `BrandMark` (tier by size, round option), `Wordmark`, `BrandLockup`. iPhone eyebrow 17/15 portrait only, About lockup 30/26 + version, watch Settings footer (round mark 12 + "Wind Watch <ver>" Rounded Bold 11, artboard at 2×), web lockup row 28/26 (24/22 under 600 px, tagline shortens to "HRRR wind"), title "Wind Watch — <location>". Not done: Icon Composer `.icon` layers (tinted/glass); flat PNGs ship instead. Version text reads CFBundleShortVersionString (0.1.0 until MARKETING_VERSION becomes 1.0). |
 | G4 | Web desktop + phone | Port `svg()` to JS (`webhover` / `webphone` geometry), hover tooltip + keyboard, legend, table, header/footer, phone layout | done | `cd web && node --test` (37; `chart.test.js` vs `webhover.svg` / `webphone48.svg`); `web-d6-desktop-{dark,light,hover}.png`, `web-d6-phone-dark.png` reviewed against `Web-Desktop.png` / `Web-Phone.png` | orchestrator re-ran tests and reviewed all four screenshots |
 
+## App Store submission readiness (evaluated 2026-10-23, deploy Mac)
+
+Verified on this Mac: 134 WindCore tests pass, iOS and watch simulator builds clean with zero
+warnings, Worker live (200 + ETag, bake a few minutes old), TestFlight builds 0.1.0 (1)–(6)
+uploaded 2026-10-22/23 from the archive → export-upload flow in docs/HANDOFF-OTHER-MACHINE.md §7.
+
+Already in place, no task: bundle ids and the App Group come from xcconfig; app icons at every
+iPhone size plus 1024 marketing, watch 1024, none with alpha; `ITSAppUsesNonExemptEncryption = NO`
+in all three Info.plists; four privacy manifests (app, watch, complications, WindCore) that match
+`web/privacy.html` and `server/src/usage.ts` (Product Interaction + Coarse Location, not linked,
+no tracking, UserDefaults reasons CA92.1/1C8F.1); no `NSLocation*UsageDescription` needed (place
+search is `MKLocalSearch` + `CLGeocoder`, no `CLLocationManager`); DEBUG-only surfaces gated
+(`ComplicationsDebugView`, `WW_SAVE_CUSTOM`, `WW_CANDIDATE`; the `WW_*` env reads in release
+code are inert outside a debugger); Open-Meteo CC BY 4.0 attribution, privacy link and contact
+address on About; iOS 18 / watchOS 11 targets with `#available(iOS 26)` guards around the new
+MapKit APIs; landscape, Dynamic Type/AX reflow and VoiceOver walked in §11 above; watch app
+runs independently (`WKRunsIndependentlyOfCompanionApp`). Review-risk read: low. Guideline 4.2
+(minimum functionality) is covered by the chart, scrub, table, custom HRRR locations, watch app
+and four complication families; no sign-in, no demo account, no background modes.
+
+| ID | Task | Status | Verification | Notes |
+|---|---|---|---|---|
+| H1 | Version for release: `MARKETING_VERSION` 0.1.0 → 1.0 and `CURRENT_PROJECT_VERSION` 6 → 7 in `apple/project.yml`; `./build.sh gen`; revert the `Local.xcconfig` file ref gen adds to `project.pbxproj` on this Mac | done | 2026-10-23: project.yml and pbxproj at 1.0 (7); About screen and watch Settings footer read 1.0 in the simulator (`docs/appstore/iphone-69-05-about.png`, `watch-46-03-settings.png`) | the usage labels (`X-WW-Client`) change to `ios/1.0+7` etc.; `pnpm usage` groups by version |
+| H2 | Device test matrix, HANDOFF §6 rows 1–10, on the paired iPhone + watch from the TestFlight build, including the iOS 18 first-launch Welcome fix (e4b8467) | todo | tick the rows in "Needs the other machine" below with the date and build | the simulator cannot prove rows 3–6 (real face, cellular, hour rollover, 90 min / 6 h flips); none is ticked yet |
+| H3 | App Store screenshots. iPhone: a 6.9" set (1320 × 2868; iPhone 18 Pro Max simulator — the `d7-iphone-*` set is 1206 × 2622, the optional 6.3" slot) of main, scrub, table open, location, about, dark scheme, `WW_FIXTURE=1` so the numbers are stable. Apple Watch: 416 × 496 (Series 12/11/10 46 mm; the Series 12 simulator already produces this size, `d7-watch-*.png`) of strip, now, settings, plus a face carrying the rectangular + circular complications captured on the real watch (unsigned simulators get no shared App Group, see "Needs the other machine") | in-progress | simulator sets done 2026-10-23 in `docs/appstore/`: `iphone-69-01-main`, `02-scrub`, `03-table`, `04-location`, `05-about` (1320 × 2868, iPhone 18 Pro Max, dark, 9:41 status bar) and `watch-46-01-strip`, `02-now`, `03-settings` (416 × 496, Series 12 46 mm); all PNG, alpha stripped. Left for Henry: a watch face carrying the rectangular + circular complications, captured on the real watch | `xcrun simctl status_bar <udid> override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3` before iPhone captures; ASC accepts up to 10 per slot, 3–5 is plenty |
+| H4 | App Store Connect listing: confirm the public name ("Wind Watch Sailing" on the record; bundle display name is "Wind Watch"), subtitle, promotional text, description, keywords, support URL (`https://windwatch.wilder-roses.com`), privacy policy URL (`…/privacy.html`), category Weather, copyright, age-rating questionnaire (the 2025 questionnaire is mandatory for new submissions), App Privacy answers published (Product Interaction + Coarse Location, not linked, no tracking, matches the manifests), price Free, availability, watchOS app information with the watch screenshots | todo | every ASC section shows no red "missing" marker; Version 1.0 ready to submit | keep the description honest about the single default bay and custom HRRR points (CONUS only) so 2.3 metadata accuracy is not a question |
+| H5 | App Review notes on the version page: default location is Port Townsend Bay, any HRRR point selectable; where custom locations live (Location screen, search or long-press, refused outside HRRR coverage with the reason shown); the watch app works standalone and the four complication families are added from the face editor under "Wind"; no account or login; the server is public, so no demo credentials; contact `windwatch@wilder-roses.com` | todo | notes saved on the version | reviewers test iPhone-only apps on iPad too; nothing to do, the layout is portrait-safe at iPhone widths |
+| H6 | Decision: public listing or unlisted (DESIGN §9 says unlisted). Unlisted needs Apple's request form after the build is submittable, is meant for "limited audiences", and a personal app may be turned down, which falls back to a public listing anyway | Henry | decision row in the log | default if silent: submit as a public app with manual release, decide at release time; nothing in the build differs between the two |
+| H7 | Pre-archive gate: `git status` clean (commit or `git checkout` the two regenerated `.xcscheme` files currently modified), `cd apple && ./build.sh all`, `cd server && pnpm test && pnpm typecheck`, `curl -i …/v1/wind` → 200 + ETag; archive Release, generic iOS device, `-allowProvisioningUpdates`; upload build 7; install it from TestFlight and check the watch app and all four complications before submitting that same build | in-progress (gate passed 2026-10-23: 134 package tests, iOS + watch builds clean with zero warnings, 89 server tests + typecheck, Worker 200 + ETag, tree committed; archive, upload and the TestFlight check are Henry's) | build 7 processed in ASC, TestFlight install run through HANDOFF §6 rows 1–3 | re-login `wrangler` is not needed for an Apple upload; ASC upload needs Xcode's Apple ID session |
+| H8 | Polish before 1.0, no review impact: the complication gallery description reads "for Port Townsend Bay" whatever location is active (`WindWatchComplications.swift`, `.description`) → location-neutral wording; consider a one-line "Forecast guidance, not a substitute for marine warnings" on About (not required by Apple; honest for a sailing app) | done / open | description now "Sustained wind, gusts and direction, hour by hour" (2026-10-23); the About line is Henry's call and not added | both are one-line edits; do them before H7 so they ship in build 7 |
+| H9 | After approval: link the App Store page from the web footer and README; stop the 90-day TestFlight cycle; record the route taken in DESIGN §9 | later | | |
+
 ## Needs the other machine (from plan §7)
 
 | Item | Status | Where verified |
 |---|---|---|
 | Worker deploy + KV + cron live | done | 2026-10-21: https://wind-watch.wind-watch-server.workers.dev; cron bake verified, 200 + ETag, 304 on If-None-Match, ?lat&lon 200 |
 | Real API base in Shared.xcconfig and web/config.js | done | 2026-10-21; web tests 22/22 |
-| Signing, device install | other-machine | same |
-| Complications on a real watch face + shared App Group cache between app and extension | other-machine | unsigned simulator builds get no group container, so app and extension cannot share the cache here; DEBUG page `WW_PAGE=complications` verified the views |
-| Cellular standalone, hour-boundary rollover, 90-min/6-h flips on wrist | other-machine | device matrix |
-| WatchConnectivity custom-location round trip on hardware (simulator round trip done) | other-machine | device matrix rows 8–9 |
-| TestFlight upload | other-machine | same |
+| Signing, device install | done | 2026-10-22: paid team, automatic signing, TestFlight installs on the phone + watch |
+| Complications on a real watch face + shared App Group cache between app and extension | other-machine (H2 row 3) | unsigned simulator builds get no group container, so app and extension cannot share the cache here; DEBUG page `WW_PAGE=complications` verified the views |
+| Cellular standalone, hour-boundary rollover, 90-min/6-h flips on wrist | other-machine (H2 rows 4–6) | device matrix |
+| WatchConnectivity custom-location round trip on hardware (simulator round trip done) | other-machine (H2 rows 8–9) | device matrix rows 8–9 |
+| TestFlight upload | done | 0.1.0 builds (1)–(6) uploaded 2026-10-22/23; next upload is build 7 (H1, H7) |
 
 ## Decisions log
 
@@ -125,6 +157,7 @@ The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict subset and is gone.
 
 | Date | Question | Default taken |
 |---|---|---|
+| 2026-10-23 | H6: public App Store listing or unlisted (DESIGN §9 chose unlisted; Apple may refuse unlisted for a personal app)? | submit as a public app with manual release; pick the route at release time |
 
 ## Blockers
 
@@ -143,4 +176,5 @@ The old `docs/WINDWATCH-DESIGN-HANDOFF.md` was a strict subset and is gone.
 - `docs/screenshots/d6-watch-<page>-<state>[-42].png`: watch Now (fresh, stale, offline, firstrun, updating; 42 mm fresh/firstrun), strip (fresh, short horizon), settings, rectangular complication rows. From G3.
 - `docs/screenshots/web-d6-{desktop-dark,desktop-light,desktop-hover,phone-dark}.png`: web after the design package (hover = `?hover=15`). From G4.
 - `docs/screenshots/d7-iphone-{main,scrub,table-open,ax3,landscape,landscape-scrub}.png`, `d7-watch-{strip,strip-short,strip-42mm,now}.png`, `web-d7-{desktop-hover-table,phone-dark}.png`: round two (§6.4d). From G6.
+- `docs/appstore/iphone-69-*.png` (1320 × 2868) and `docs/appstore/watch-46-*.png` (416 × 496): App Store screenshot sets from the simulators with fixture data, no alpha. From H3, 2026-10-23.
 - `docs/screenshots/web-live-1180.png` (live against local Worker, HRRR 17Z, 42 h) and `web-offline-cached-1180.png` (Worker killed, cached data with amber offline line). From E2.
