@@ -84,6 +84,22 @@ and four complication families; no sign-in, no demo account, no background modes
 | H8 | Polish before 1.0, no review impact: the complication gallery description reads "for Port Townsend Bay" whatever location is active (`WindWatchComplications.swift`, `.description`) → location-neutral wording; consider a one-line "Forecast guidance, not a substitute for marine warnings" on About (not required by Apple; honest for a sailing app) | done / open | description now "Sustained wind, gusts and direction, hour by hour" (2026-10-23); the About line is Henry's call and not added | both are one-line edits; do them before H7 so they ship in build 7 | About disclaimer line: no answer from Henry before the build 7 upload, so not in 1.0; candidate for 1.0.1. |
 | H9 | After approval: link the App Store page from the web footer and README; stop the 90-day TestFlight cycle; record the route taken in DESIGN §9 | later | | |
 
+### App Review rejection, 2026-10-24 (1.0 build 7): information requested
+
+Apple asked for six things, replied in Resolution Center **and** copied into App Review
+Information → Notes. Draft text for items 2–6: `docs/appstore/review-reply.md`.
+
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| R1 | Screen recording on a physical iPhone on the latest iOS (and watch on latest watchOS): start from launch; first-launch chooser, chart + scrub, hourly table, Location search/pin + Save, About, then watch app pages and a face with the complications. No account/UGC/paid flows exist; the reply says so | Henry | todo | Control Center → Screen Recording; delete and reinstall from TestFlight first so the Welcome chooser shows; watch part: film the wrist, or record the iPhone's Watch app is not enough — a short phone video of the watch is fine; keep under ~2 min, trim in Photos |
+| R2 | Purpose and target audience | Claude | drafted | review-reply.md §2 |
+| R3 | Setup instructions, no credentials | Claude | drafted | review-reply.md §3 |
+| R4 | External services list | Claude | drafted | review-reply.md §4: own Worker, Open-Meteo, Apple MapKit |
+| R5 | Regional differences | Claude | drafted | review-reply.md §5: same everywhere; HRRR coverage limits custom points |
+| R6 | Regulated industry / third-party material | Claude | drafted | review-reply.md §6: not applicable; CC BY 4.0 attribution |
+| R7 | Henry reviews the draft, edits anything wrong, pastes §1–6 into the Resolution Center reply with the video attached, and into App Review Information → Notes; save | Henry | todo | the reply alone is not enough; Apple asked for both |
+| R8 | Resubmit (no new build needed unless the reply prompts one) | Henry | todo | |
+
 ## Needs the other machine (from plan §7)
 
 | Item | Status | Where verified |
