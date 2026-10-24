@@ -91,7 +91,7 @@ Information → Notes. Draft text for items 2–6: `docs/appstore/review-reply.m
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| R1 | Screen recording on a physical iPhone on the latest iOS (and watch on latest watchOS): start from launch; first-launch chooser, chart + scrub, hourly table, Location search/pin + Save, About, then watch app pages and a face with the complications. No account/UGC/paid flows exist; the reply says so | Henry | todo | Control Center → Screen Recording; delete and reinstall from TestFlight first so the Welcome chooser shows; watch part: film the wrist, or record the iPhone's Watch app is not enough — a short phone video of the watch is fine; keep under ~2 min, trim in Photos |
+| R1 | Screen recording on a physical iPhone on the latest iOS (and watch on latest watchOS): start from launch; first-launch chooser, chart + scrub, hourly table, Location search/pin + Save, About, then watch app pages and a face with the complications. No account/UGC/paid flows exist; the reply says so | Henry | todo | Control Center → Screen Recording; delete and reinstall from TestFlight first so the Welcome chooser shows; the watch cannot screen-record, so film it with another phone and attach that clip too; keep under ~2 min, trim in Photos |
 | R2 | Purpose and target audience | Claude | drafted | review-reply.md §2 |
 | R3 | Setup instructions, no credentials | Claude | drafted | review-reply.md §3 |
 | R4 | External services list | Claude | drafted | review-reply.md §4: own Worker, Open-Meteo, Apple MapKit |

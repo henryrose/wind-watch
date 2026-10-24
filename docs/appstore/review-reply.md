@@ -43,7 +43,7 @@ No login, account, credentials or sample files are needed.
 
 **4. External services**
 
-- Wind Watch server (our own Cloudflare Worker, windwatch's API at
+- Wind Watch server (our own Cloudflare Worker at
   wind-watch.wind-watch-server.workers.dev): fetches and caches the forecast; the apps only
   talk to this server. It keeps anonymous request counts (surface, version, country) with no
   identifiers.
