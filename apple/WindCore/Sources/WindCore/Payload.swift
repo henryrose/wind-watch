@@ -70,6 +70,47 @@ public struct Payload: Codable, Sendable, Equatable {
         public var duskDate: Date { Date(timeIntervalSince1970: TimeInterval(dusk)) }
     }
 
+    /// NBM after the HRRR horizon (DESIGN §4.2a): 3-hour blocks from `from`, which the server sets
+    /// to exactly `start + hours × 3600`, so NBM never covers an hour HRRR owns.
+    public struct Extended: Codable, Sendable, Equatable {
+        public var model: String
+        /// NBM init time (unix seconds).
+        public var run: Int
+        /// When the Worker last pulled NEW NBM data (unix seconds).
+        public var fetched: Int
+        /// Hours per block.
+        public var step: Int
+        /// Unix seconds of block 0's start.
+        public var from: Int
+        /// Count of blocks; each array below has this length.
+        public var blocks: Int
+        public var kn: [Int]
+        public var gust: [Int]
+        public var dir: [Int]
+        /// Mean °C per block, one decimal.
+        public var temp: [Double]?
+        /// Mean total cloud cover per block, %.
+        public var cloud: [Int]?
+        /// Max precipitation per block, mm/h.
+        public var precip: [Double]?
+
+        public init(model: String, run: Int, fetched: Int, step: Int, from: Int, blocks: Int,
+                    kn: [Int], gust: [Int], dir: [Int], temp: [Double]? = nil, cloud: [Int]? = nil, precip: [Double]? = nil) {
+            self.model = model
+            self.run = run
+            self.fetched = fetched
+            self.step = step
+            self.from = from
+            self.blocks = blocks
+            self.kn = kn
+            self.gust = gust
+            self.dir = dir
+            self.temp = temp
+            self.cloud = cloud
+            self.precip = precip
+        }
+    }
+
     public var v: Int
     public var loc: Location
     public var model: String
@@ -87,10 +128,19 @@ public struct Payload: Codable, Sendable, Equatable {
     public var peak: Peak
     public var summary: String
     public var sun: [Sun]
+    /// HRRR 2 m temperature, °C, one decimal (§4.2a; optional, length == hours).
+    public var temp: [Double]?
+    /// HRRR total cloud cover, % (§4.2a; optional).
+    public var cloud: [Int]?
+    /// HRRR precipitation, mm/h (§4.2a; optional).
+    public var precip: [Double]?
+    /// NBM beyond the HRRR horizon; nil (missing or `null`) when NBM is unavailable.
+    public var extended: Extended?
 
     public init(
         v: Int, loc: Location, model: String, fetched: Int, run: Run, start: Int, hours: Int,
-        kn: [Int], gust: [Int], dir: [Int], peak: Peak, summary: String, sun: [Sun]
+        kn: [Int], gust: [Int], dir: [Int], peak: Peak, summary: String, sun: [Sun],
+        temp: [Double]? = nil, cloud: [Int]? = nil, precip: [Double]? = nil, extended: Extended? = nil
     ) {
         self.v = v
         self.loc = loc
@@ -105,6 +155,10 @@ public struct Payload: Codable, Sendable, Equatable {
         self.peak = peak
         self.summary = summary
         self.sun = sun
+        self.temp = temp
+        self.cloud = cloud
+        self.precip = precip
+        self.extended = extended
     }
 
     public var fetchedDate: Date { Date(timeIntervalSince1970: TimeInterval(fetched)) }

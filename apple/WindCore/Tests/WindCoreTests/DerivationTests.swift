@@ -79,7 +79,7 @@ struct NowIndexTests {
         let now = f.start.addingTimeInterval(15.5 * 3600)
         #expect(Derivations.nowIndex(forecast: f, now: now) == 15.5)
         #expect(Derivations.heroIndex(forecast: f, now: now) == 15)
-        #expect(f.hero(at: now) == Forecast.Hour(kn: 15, gust: 25, dirFrom: 283))
+        #expect(f.hero(at: now) == Forecast.Hour(kn: 15, gust: 25, dirFrom: 283, tempC: 7.9, cloud: 100, precip: 1.2))
     }
 
     @Test func atHorizonIsLastHour() throws {

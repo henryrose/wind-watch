@@ -11,7 +11,8 @@ struct ChartModelTests {
         let m = ChartModel(forecast: f, now: now, window: .all, scheme: .dark)
         #expect(m.points.count == 45)
         #expect(m.points.first?.index == 0 && m.points.last?.index == 44)
-        #expect(m.points[15] == HourPoint(index: 15, date: f.date(ofHour: 15), kn: 15, gust: 25, dirFrom: 283, step: 4))
+        #expect(m.points[15] == HourPoint(index: 15, date: f.date(ofHour: 15), kn: 15, gust: 25, dirFrom: 283, step: 4,
+                                          tempC: 7.9, cloud: 100, precip: 1.2))
         #expect(m.xRange == f.start...f.horizon.addingTimeInterval(3600))
         #expect(m.firstIndex == 0)
         #expect(m.slotCount == 45)
@@ -117,11 +118,13 @@ struct ChartGeometryTests {
         let m = ChartModel(forecast: f, now: f.start.addingTimeInterval(0.4 * 3600), window: .all, scheme: .dark)
         let g = ChartGeometry(model: m, style: .phonePortrait, width: 402)
         #expect(g.tickPoints.map(\.index) == [0, 6, 12, 18, 24, 30, 36, 42])
-        #expect(g.tickPoints.map { g.tickLabel($0) } == ["9am", "3pm", "9pm", "3am", "9am", "3pm", "9pm", "3am"])
+        // The first label would clip at the edge-to-edge plot's left edge (26 Oct, item 3).
+        #expect(g.tickPoints.map { g.tickLabel($0) } == [nil, "3pm", "9pm", "3am", "9am", "3pm", "9pm", "3am"])
         #expect(g.arrowPoints.map(\.index) == Array(stride(from: 0, through: 42, by: 3)))
         #expect(g.edgeLabel == "ends Fri 5am")
-        #expect(g.dayMarks.map(\.name) == ["Wed", "Thu", "Fri"])
-        #expect(g.dayMarks.map(\.divider) == [false, true, true])
+        // The first day's name is suppressed while `now` is drawn (the readout names the day).
+        #expect(g.dayMarks.map(\.name) == ["Thu", "Fri"])
+        #expect(g.dayMarks.map(\.divider) == [true, true])
         #expect(g.gridValues == [10, 20])
         #expect(g.height == 275)
         let land = ChartGeometry(model: m, style: .phoneLandscape, width: 834)
