@@ -12,6 +12,7 @@ import SwiftUI
 ///   the clock (stale = fetched + 2 h, old = + 7 h, horizon = horizon + 2 h) or the cache meta.
 /// - `WW_NOW=<ISO 8601>`: pins the clock.
 /// - `WW_TYPE_SIZE=xl|xxl|xxxl|ax1…ax5`: forces a Dynamic Type size.
+/// - `WW_NBM=none`: drops the fixture's NBM `extended` blocks.
 @MainActor
 @Observable
 public final class ForecastSession {
@@ -256,7 +257,9 @@ public final class ForecastSession {
     }
 
     private func applyFixture(state: String?) {
-        let payload = PreviewData.payload
+        var payload = PreviewData.payload
+        // `WW_NBM=none`: the payload without its NBM `extended` (7 d stops at the HRRR edge).
+        if environment["WW_NBM"] == "none" { payload.extended = nil }
         let fetched = payload.fetchedDate
         let base = fetched.addingTimeInterval(30 * 60)
         try? store.clear()

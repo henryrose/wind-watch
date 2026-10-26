@@ -1,10 +1,13 @@
 import SwiftUI
 import WindCore
 
-/// HANDOFF §8.4 / `Phone-About.dc.html`: three cards — the model, the Beaufort legend
-/// (step · swatch bar · knots), attribution with the version line.
+/// HANDOFF §8.4 / `Phone-About.dc.html`: the Temperature card (`°F | °C`, §12b), then three
+/// cards — the model, the Beaufort legend (step · swatch bar · knots), attribution with the
+/// version line.
 struct AboutView: View {
     @Environment(\.colorScheme) private var scheme
+    /// Shared with the watch through the App Group defaults (it shows no temperature today).
+    @AppStorage(TemperatureUnit.storageKey, store: .windShared) private var unit: TemperatureUnit = .fahrenheit
 
     static let contactEmail = "windwatch@wilder-roses.com"
     static let privacyURL = URL(string: "https://windwatch.wilder-roses.com/privacy.html")!
@@ -30,6 +33,23 @@ struct AboutView: View {
                             .accessibilityLabel("version \(shortVersion)")
                     }
                 }
+                // Temperature: 17 Semibold title over the 13 caption, the 30 pt control right.
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Temperature")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Tokens.inkPrimary(scheme))
+                        Text("Wind is always knots.")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Tokens.inkSecondary(scheme))
+                    }
+                    Spacer(minLength: 8)
+                    SegmentedPicker(unit: $unit)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 card(spacing: 8) {
                     sectionLabel("The model")
                     Text("HRRR is NOAA's 3 km hourly-updating forecast for the continental US; each run looks 18 hours ahead, and every 6 hours a run looks 48. Wind Watch shows the latest run that reaches furthest, so the chart's horizon moves between about 40 and 47 hours as runs come and go. The run label (\"HRRR 15Z\") is the model's start time in UTC; \"as of\" is when this device last got new data.")

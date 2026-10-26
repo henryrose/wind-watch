@@ -43,6 +43,7 @@
 		CC06D82569E978FD7657CF65 /* WindEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3080A509D70312CE6DCFE398 /* WindEntry.swift */; };
 		CC1F63308295E0255808820B /* WindCore in Frameworks */ = {isa = PBXBuildFile; productRef = 000CADC025E3E5FA5D702086 /* WindCore */; };
 		D30BE4A2406DE3ACE044F407 /* LandscapeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A455B00C00944E83C98B66 /* LandscapeView.swift */; };
+		E0AD5A895901DE4C4C7FBFE8 /* SegmentedPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 645683FBE6A718940C38C805 /* SegmentedPicker.swift */; };
 		E2C4CB2F8686BDA23195A78F /* CircularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4392B6EB8BC8B6FDCC7F1620 /* CircularComplicationView.swift */; };
 		E89AB377FED9C9186DFAA7DA /* LocationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D621A0C7FB12162CDE86EAD2 /* LocationSettingsView.swift */; };
 		EB23BF4BA21F5D58CBB6D66F /* RectangularComplicationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */; };
@@ -107,6 +108,7 @@
 		5A731493680C28DF215DADD4 /* WindCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WindCore; path = WindCore; sourceTree = SOURCE_ROOT; };
 		5DB2CC3B4E05231D4E1B6EC8 /* RectangularComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangularComplicationView.swift; sourceTree = "<group>"; };
 		6159A63E65A45B63F6C1E67C /* InlineComplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineComplicationView.swift; sourceTree = "<group>"; };
+		645683FBE6A718940C38C805 /* SegmentedPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedPicker.swift; sourceTree = "<group>"; };
 		6824B339471D125681F8D7FC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		725A4B9D252F50A7C1A8A47F /* WindWatch.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WindWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		74B9937BB82832949D6C22DC /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -242,6 +244,7 @@
 				87E90582FC4E07F44513EF7A /* MainView.swift */,
 				96DB0A0C4166C4FDFBDAE499 /* NowBlock.swift */,
 				E0409C6DDFD25D26AF356086 /* PrivacyInfo.xcprivacy */,
+				645683FBE6A718940C38C805 /* SegmentedPicker.swift */,
 				1EF9BC3E5E40045ECEE7039F /* WelcomeView.swift */,
 				F32627786F49BCD4FE518DB9 /* WindWatch.entitlements */,
 				B968EE644A9F48069E6AD893 /* WindWatchApp.swift */,
@@ -464,6 +467,7 @@
 				61BEF0762EF6C5FAD071224F /* LocationSync.swift in Sources */,
 				73B96DE1EA8356B696B6A71A /* MainView.swift in Sources */,
 				B19DFB68BD943E2B9F8CAAE0 /* NowBlock.swift in Sources */,
+				E0AD5A895901DE4C4C7FBFE8 /* SegmentedPicker.swift in Sources */,
 				539598641F46C2ADB0A1C453 /* WelcomeView.swift in Sources */,
 				3E79661177AA9456989056B9 /* WindWatchApp.swift in Sources */,
 			);
