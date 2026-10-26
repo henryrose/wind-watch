@@ -1,52 +1,42 @@
 import SwiftUI
 import WindCore
 
-/// HANDOFF §7.4 / `Watch-Settings.dc.html`: `Location` Rounded Bold 13 (4 pt side inset), two
-/// full-width buttons (44 pt min, radius 12, plates 14 % / 8 % white, padding 0 10) with a
-/// two-line label (name Semibold 14 · sub Regular 10 secondary), a filled blue check on the
-/// selected row and an empty ring on the other, then the brand footer (HANDOFF §10a): round
-/// mark + `Wind Watch 1.0` Rounded Bold 11 over `Weather data by Open-Meteo.com` Regular 10
-/// secondary. The only place the watch shows the name.
+/// HANDOFF §7.4 / §8.3: `Locations` Rounded Bold 13 (4 pt side inset), then the iPhone's list
+/// in the iPhone's order, Crown-scrolled: one full-width button per location (44 pt min, radius 12,
+/// plates 14 % / 8 % white, padding 0 10) with a two-line label (name Semibold 14 · coordinates
+/// Regular 10 secondary), a filled blue check on the selected row and an empty ring on the others.
+/// Tapping selects; editing stays on the iPhone. Then the brand footer (HANDOFF §10a): round mark +
+/// `Wind Watch 1.0` Rounded Bold 11 over `Weather data by Open-Meteo.com` Regular 10 secondary.
 struct SettingsView: View {
     @Environment(ForecastSession.self) private var session
 
-    private var custom: SavedLocation? { session.preferences.custom }
-    private var usingCustom: Bool { session.preferences.effectiveUseCustom }
     private var shortVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
 
     var body: some View {
-        GeometryReader { geo in
+        ScrollView {
             content
-                .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
         }
-        .ignoresSafeArea(edges: .bottom)
         .background(Tokens.groundWatch(.dark))
     }
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Location")
+            Text("Locations")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundStyle(Tokens.inkPrimary(.dark))
                 .padding(.horizontal, 4)
             VStack(spacing: 5) {
-                plate(
-                    name: SavedLocation.portTownsendBay.name, sub: "default",
-                    selected: !usingCustom, enabled: true, action: session.selectDefault
-                )
-                .accessibilityLabel("Default location, \(SavedLocation.portTownsendBay.name)")
-                .accessibilityAddTraits(usingCustom ? [] : .isSelected)
-                plate(
-                    name: custom?.name ?? "No custom location",
-                    sub: custom == nil ? "set it on iPhone" : "set on iPhone",
-                    selected: usingCustom, enabled: custom != nil, action: session.selectCustom
-                )
-                .accessibilityLabel(custom.map { "Custom location, \($0.name)" } ?? "No custom location, set it on iPhone")
-                .accessibilityAddTraits(usingCustom ? .isSelected : [])
+                ForEach(session.preferences.locations) { location in
+                    let selected = location.id == session.preferences.selectedID
+                    plate(name: location.name, sub: location.coordinateText, selected: selected, enabled: true) {
+                        session.select(location.id)
+                    }
+                    .accessibilityLabel(location.name)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
             }
-            Spacer(minLength: 0)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     BrandMark(size: 12, round: true)
@@ -61,6 +51,7 @@ struct SettingsView: View {
                     .foregroundStyle(Tokens.inkSecondary(.dark))
             }
             .padding(.horizontal, 4)
+            .padding(.top, 6)
         }
         .padding(.horizontal, 8)
         .padding(.bottom, 12)
