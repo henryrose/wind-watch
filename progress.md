@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-25 (design rounds 4–5 implemented, build 1.0 (8); App Store readiness H1–H9 and review reply R1–R8 above)
+Last updated: 2026-10-25 (design rounds 4–5 and location naming implemented, build 1.0 (9); App Store readiness H1–H9 and review reply R1–R8 above)
 
 
 ## Tasks
@@ -117,6 +117,15 @@ clients, so builds ≤ 7 in the field keep working against the same `/v1/wind` a
 | R5e | Deploy: Worker redeployed (code unchanged) and checked with old-client requests (200 + ETag, 304, `?lat&lon` 200, outside HRRR 422, payload `v` 1); web on Pages (custom domain serves the new `derive.js`); archive `apple/build/WindWatch-1.0-8.xcarchive` (Release, zero warnings, watch app + complications embedded) | done | 2026-10-25 | |
 | R5f | Upload 1.0 (8) to TestFlight | blocked | `xcodebuild -exportArchive` → "App Store Connect access for 76DTB9437K is required" | Xcode's Apple ID session expired. Henry: Xcode → Settings → Accounts, sign in again; then rerun the export (command in the deploy-Mac memory / HANDOFF §7) |
 
+
+## Location naming (docs/location-naming, 2026-10-25)
+
+| ID | Change | Status | Verification | Notes |
+|---|---|---|---|---|
+| N1 | Data model: `suggestedName`, HRRR `cellLat`/`cellLon`, `createdAt` on `SavedLocation`; names normalised (trim, collapse spaces, 1–40), never re-geocoded or overwritten; renaming never touches the pin or cell | done | `LocationNamingTests` (normalise, ` 2` suggestion, forecast-point text against the live server's cell, build-8 rows decode, rename vs cell) | the cell is the payload's `loc`; rows from earlier builds learn it on their next refresh |
+| N2 | `LocationDetailSheet`: `New Location` · Save after a long-press or a search pick (suggestion selected, typing replaces it); ⓘ on each row opens it with the row's name · Done · Delete Location (hidden on the last row, confirm dialog); name field, helper, map with pin + dashed 3 km cell, POSITION / FORECAST POINT tiles, suggestion chips | done | screenshots of the list, new and existing sheets vs `Phone-Location*.png` | the sheet fetches the point once to learn its cell and Save reuses that payload (`ForecastSession.probe` / `tryAdd(_:probe:)`). SwiftUI can't ask before a swipe-down, so a changed name blocks the swipe and Cancel asks "Discard Changes?" |
+| N3 | Geocoder once per pin: areasOfInterest → water → locality → sub-locality → admin area, rest as chips (≤ 4), 4 s timeout | done | build | iOS 26 uses `MKReverseGeocodingRequest` (name, city, region); iOS 18–25 `CLGeocoder` with the handoff's fields. An existing row's chips show its stored suggestion only (the other names aren't stored) |
+| N4 | Build 1.0 (9) | done | `./build.sh all`: 147 Swift tests, zero warnings | supersedes build 8, which never uploaded |
 
 ## Needs the other machine (from plan §7)
 

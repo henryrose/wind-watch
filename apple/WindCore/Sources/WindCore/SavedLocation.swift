@@ -4,21 +4,35 @@ import Foundation
 /// phone → watch. Every row is equal; Port Townsend Bay is only the seed.
 public struct SavedLocation: Codable, Sendable, Hashable, Identifiable {
     public var id: UUID
+    /// User-owned (location-naming handoff §1): stored verbatim, never re-geocoded or corrected.
     public var name: String
     public var lat: Double
     public var lon: Double
     /// IANA identifier, informational; the payload's `loc.tz` drives display.
     public var tz: String
+    /// What the geocoder said when the pin was placed; kept for the chips, never shown as the title.
+    public var suggestedName: String?
+    /// The HRRR grid cell the forecast comes from (the payload's `loc`), once known.
+    public var cellLat: Double?
+    public var cellLon: Double?
+    /// Nil for rows saved before build 9.
+    public var createdAt: Date?
 
-    public init(id: UUID = UUID(), name: String, lat: Double, lon: Double, tz: String) {
+    public init(id: UUID = UUID(), name: String, lat: Double, lon: Double, tz: String,
+                suggestedName: String? = nil, cellLat: Double? = nil, cellLon: Double? = nil, createdAt: Date? = nil) {
         self.id = id
         self.name = name
         self.lat = lat
         self.lon = lon
         self.tz = tz
+        self.suggestedName = suggestedName
+        self.cellLat = cellLat
+        self.cellLon = cellLon
+        self.createdAt = createdAt
     }
 
-    /// Rows saved before the list existed (builds ≤ 7) have no `id`; they get a fresh one.
+    /// Rows saved before the list existed (builds ≤ 7) have no `id`; they get a fresh one. Rows
+    /// before build 9 have no suggestion, cell or date.
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
@@ -26,6 +40,16 @@ public struct SavedLocation: Codable, Sendable, Hashable, Identifiable {
         lat = try c.decode(Double.self, forKey: .lat)
         lon = try c.decode(Double.self, forKey: .lon)
         tz = try c.decode(String.self, forKey: .tz)
+        suggestedName = try c.decodeIfPresent(String.self, forKey: .suggestedName)
+        cellLat = try c.decodeIfPresent(Double.self, forKey: .cellLat)
+        cellLon = try c.decodeIfPresent(Double.self, forKey: .cellLon)
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt)
+    }
+
+    /// `HRRR cell 1.1 km NE`, or `at pin` within 0.3 km; nil until the cell is known.
+    public var forecastPointText: String? {
+        guard let cellLat, let cellLon else { return nil }
+        return ForecastPoint.text(pinLat: lat, pinLon: lon, cellLat: cellLat, cellLon: cellLon)
     }
 
     /// The seed row (DESIGN §0): Port Townsend Bay, the `cell_selection=sea` point. Its id is fixed
@@ -132,10 +156,18 @@ public enum LocationSettings {
             return true
         }
 
+        /// Renames without touching the pin or the cell. Blank names are ignored.
         public mutating func rename(_ id: UUID, to name: String) {
-            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty, let i = locations.firstIndex(where: { $0.id == id }) else { return }
-            locations[i].name = String(trimmed.prefix(40))
+            let clean = LocationName.normalize(name)
+            guard !clean.isEmpty, let i = locations.firstIndex(where: { $0.id == id }) else { return }
+            locations[i].name = clean
+        }
+
+        /// Records the HRRR cell a row resolves to (from its payload's `loc`). Never touches the name.
+        public mutating func setCell(_ id: UUID, lat: Double, lon: Double) {
+            guard let i = locations.firstIndex(where: { $0.id == id }) else { return }
+            locations[i].cellLat = lat
+            locations[i].cellLon = lon
         }
 
         public mutating func move(fromOffsets source: IndexSet, toOffset destination: Int) {
@@ -197,5 +229,64 @@ public enum LocationSettings {
         }
         let custom = (ctx[customLocationKey] as? Data).flatMap { try? JSONDecoder().decode(SavedLocation.self, from: $0) }
         return .legacy(custom: custom, useCustom: ctx[useCustomKey] as? Bool ?? false)
+    }
+}
+
+/// Location names (location-naming handoff §1): user-owned, 1–40 characters after trimming and
+/// collapsing runs of whitespace; duplicates are allowed and only get a ` 2` suggestion.
+public enum LocationName {
+    public static let maxLength = 40
+    /// Shown in the sheet when the geocoder found nothing, and stored if nothing better exists.
+    public static let fallback = "Pinned location"
+
+    public static func normalize(_ raw: String) -> String {
+        let words = raw.split(whereSeparator: { $0.isWhitespace })
+        return String(words.joined(separator: " ").prefix(maxLength))
+    }
+
+    /// `Mystery Bay 2` (or ` 3`, …) when `name` already names another row, else nil.
+    public static func duplicateSuggestion(for name: String, among others: [String]) -> String? {
+        let clean = normalize(name)
+        let taken = Set(others.map { normalize($0).lowercased() })
+        guard !clean.isEmpty, taken.contains(clean.lowercased()) else { return nil }
+        var n = 2
+        while true {
+            let suffix = " \(n)"
+            let candidate = String(clean.prefix(maxLength - suffix.count)) + suffix
+            if !taken.contains(candidate.lowercased()) { return candidate }
+            n += 1
+        }
+    }
+}
+
+/// The FORECAST POINT tile: distance and 8-point bearing from the pin to the HRRR cell centre.
+public enum ForecastPoint {
+    public static func distanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
+        let r = 6371.0
+        let p1 = lat1 * .pi / 180, p2 = lat2 * .pi / 180
+        let dp = (lat2 - lat1) * .pi / 180, dl = (lon2 - lon1) * .pi / 180
+        let a = sin(dp / 2) * sin(dp / 2) + cos(p1) * cos(p2) * sin(dl / 2) * sin(dl / 2)
+        return 2 * r * atan2(sqrt(a), sqrt(1 - a))
+    }
+
+    /// Initial bearing from point 1 to point 2, degrees 0..<360.
+    public static func bearing(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
+        let p1 = lat1 * .pi / 180, p2 = lat2 * .pi / 180, dl = (lon2 - lon1) * .pi / 180
+        let y = sin(dl) * cos(p2)
+        let x = cos(p1) * sin(p2) - sin(p1) * cos(p2) * cos(dl)
+        let deg = atan2(y, x) * 180 / .pi
+        return (deg + 360).truncatingRemainder(dividingBy: 360)
+    }
+
+    public static func eightPoint(_ degrees: Double) -> String {
+        let names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        return names[Int(((degrees + 22.5) / 45).rounded(.down)) % 8]
+    }
+
+    public static func text(pinLat: Double, pinLon: Double, cellLat: Double, cellLon: Double) -> String {
+        let km = distanceKm(lat1: pinLat, lon1: pinLon, lat2: cellLat, lon2: cellLon)
+        guard km >= 0.3 else { return "at pin" }
+        let dir = eightPoint(bearing(lat1: pinLat, lon1: pinLon, lat2: cellLat, lon2: cellLon))
+        return "HRRR cell \(String(format: "%.1f", km)) km \(dir)"
     }
 }

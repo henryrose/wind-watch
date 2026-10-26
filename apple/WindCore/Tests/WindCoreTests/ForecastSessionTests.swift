@@ -216,7 +216,9 @@ struct ForecastSessionSyncTests {
     @Test func tryAddSavesInFixtureModeAndStopsAtTwelve() async throws {
         let h = try Harness(fixture: true); defer { h.cleanup() }
         #expect(await h.session.tryAdd(custom) == .saved)
-        #expect(h.session.preferences == list(selecting: custom))
+        #expect(h.session.preferences.locations.map(\.id) == [SavedLocation.portTownsendBay.id, custom.id])
+        #expect(h.session.preferences.selected.id == custom.id)
+        #expect(h.session.preferences.selected.createdAt != nil)
         for i in 0..<10 {
             #expect(await h.session.tryAdd(SavedLocation(name: "P\(i)", lat: 47 + Double(i) / 10, lon: -122, tz: "America/Los_Angeles")) == .saved)
         }
@@ -224,6 +226,23 @@ struct ForecastSessionSyncTests {
         #expect(h.session.preferences.isFull)
         #expect(await h.session.tryAdd(SavedLocation(name: "One more", lat: 45, lon: -122, tz: "America/Los_Angeles")) == .full)
         #expect(h.session.preferences.locations.count == 12)
+    }
+
+    @Test func probeThenSaveStoresTheCellAndTheUsersName() async throws {
+        let h = try Harness(fixture: true); defer { h.cleanup() }
+        let pin = SavedLocation(name: "Marrowstone Island", lat: 48.1, lon: -122.683, tz: "America/Los_Angeles", suggestedName: "Marrowstone Island")
+        guard case .found(let probe) = await h.session.probe(pin) else { Issue.record("no probe"); return }
+        var named = pin
+        named.name = "Marrowstone Pt"
+        #expect(await h.session.tryAdd(named, probe: probe) == .saved)
+        let row = h.session.preferences.selected
+        #expect(row.name == "Marrowstone Pt")
+        #expect(row.suggestedName == "Marrowstone Island")
+        #expect(row.cellLat == probe.cellLat && row.cellLon == probe.cellLon)
+        #expect(row.createdAt != nil)
+        #expect(row.forecastPointText == "HRRR cell 1.1 km NE")
+        let london = SavedLocation(name: "London", lat: 51.5, lon: -0.12, tz: "Europe/London")
+        #expect(await h.session.probe(london) == .outsideCoverage)
     }
 
     @Test func payloadTimeZoneWinsOverSavedLocationTimeZone() throws {

@@ -118,3 +118,50 @@ struct SavedLocationTests {
 
     typealias Preferences = LocationSettings.Preferences
 }
+
+@Suite("Location naming (handoff 2026-10-25)")
+struct LocationNamingTests {
+    @Test func normalizeTrimsCollapsesAndCaps() {
+        #expect(LocationName.normalize("  Marrowstone   Pt \n") == "Marrowstone Pt")
+        #expect(LocationName.normalize("   ").isEmpty)
+        #expect(LocationName.normalize(String(repeating: "a", count: 41)).count == 40)
+    }
+
+    @Test func duplicateGetsASuffixSuggestionNotABlock() {
+        #expect(LocationName.duplicateSuggestion(for: "Mystery Bay", among: ["Mystery Bay", "Oak Bay"]) == "Mystery Bay 2")
+        #expect(LocationName.duplicateSuggestion(for: "mystery bay", among: ["Mystery Bay", "Mystery Bay 2"]) == "mystery bay 3")
+        #expect(LocationName.duplicateSuggestion(for: "Oak Bay", among: ["Mystery Bay"]) == nil)
+        let long = String(repeating: "x", count: 40)
+        #expect(LocationName.duplicateSuggestion(for: long, among: [long])?.count == 40)
+    }
+
+    @Test func forecastPointText() {
+        // The live server put the cell for 48.10, −122.68 at 48.10515, −122.70064: 1.6 km W(NW).
+        let t = ForecastPoint.text(pinLat: 48.10, pinLon: -122.68, cellLat: 48.10515, cellLon: -122.70064)
+        #expect(t == "HRRR cell 1.6 km W")
+        #expect(ForecastPoint.text(pinLat: 48.1, pinLon: -122.7, cellLat: 48.1007, cellLon: -122.7015) == "at pin")
+        #expect(ForecastPoint.text(pinLat: 48.1, pinLon: -122.683, cellLat: 48.107, cellLon: -122.6725) == "HRRR cell 1.1 km NE")
+        #expect(ForecastPoint.eightPoint(0) == "N" && ForecastPoint.eightPoint(359) == "N" && ForecastPoint.eightPoint(200) == "S")
+    }
+
+    @Test func olderRowsDecodeAndNewFieldsRoundTrip() throws {
+        let build8 = #"{"id":"6F1D4E2A-0000-4000-8000-000000000001","name":"Port Townsend Bay","lat":48.0907,"lon":-122.7773,"tz":"America/Los_Angeles"}"#
+        let old = try JSONDecoder().decode(SavedLocation.self, from: Data(build8.utf8))
+        #expect(old.suggestedName == nil && old.cellLat == nil && old.createdAt == nil && old.forecastPointText == nil)
+        let row = SavedLocation(name: "Marrowstone Pt", lat: 48.1, lon: -122.683, tz: "America/Los_Angeles",
+                                suggestedName: "Marrowstone Island", cellLat: 48.107, cellLon: -122.6725,
+                                createdAt: Date(timeIntervalSince1970: 1_792_000_000))
+        #expect(try JSONDecoder().decode(SavedLocation.self, from: JSONEncoder().encode(row)) == row)
+    }
+
+    @Test func renameAndCellNeverTouchEachOther() {
+        let row = SavedLocation(name: "Marrowstone Island", lat: 48.1, lon: -122.683, tz: "UTC", suggestedName: "Marrowstone Island")
+        var p = LocationSettings.Preferences(locations: [.portTownsendBay, row])
+        p.rename(row.id, to: "  Marrowstone   Pt ")
+        p.setCell(row.id, lat: 48.107, lon: -122.6725)
+        let saved = p.locations[1]
+        #expect(saved.name == "Marrowstone Pt")
+        #expect(saved.lat == 48.1 && saved.lon == -122.683)
+        #expect(saved.cellLat == 48.107 && saved.suggestedName == "Marrowstone Island")
+    }
+}

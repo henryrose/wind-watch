@@ -5,9 +5,11 @@ import WindCore
 /// HANDOFF §8.3 rounds four–five / `Phone-Location.dc.html`, `Phone-Location-Full.dc.html`: one
 /// list of up to 12 equal locations. Tap a row to switch; swipe left to delete; the permanent
 /// Edit button shows minus buttons (two-tap delete) and drag handles. The last location can't be
-/// deleted. Under the list: search, then a 250 pt map with every location pinned (selected blue,
-/// others white) where a long-press drops a new pin; a new point is named, then added. At 12 of
-/// 12 the screen opens in Edit mode with a "List full" banner and long-press shows a toast.
+/// deleted. Each row's ⓘ opens `LocationDetailSheet` (rename, position, forecast point, delete).
+/// Under the list: search, then a 250 pt map with every location pinned (selected blue, others
+/// white) where a long-press drops a new pin; a new pin or search result is reverse-geocoded once
+/// and opens the sheet as `New Location`. At 12 of 12 the screen opens in Edit mode with a
+/// "List full" banner and long-press shows a toast.
 struct LocationSettingsView: View {
     @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
@@ -15,13 +17,12 @@ struct LocationSettingsView: View {
 
     @State private var editMode: EditMode = .inactive
     @State private var query = ""
-    @State private var candidate: SavedLocation?
+    /// A pin being named: drawn amber while the geocoder runs.
+    @State private var placing: SavedLocation?
+    @State private var detail: LocationDetailSheet.Mode?
     @State private var searchError: String?
     @State private var isSearching = false
-    @State private var isSaving = false
     @State private var toast: String?
-    @State private var renaming: SavedLocation?
-    @State private var renameText = ""
     @State private var camera: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: SavedLocation.portTownsendBay.lat, longitude: SavedLocation.portTownsendBay.lon),
@@ -69,7 +70,6 @@ struct LocationSettingsView: View {
             }
             Section {
                 VStack(alignment: .leading, spacing: 12) {
-                    if let candidate { candidateCard(candidate) }
                     searchField
                     if let searchError {
                         Text(searchError)
@@ -77,7 +77,7 @@ struct LocationSettingsView: View {
                             .foregroundStyle(Tokens.trustAmber(scheme))
                     }
                     map
-                    Text("Tap a row to switch. Swipe left, or tap Edit, to delete or reorder — any location, including Port Townsend Bay. The selected location drives every surface; order is just order. The last remaining location can't be deleted.")
+                    Text("Tap a row to switch; tap ⓘ to rename it or see its details. Swipe left, or tap Edit, to delete or reorder — any location, including Port Townsend Bay. The last remaining location can't be deleted.")
                         .font(.system(size: 12))
                         .foregroundStyle(Tokens.inkSecondary(scheme))
                         .padding(.horizontal, 4)
@@ -95,24 +95,28 @@ struct LocationSettingsView: View {
         .environment(\.editMode, $editMode)
         .toolbar(.hidden, for: .navigationBar)
         .overlay(alignment: .center) { toastView }
-        .alert("Rename location", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
-            TextField("Name", text: $renameText)
-            Button("Cancel", role: .cancel) { renaming = nil }
-            Button("Save") {
-                if let renaming { model.rename(renaming.id, to: renameText) }
-                renaming = nil
+        .sheet(item: $detail) { mode in
+            LocationDetailSheet(mode: mode) {
+                query = ""
+                onSaved?()
             }
+            .environment(model)
         }
         .onAppear {
             if prefs.isFull { editMode = .active }
             center(on: prefs.selected, span: 0.6)
             #if DEBUG
-            // `WW_CANDIDATE="Name,lat,lon"`: propose an unsaved point at launch (screenshots).
+            // `WW_CANDIDATE="Name,lat,lon"` opens the sheet for a new point (chips from
+            // `WW_CHIPS="A|B|C"`); `WW_DETAILS=<row>` opens it for an existing row (screenshots).
             if let spec = model.environment["WW_CANDIDATE"] {
                 let parts = spec.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
                 if parts.count == 3, let lat = Double(parts[1]), let lon = Double(parts[2]) {
-                    propose(SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier))
+                    let chips = model.environment["WW_CHIPS"].map { $0.split(separator: "|").map(String.init) } ?? []
+                    detail = .new(SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier,
+                                                suggestedName: parts[0]), chips: chips)
                 }
+            } else if let row = model.environment["WW_DETAILS"].flatMap(Int.init), prefs.locations.indices.contains(row) {
+                detail = .existing(prefs.locations[row])
             }
             #endif
         }
@@ -173,11 +177,27 @@ struct LocationSettingsView: View {
 
     /// 52 pt (44 in Edit mode): selection ring / check · name Semibold 16 · coords 12 secondary.
     private func row(_ location: SavedLocation) -> some View {
+        HStack(spacing: 4) {
+            selectButton(location)
+            if !isEditing {
+                Button { detail = .existing(location) } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Self.selectedBlue)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Details for \(location.name)")
+            }
+        }
+    }
+
+    private func selectButton(_ location: SavedLocation) -> some View {
         let selected = location.id == prefs.selectedID
         return Button {
             guard !isEditing else { return }
             model.select(location.id)
-            candidate = nil
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
@@ -199,62 +219,10 @@ struct LocationSettingsView: View {
             .frame(maxWidth: .infinity, minHeight: isEditing ? 44 : 52, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .contextMenu {
-            Button("Rename", systemImage: "pencil") {
-                renameText = location.name
-                renaming = location
-            }
-            if prefs.canDelete {
-                Button("Delete", systemImage: "trash", role: .destructive) { model.delete(location.id) }
-            }
-        }
+        .buttonStyle(.borderless)
         .accessibilityLabel("\(location.name), \(location.coordinateText)")
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityHint(isEditing ? "" : "Shows this location's forecast")
-    }
-
-    // MARK: New point
-
-    /// A proposed point: an editable name, its coordinates, and Add (amber). No Add for a point
-    /// outside the HRRR grid; `searchError` says why.
-    private func candidateCard(_ location: SavedLocation) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                TextField("Name", text: Binding(
-                    get: { candidate?.name ?? "" },
-                    set: { candidate?.name = $0 }))
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Tokens.inkPrimary(scheme))
-                    .submitLabel(.done)
-                if location.isInHRRRCoverage {
-                    Button { Task { await add(location) } } label: {
-                        if isSaving { ProgressView().controlSize(.small) } else { Text("Add") }
-                    }
-                    .font(.system(size: 15, weight: .semibold))
-                    .buttonStyle(.borderedProminent)
-                    .tint(Tokens.trustAmber(scheme))
-                    .foregroundStyle(Color.black)
-                    .frame(minHeight: 44)
-                    .disabled(isSaving || location.name.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-                Button { candidate = nil; searchError = nil } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(Tokens.inkSecondary(scheme))
-                        .frame(width: 32, height: 44)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Discard this point")
-            }
-            Text(location.coordinateText + " · nearest 3 km HRRR cell")
-                .font(.system(size: 12).monospacedDigit())
-                .foregroundStyle(Tokens.inkSecondary(scheme))
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 6)
-        .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Tokens.trustAmber(scheme).opacity(0.6), lineWidth: 1))
     }
 
     // MARK: Search
@@ -283,7 +251,7 @@ struct LocationSettingsView: View {
         let text = query.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
         if let coords = SavedLocation.parseCoordinates(text) {
-            propose(SavedLocation(name: "Custom point", lat: coords.lat, lon: coords.lon, tz: TimeZone.current.identifier))
+            await propose(lat: coords.lat, lon: coords.lon, preferredName: nil, tz: nil)
             return
         }
         isSearching = true
@@ -303,56 +271,41 @@ struct LocationSettingsView: View {
             } else {
                 coordinate = item.placemark.coordinate
             }
-            propose(SavedLocation(
-                name: item.name ?? text,
-                lat: coordinate.latitude, lon: coordinate.longitude,
-                tz: item.timeZone?.identifier ?? TimeZone.current.identifier))
+            await propose(lat: coordinate.latitude, lon: coordinate.longitude,
+                          preferredName: item.name, tz: item.timeZone?.identifier)
         } catch {
             searchError = "Search failed. Check the connection and try again."
         }
     }
 
-    private func propose(_ location: SavedLocation) {
-        candidate = location
-        searchError = location.isInHRRRCoverage ? nil : HRRRCoverage.outsideText
+    /// A new point from a pin, a search result or pasted coordinates: refused outside the HRRR
+    /// grid; otherwise reverse-geocoded once (§6) and opened in the sheet as `New Location`.
+    private func propose(lat: Double, lon: Double, preferredName: String?, tz: String?) async {
+        guard !prefs.isFull else {
+            showToast("List full — delete a location first")
+            return
+        }
+        let draft = SavedLocation(name: "", lat: lat, lon: lon, tz: tz ?? TimeZone.current.identifier)
+        guard draft.isInHRRRCoverage else {
+            searchError = HRRRCoverage.outsideText
+            return
+        }
+        searchError = nil
+        placing = draft
         camera = .region(MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lon),
+            center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
             span: MKCoordinateSpan(latitudeDelta: 0.4, longitudeDelta: 0.4)))
+        let names = await PlaceNamer.suggest(lat: lat, lon: lon, preferred: preferredName)
+        placing = nil
+        var row = draft
+        row.name = names.suggestion ?? ""
+        row.suggestedName = names.suggestion
+        if tz == nil, let zone = names.timeZone { row.tz = zone }
+        detail = .new(row, chips: names.chips)
     }
 
     private func pin(at coordinate: CLLocationCoordinate2D) async {
-        var name = "Dropped pin"
-        var tz = TimeZone.current.identifier
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        if #available(iOS 26, *) {
-            if let request = MKReverseGeocodingRequest(location: location),
-               let item = try? await request.mapItems.first {
-                name = item.name ?? item.address?.shortAddress ?? name
-                tz = item.timeZone?.identifier ?? tz
-            }
-        } else if let mark = try? await CLGeocoder().reverseGeocodeLocation(location).first {
-            // iOS 18–25: the pre-26 geocoder gives the same name and time zone.
-            name = mark.name ?? mark.locality ?? name
-            tz = mark.timeZone?.identifier ?? tz
-        }
-        propose(SavedLocation(name: name, lat: coordinate.latitude, lon: coordinate.longitude, tz: tz))
-    }
-
-    /// Fetches the point before adding it; the server can still refuse one at the grid edge.
-    private func add(_ location: SavedLocation) async {
-        isSaving = true
-        defer { isSaving = false }
-        switch await model.tryAdd(location) {
-        case .saved:
-            candidate = nil
-            searchError = nil
-            query = ""
-            onSaved?()
-        case .outsideCoverage:
-            searchError = HRRRCoverage.outsideText
-        case .full:
-            showToast("List full — delete a location first")
-        }
+        await propose(lat: coordinate.latitude, lon: coordinate.longitude, preferredName: nil, tz: nil)
     }
 
     private func center(on location: SavedLocation, span: Double) {
@@ -372,8 +325,8 @@ struct LocationSettingsView: View {
                         pin(selected ? Self.selectedBlue : Color.white.opacity(0.9), size: selected ? 28 : 22)
                     }
                 }
-                if let candidate {
-                    Annotation(candidate.name, coordinate: CLLocationCoordinate2D(latitude: candidate.lat, longitude: candidate.lon)) {
+                if let placing {
+                    Annotation("", coordinate: CLLocationCoordinate2D(latitude: placing.lat, longitude: placing.lon)) {
                         pin(Tokens.trustAmber(.dark), size: 26)
                     }
                 }

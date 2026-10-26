@@ -155,6 +155,7 @@ public final class ForecastSession {
         isUpdating = false
         setCached(result)
         tick()
+        recordCellIfMissing()
         return result != nil && result?.meta.savedAt != before
     }
 
@@ -217,32 +218,80 @@ public final class ForecastSession {
         case full
     }
 
-    /// The Locations screen's Add. Fetches the new point first, so the current forecast stays on
-    /// screen until the new one is in hand and a point the server refuses changes nothing. Any
-    /// other failure (offline, server down) adds anyway and the next refresh fills it in.
-    public func tryAdd(_ location: SavedLocation) async -> AddOutcome {
+    /// What the naming sheet learns about a point before it is saved: the HRRR cell from the
+    /// payload's `loc`, and the payload itself so Save can switch without a second fetch.
+    public struct PointProbe: Sendable, Equatable {
+        public let cellLat: Double
+        public let cellLon: Double
+        /// Nil in fixture mode (no network); Save then fetches as usual.
+        let payload: Data?
+        let etag: String?
+    }
+
+    public enum ProbeOutcome: Sendable, Equatable {
+        case found(PointProbe)
+        /// Outside the HRRR grid (`HRRRCoverage`, or the server's 422).
+        case outsideCoverage
+        /// Offline or server trouble: the sheet still saves, the cell fills in on a later refresh.
+        case unavailable
+    }
+
+    /// Fetches a point's forecast once to learn its HRRR cell (location-naming handoff §3, tile 6).
+    public func probe(_ location: SavedLocation) async -> ProbeOutcome {
+        guard location.isInHRRRCoverage else { return .outsideCoverage }
+        guard let client, !isFixture else {
+            // Fixture mode: a cell 1.1 km NE of the pin, so screenshots show the tile filled.
+            return .found(PointProbe(cellLat: location.lat + 0.0070, cellLon: location.lon + 0.0105, payload: nil, etag: nil))
+        }
+        let result = await client.fetch(ifNoneMatch: nil, location: location.isDefaultPoint ? nil : location.customLocation)
+        switch result {
+        case .updated(let data, let etag):
+            guard let payload = try? Payload.decode(data) else { return .unavailable }
+            return .found(PointProbe(cellLat: payload.loc.lat, cellLon: payload.loc.lon, payload: data, etag: etag))
+        case .failed(let error) where error as? WindClientError == .outsideCoverage:
+            return .outsideCoverage
+        default:
+            return .unavailable
+        }
+    }
+
+    /// The naming sheet's Save for a new location. With a probe the cell is stored and the probed
+    /// payload is used directly; without one the point is fetched first, so the current forecast
+    /// stays on screen until the new one is in hand and a point the server refuses changes nothing.
+    /// Any other failure (offline, server down) adds anyway and the next refresh fills it in.
+    public func tryAdd(_ location: SavedLocation, probe: PointProbe? = nil) async -> AddOutcome {
         guard !preferences.isFull else { return .full }
         guard location.isInHRRRCoverage else { return .outsideCoverage }
-        var next = preferences
-        next.add(location)
-        guard let client, !isFixture, !isUpdating, !location.isDefaultPoint else {
+        var row = location
+        if row.createdAt == nil { row.createdAt = .now }
+        if let probe { row.cellLat = probe.cellLat; row.cellLon = probe.cellLon }
+        if let probe, let data = probe.payload {
+            var next = preferences
+            guard next.add(row) else { return .full }
+            apply(next, prefetched: (data, probe.etag))
+            return .saved
+        }
+        guard let client, !isFixture, !isUpdating, !row.isDefaultPoint else {
+            var next = preferences
+            guard next.add(row) else { return .full }
             apply(next)
             return .saved
         }
         isUpdating = true
-        let result = await client.fetch(ifNoneMatch: nil, location: location.customLocation)
+        let result = await client.fetch(ifNoneMatch: nil, location: row.customLocation)
         isUpdating = false
         switch result {
         case .failed(let error) where error as? WindClientError == .outsideCoverage:
             return .outsideCoverage
         case .updated(let data, let etag):
+            if let payload = try? Payload.decode(data) { row.cellLat = payload.loc.lat; row.cellLon = payload.loc.lon }
             // Re-apply on the latest list in case it changed while the fetch was in flight.
             var latest = preferences
-            guard latest.add(location) else { return .full }
+            guard latest.add(row) else { return .full }
             apply(latest, prefetched: (data, etag))
         default:
             var latest = preferences
-            guard latest.add(location) else { return .full }
+            guard latest.add(row) else { return .full }
             apply(latest)
         }
         return .saved
@@ -290,6 +339,15 @@ public final class ForecastSession {
     }
 
     // MARK: - Private
+
+    /// Rows saved before build 9 (or added offline) learn their HRRR cell from the first payload
+    /// fetched for them. The name is never touched.
+    private func recordCellIfMissing() {
+        guard !isFixture, let loc = cached?.payload.loc, preferences.selected.cellLat == nil else { return }
+        var next = preferences
+        next.setCell(next.selectedID, lat: loc.lat, lon: loc.lon)
+        apply(next)
+    }
 
     private func setCached(_ value: Cached?) {
         cached = value
