@@ -5,9 +5,16 @@ import type { OpenMeteoForecast, OpenMeteoMeta } from "./types.js";
 
 const API = "https://api.open-meteo.com";
 export const MODEL = "ncep_hrrr_conus";
+/** National Blend of Models, used only after the HRRR horizon (DESIGN §4.2a). */
+export const NBM_MODEL = "ncep_nbm_conus";
 
 /** HRRR run metadata; not rate-limited per Open-Meteo (DESIGN §2.2). */
 export const metaURL = `${API}/data/${MODEL}/static/meta.json`;
+/** NBM run metadata, same shape. */
+export const nbmMetaURL = `${API}/data/${NBM_MODEL}/static/meta.json`;
+
+/** Every hourly series either model is asked for. */
+const HOURLY = "wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,cloud_cover,precipitation";
 
 export interface ForecastURLOptions {
   lat: number;
@@ -22,7 +29,7 @@ export function forecastURL(opts: ForecastURLOptions): string {
   const q = new URLSearchParams({
     latitude: String(opts.lat),
     longitude: String(opts.lon),
-    hourly: "wind_speed_10m,wind_direction_10m,wind_gusts_10m",
+    hourly: HOURLY,
     wind_speed_unit: "kn",
     timeformat: "unixtime",
     timezone: opts.timezone,
@@ -31,6 +38,43 @@ export function forecastURL(opts: ForecastURLOptions): string {
     cell_selection: opts.cell,
   });
   return `${API}/v1/forecast?${q.toString()}`;
+}
+
+export interface NbmURLOptions {
+  lat: number;
+  lon: number;
+  cell: "sea" | "nearest";
+  /** Unix seconds of the first hour wanted (the HRRR horizon). */
+  first: number;
+  /** Unix seconds of the last hour wanted, inclusive. */
+  last: number;
+}
+
+/**
+ * NBM for exactly the hours [first, last]. `start_hour`/`end_hour` are ISO local times in
+ * the request's `timezone`; with `timezone=GMT` they are UTC and `end_hour` is inclusive
+ * (checked against the live API 2026-10-26: 13:00Z → 15:00Z five days on gave 123 hours).
+ * Always GMT, even for custom locations: only unix times are read from this response.
+ */
+export function nbmURL(opts: NbmURLOptions): string {
+  const q = new URLSearchParams({
+    latitude: String(opts.lat),
+    longitude: String(opts.lon),
+    hourly: HOURLY,
+    wind_speed_unit: "kn",
+    timeformat: "unixtime",
+    timezone: "GMT",
+    start_hour: isoHour(opts.first),
+    end_hour: isoHour(opts.last),
+    models: NBM_MODEL,
+    cell_selection: opts.cell,
+  });
+  return `${API}/v1/forecast?${q.toString()}`;
+}
+
+/** `2026-10-28T13:00` for a unix time, UTC. */
+function isoHour(t: number): string {
+  return new Date(t * 1000).toISOString().slice(0, 16);
 }
 
 export class UpstreamError extends Error {
@@ -84,4 +128,12 @@ export function fetchMeta(): Promise<OpenMeteoMeta> {
 
 export function fetchForecast(opts: ForecastURLOptions): Promise<OpenMeteoForecast> {
   return fetchJSON<OpenMeteoForecast>(forecastURL(opts));
+}
+
+export function fetchNbmMeta(): Promise<OpenMeteoMeta> {
+  return fetchJSON<OpenMeteoMeta>(nbmMetaURL);
+}
+
+export function fetchNbm(opts: NbmURLOptions): Promise<OpenMeteoForecast> {
+  return fetchJSON<OpenMeteoForecast>(nbmURL(opts));
 }

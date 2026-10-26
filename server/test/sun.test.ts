@@ -6,8 +6,9 @@ import { localDate, localMidnight, sunDays, sunEvents } from "../src/sun.js";
 import { transform } from "../src/transform.js";
 import { serializePayload } from "../src/stableStringify.js";
 import type { Location, OpenMeteoForecast, OpenMeteoMeta, SunDay } from "../src/types.js";
+import { withSky } from "./helpers.js";
 
-const forecast = forecastFixture as OpenMeteoForecast;
+const forecast = withSky(forecastFixture as OpenMeteoForecast);
 const meta = metaFixture as OpenMeteoMeta;
 
 const PT = { lat: 48.0907, lon: -122.7773, tz: "America/Los_Angeles" };
@@ -183,8 +184,8 @@ describe("transform populates sun", () => {
     }
   });
 
-  it("serialised payload with sun populated stays under 1,200 bytes", () => {
+  it("serialised payload with sun populated stays under 2,000 bytes (no NBM)", () => {
     const bytes = new TextEncoder().encode(serializePayload(payload)).byteLength;
-    expect(bytes).toBeLessThan(1200);
+    expect(bytes).toBeLessThan(2000);
   });
 });

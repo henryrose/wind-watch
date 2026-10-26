@@ -4,8 +4,9 @@ import metaFixture from "../../fixtures/openmeteo-meta-2026-10-21.json";
 import { countNonNullHours, inferExtendedRun, normaliseDegrees, transform } from "../src/transform.js";
 import { serializePayload, stableStringify } from "../src/stableStringify.js";
 import type { Location, OpenMeteoForecast, OpenMeteoMeta, Payload } from "../src/types.js";
+import { withSky } from "./helpers.js";
 
-const forecast = forecastFixture as OpenMeteoForecast;
+const forecast = withSky(forecastFixture as OpenMeteoForecast);
 const meta = metaFixture as OpenMeteoMeta;
 
 const HOUR = 3600;
@@ -35,19 +36,33 @@ function synthetic(nullFrom?: number): OpenMeteoForecast {
   const speed: (number | null)[] = [];
   const dir: (number | null)[] = [];
   const gust: (number | null)[] = [];
+  const temp: (number | null)[] = [];
+  const cloud: (number | null)[] = [];
+  const precip: (number | null)[] = [];
   for (let i = 0; i < n; i++) {
     time.push(start + i * HOUR);
     const dead = nullFrom !== undefined && i >= nullFrom;
     speed.push(dead ? null : 5 + (i % 7) * 1.3);
     dir.push(dead ? null : (i * 37) % 360);
     gust.push(dead ? null : 8 + (i % 11) * 1.7);
+    temp.push(dead ? null : 9 + (i % 5) * 0.37);
+    cloud.push(dead ? null : (i * 13) % 101);
+    precip.push(dead ? null : (i % 4) * 0.33);
   }
   return {
     latitude: 48.09075,
     longitude: -122.777275,
     utc_offset_seconds: 0,
     timezone: "GMT",
-    hourly: { time, wind_speed_10m: speed, wind_direction_10m: dir, wind_gusts_10m: gust },
+    hourly: {
+      time,
+      wind_speed_10m: speed,
+      wind_direction_10m: dir,
+      wind_gusts_10m: gust,
+      temperature_2m: temp,
+      cloud_cover: cloud,
+      precipitation: precip,
+    },
   };
 }
 
@@ -131,9 +146,9 @@ describe("transform on the 2026-10-21 fixture", () => {
     expect(ext).toBe(1792584000);
   });
 
-  it("serialises under 1,200 bytes raw", () => {
+  it("serialises under 2,000 bytes raw (no NBM)", () => {
     const body = serializePayload(payload);
-    expect(new TextEncoder().encode(body).byteLength).toBeLessThan(1200);
+    expect(new TextEncoder().encode(body).byteLength).toBeLessThan(2000);
     // Round-trips and matches the plain JSON.stringify of the transform output.
     expect(JSON.parse(body)).toEqual(payload);
     expect(body).toBe(JSON.stringify(payload));
@@ -205,6 +220,10 @@ describe("stableStringify", () => {
     const p = transform(forecast, meta, { loc: DEFAULT_LOC, fetched: FETCHED });
     // Rebuild the object with keys in a scrambled order.
     const scrambled = {
+      extended: p.extended,
+      precip: p.precip,
+      cloud: p.cloud,
+      temp: p.temp,
       sun: p.sun,
       summary: p.summary,
       peak: { at: p.peak.at, gust: p.peak.gust },

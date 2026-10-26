@@ -17,6 +17,11 @@ export const KV_KEYS = {
   etag: "default:etag",
   /** `last_run_availability_time` of the meta.json the bake was made from, as a decimal string. */
   meta: "default:meta",
+  /**
+   * NBM `last_run_availability_time` the bake's `extended` was fetched from. Deleted when
+   * an NBM fetch fails, so the next cron retries.
+   */
+  nbmMeta: "default:nbm_meta",
 } as const;
 
 /** Custom-location responses are cached under this synthetic origin (DESIGN §7). */

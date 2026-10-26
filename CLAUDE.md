@@ -5,8 +5,8 @@ forecast for Port Townsend Bay, WA. One user. Watch complications are the primar
 
 ## Architecture in ten lines
 
-1. A Cloudflare Worker (`server/`) runs a cron every 10 min, pulls HRRR from Open-Meteo
-   (`cell_selection=sea`), bakes one ~1 KB JSON payload into KV, and serves it at `GET /v1/wind`
+1. A Cloudflare Worker (`server/`) runs a cron every 10 min, pulls HRRR (and NBM after the HRRR
+   horizon, §4.2a) from Open-Meteo (`cell_selection=sea`), bakes one ~2.4 KB JSON payload into KV, and serves it at `GET /v1/wind`
    with an ETag. `?lat&lon` serves a custom location on demand.
 2. Clients never call Open-Meteo. The payload is the only contract: `docs/DESIGN.md` §4.2.
 3. `apple/WindCore` (Swift package) decodes the payload into a `Forecast` view model and holds
@@ -67,7 +67,7 @@ python3 -m http.server 8080     # from the repo root, then open http://localhost
 
 ## Layout
 
-- `server/` — Worker: `src/transform.ts` (Open-Meteo → payload), `sun.ts`, `summary.ts`, `index.ts` (fetch + scheduled), tests in `test/`.
+- `server/` — Worker: `src/transform.ts` (Open-Meteo → payload), `nbm.ts` (NBM window, 3-h blocks, fallback), `sun.ts`, `summary.ts`, `index.ts` (fetch + scheduled), tests in `test/`.
 - `apple/WindCore/` — Swift package: `Payload`, `Forecast`, `Beaufort`, `Compass`, `Trust`, `Twilight`, `TimelineBuilder`, `WindClient`, `AppGroupStore`, `ForecastSession`, `SavedLocation`, and `UI/` (tokens, glyphs, `ChartStyle`, `ChartGeometry`, `ChartModel`, `WindChart`, `MiniStrip`, `TrustLineView`). `Tests/…/ChartReferenceTests` checks the geometry against the reference SVGs.
 - `apple/WindWatch/` iOS app · `apple/WindWatchWatch/` watchOS app · `apple/WindWatchComplications/` widget extension · `apple/Shared/` views compiled into more than one target.
 - `apple/Config/Shared.xcconfig` (tracked) + `Local.xcconfig` (untracked: team id, bundle prefix).

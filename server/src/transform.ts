@@ -1,7 +1,8 @@
-// Open-Meteo HRRR response + meta.json → wire payload (docs/DESIGN.md §4.2).
+// Open-Meteo HRRR response + meta.json → wire payload (docs/DESIGN.md §4.2, §4.2a).
 // Pure function: no I/O, no clock. `fetched` and `loc` come from the caller.
-// Sun events and the summary line are derived here too (both pure), so the
-// payload leaves this function complete.
+// Sun events and the summary line are derived here too (both pure). `extended`
+// leaves as null: its window depends on `hours`, so the caller fetches NBM
+// afterwards and attaches it (nbm.ts).
 
 import type { Location, OpenMeteoForecast, OpenMeteoMeta, Payload } from "./types.js";
 import { sunDays } from "./sun.js";
@@ -40,6 +41,13 @@ export function transform(
     dir.push(normaliseDegrees(Math.round(h.wind_direction_10m[i] as number)));
   }
 
+  // Sky and temperature never shorten the wind: a null inside the wind range
+  // takes its nearest non-null neighbour (fillNearest). A series with no value
+  // at all is an upstream fault and fails the bake like an empty forecast would.
+  const temp = requireFilled(h.temperature_2m, hours, "temperature_2m").map(round1);
+  const cloud = requireFilled(h.cloud_cover, hours, "cloud_cover").map((c) => clamp(Math.round(c), 0, 100));
+  const precip = requireFilled(h.precipitation, hours, "precipitation").map((p) => round1(Math.max(0, p)));
+
   // Peak gust: the max, first occurrence wins ties. Computed on the rounded
   // values so `peak.gust` always equals some `gust[i]`.
   let peakIndex = 0;
@@ -64,6 +72,10 @@ export function transform(
     peak: { gust: gust[peakIndex] as number, at: start + peakIndex * HOUR },
     summary: "",
     sun: sunDays({ lat: opts.loc.lat, lon: opts.loc.lon, tz: opts.loc.tz, start, hours }),
+    temp,
+    cloud,
+    precip,
+    extended: null,
   };
   payload.summary = summary(payload);
   return payload;
@@ -115,4 +127,50 @@ export function inferExtendedRun(lastHourTime: number, latest: number): number |
 /** Map any integer degree value onto 0..359 (360 → 0, −10 → 350). */
 export function normaliseDegrees(deg: number): number {
   return ((deg % 360) + 360) % 360;
+}
+
+/**
+ * The first `n` values of `series` with every null replaced by its nearest non-null
+ * neighbour anywhere in the series (the earlier one on a tie). Null when the series is
+ * missing or has no value at all. Used for temperature, cloud and precipitation, where
+ * a one-hour hole is far likelier to be an upstream glitch than a real change, and a
+ * neighbour is a better guess than any constant (0 % cloud would read as "Clear").
+ */
+export function fillNearest(series: readonly (number | null)[] | undefined, n: number): number[] | null {
+  if (!series) return null;
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const v = series[i];
+    if (v != null) {
+      out.push(v);
+      continue;
+    }
+    let found: number | null = null;
+    for (let d = 1; d < series.length && found === null; d++) {
+      const before = i - d >= 0 ? series[i - d] : undefined;
+      const after = series[i + d];
+      if (before != null) found = before;
+      else if (after != null) found = after;
+    }
+    if (found === null) return null;
+    out.push(found);
+  }
+  return out;
+}
+
+function requireFilled(series: readonly (number | null)[] | undefined, n: number, name: string): number[] {
+  const filled = fillNearest(series, n);
+  // Not "transform: forecast has no …": that prefix means outside coverage to the custom path.
+  if (filled === null) throw new Error(`transform: upstream sent no ${name}`);
+  return filled;
+}
+
+/** One decimal, and never −0 (it would serialise as 0 but compare unequal in tests). */
+export function round1(x: number): number {
+  const r = Math.round(x * 10) / 10;
+  return r === 0 ? 0 : r;
+}
+
+export function clamp(x: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, x));
 }
