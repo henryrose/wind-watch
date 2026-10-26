@@ -3,6 +3,7 @@
 
 # Design package archive (its contents live in docs/design/)
 docs/windwatch-design.zip
+docs/windwatch-location-naming.zip
 
 # Node / Cloudflare
 node_modules/
