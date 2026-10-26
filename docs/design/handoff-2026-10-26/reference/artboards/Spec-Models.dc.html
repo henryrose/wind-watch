@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Models and time ranges spec</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B0E12}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 1400px; height: 900px; box-sizing: border-box; padding: 40px 44px; background: #0B0E12; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 36px; font-size: 13px; line-height: 1.5">
+
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">Two models, one rule</div>
+    <div style="border: 1px solid #2A2F36; border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: 56px 1fr; gap: 6px 10px; font-size: 12px">
+      <b>HRRR</b><span style="color: #C7CED8">3 km, hourly, to ~45 h. The truth for the first two days. Already what every surface shows.</span>
+      <b>NBM</b><span style="color: #C7CED8">National Blend of Models, 2.5 km over CONUS. Hourly to 36 h, 3-hourly to day 7, 6-hourly to day 10. A bias-corrected blend; smoother than HRRR by construction.</span>
+    </div>
+    <div style="padding: 12px 14px; border-radius: 10px; background: rgba(255,179,64,0.08); box-shadow: inset 0 0 0 1px rgba(255,179,64,0.35); color: #FFFFFF"><b style="color: #FFB340">The rule.</b> HRRR owns every hour it covers. NBM is drawn only after HRRR ends, and the switch is visible. NBM values for the near term are never shown, blended, overlaid, badged or hinted at — not in the chart, the table, the readout, the peak chip or the complications. Reason: for the same hour HRRR can say G31 and NBM G9; showing both undercuts the number the sailor is about to act on.</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Fetching.</b> Two requests, never a blended endpoint. Request NBM from the HRRR horizon onward only (`start_hour = hrrr.horizon + 1`), so the near-term NBM data isn't even on the device to leak. Aggregate NBM to 3-hour blocks (sustained = block max, gust = block max, direction = vector mean) even where it offers hourly; the switch should read as a change of step, not a change of mood.</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Why not blend at the seam.</b> A smoothed join would hide a real disagreement between models on the handoff hour. If the first NBM block jumps from the last HRRR bar, that jump is information. Leave it.</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">The switch — what changes at the seam</div>
+    <div style="display: grid; grid-template-columns: 110px 1fr; gap: 7px 12px; border: 1px solid #2A2F36; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #C7CED8">
+      <b style="color: #FFFFFF">Seam rule</b><span>The existing dashed HRRR-edge rule, full plot height. Label left <span style="color: #FFFFFF; font-weight: 600">HRRR</span>, label right <span style="color: #9BB7D4; font-weight: 600">NBM · 3-hourly</span>.</span>
+      <b style="color: #FFFFFF">Region tint</b><span>NBM side gets a flat <span style="font-family: ui-monospace, Menlo, monospace">#4FA3D8</span> at 4.5 % over the plot. Lightness, not hue, so it survives greyscale.</span>
+      <b style="color: #FFFFFF">Bars</b><span>Same Beaufort ramp, 3-hour slots, drawn at 70 % opacity. The ramp is still the magnitude; the opacity is the model.</span>
+      <b style="color: #FFFFFF">Gust line</b><span>Solid on HRRR, <b>dashed 4/3 at 60 %</b> on NBM. This is the cue that reads at any size — a dashed line is "forecast-ier" without a legend.</span>
+      <b style="color: #FFFFFF">Caps, arrows</b><span>Unchanged, so the grammar is one grammar.</span>
+      <b style="color: #FFFFFF">Readout / tooltip</b><span>Label becomes a span with a model tag: <span style="font-family: ui-monospace, Menlo, monospace">Sat 12–3pm <span style="color: #9BB7D4">· NBM</span></span>. HRRR hours carry no tag; the absence is the default.</span>
+      <b style="color: #FFFFFF">Peak chip</b><span>Reads across the whole range; names the day and, if the peak is NBM, the model: <span style="font-family: ui-monospace, Menlo, monospace">peak G32 · Sat 1pm · NBM</span>.</span>
+      <b style="color: #FFFFFF">Table</b><span>Hourly rows to the seam, then 3-hour rows labelled by span with a small <span style="color: #9BB7D4; font-weight: 600">NBM</span> tag. A thin rule and a one-line header <span style="font-family: ui-monospace, Menlo, monospace">NBM from Fri 5am · 3-hourly</span> mark the switch inside the table too.</span>
+    </div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Ranges.</b> <b>48 h</b> (default; HRRR only, exactly today's chart) and <b>7 d</b> (HRRR to its horizon, then NBM to 168 h). NBM reaches 10 days at 6-hourly; not offered now — add a <b>10 d</b> stop later if asked, drawn 6-hourly beyond day 7 with a second, fainter step change.</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Slot rule</b> (unchanged): under 4 px per hour the whole chart aggregates to 3-hourly — iPhone portrait 7 d is 3-hourly throughout; web desktop and iPhone landscape keep HRRR hourly up to the seam. Either way the seam is drawn and the NBM treatment applies beyond it.</div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px">
+    <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA4B1; font-weight: 600">Honesty, trust line, watch, payload</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Trust line</b> names both runs: <span style="font-family: ui-monospace, Menlo, monospace">as of 09:00 · HRRR 15Z + NBM 13Z · ends Tue 9am</span>. Staleness per model: stale NBM desaturates only the NBM region and ambers only its own run label — <span style="font-family: ui-monospace, Menlo, monospace">HRRR 15Z + <span style="color: #FFB340">NBM Tue 13Z</span></span>. NBM missing: 7 d still works, the chart stops at the HRRR edge, and the right-hand seam label reads <span style="font-family: ui-monospace, Menlo, monospace">NBM unavailable</span>. Never pad.</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">HRRR missing but NBM present</b> (rare; HRRR outage): show NBM from now, label the left edge <span style="font-family: ui-monospace, Menlo, monospace">NBM · HRRR unavailable</span>, trust line amber. The hero still shows a number; the label says where it came from.</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Watch and complications: HRRR only, unchanged.</b> The 12-hour strip and every complication read the HRRR series; when HRRR's horizon is nearer than 12 h the strip ends early (already designed) rather than filling with NBM. Two seconds on a wrist is for the model that resolves the bay.</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Payload.</b> <span style="font-family: ui-monospace, Menlo, monospace">hours[]</span> stays HRRR. Add <span style="font-family: ui-monospace, Menlo, monospace">extended: {model:"NBM", run:"13Z", fetched, step:3, from:&lt;hrrr.horizon+1&gt;, blocks:[{t, kn, gust, dirFrom}]}</span>. The server enforces <span style="font-family: ui-monospace, Menlo, monospace">from</span>; clients never filter. The seam is explicit, not inferred.</div>
+    <div style="color: #C7CED8"><b style="color: #FFFFFF">Colour note.</b> The NBM tag blue (#9BB7D4) is the existing link colour, deliberately not a Beaufort step.</div>
+    <div style="margin-top: auto; padding: 12px 14px; border-radius: 10px; background: #171C23; color: #9AA4B1; font-size: 12px">NBM values on the 7-day boards are illustrative (SW front Saturday, NW clearing Sunday, light Monday). The HRRR portion is the real Oct 21 payload.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

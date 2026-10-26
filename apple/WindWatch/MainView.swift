@@ -18,6 +18,10 @@ struct MainView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var path: [Screen]
     @State private var scrub = ScrubState()
+    /// The chart range (§12a), remembered; 48 h by default.
+    @AppStorage(ChartRange.storageKey) private var range: ChartRange = .hours48
+    /// Screen width: the portrait plot is edge to edge, and the 7-day slot rule needs it.
+    @State private var width: CGFloat = 402
 
     init() {
         let env = ProcessInfo.processInfo.environment
@@ -34,6 +38,13 @@ struct MainView: View {
         if let t = env["WW_TABLE"] {
             UserDefaults.standard.set(t == "1", forKey: HourTableDisclosure.storageKey)
         }
+        // `WW_RANGE=48h|7d` presets the chart range; `WW_UNIT=f|c` the temperature unit.
+        if let r = env["WW_RANGE"], let value = ChartRange(rawValue: r) {
+            UserDefaults.standard.set(value.rawValue, forKey: ChartRange.storageKey)
+        }
+        if let u = env["WW_UNIT"]?.uppercased(), let value = TemperatureUnit(rawValue: u) {
+            UserDefaults.windShared.set(value.rawValue, forKey: TemperatureUnit.storageKey)
+        }
         #endif
     }
 
@@ -41,11 +52,13 @@ struct MainView: View {
         NavigationStack(path: $path) {
             Group {
                 if verticalSizeClass == .compact {
-                    LandscapeView(scrub: $scrub)
+                    LandscapeView(scrub: $scrub, range: $range)
                 } else {
                     portrait
                 }
             }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+            .onChange(of: range) { scrub = ScrubState() }
             .background(Tokens.ground(scheme))
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Screen.self) { screen in
@@ -61,14 +74,15 @@ struct MainView: View {
     private var portrait: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
-                HeaderView()
+                let chart = chartModel
+                HeaderView(range: range)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
-                NowBlock(scrub: scrub.index)
+                NowBlock(scrubbed: chart?.selected(scrub.index), chart: chart)
                     .padding(.horizontal, 12)
                     .padding(.bottom, 12)
-                if let forecast = model.forecast, model.trustState.showsNumbers {
-                    ChartCard(forecast: forecast, scrub: $scrub, clamped: typeSize.isAccessibilitySize)
+                if let forecast = model.forecast, let chart {
+                    ChartCard(forecast: forecast, chart: chart, scrub: $scrub, range: $range, clamped: typeSize.isAccessibilitySize)
                         .padding(.bottom, 12)
                     Text(forecast.summary)
                         .font(Tokens.summaryFont(watch: false))
@@ -76,7 +90,7 @@ struct MainView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 14)
-                    HourTableDisclosure(forecast: forecast, now: model.now, tier: model.ageTier)
+                    HourTableDisclosure(forecast: forecast, now: model.now, tier: model.ageTier, range: range)
                 } else {
                     emptyBody
                         .padding(.horizontal, 16)
@@ -87,6 +101,14 @@ struct MainView: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
+    }
+
+    /// The portrait chart for the current range, sized for the slot rule: edge to edge, or the
+    /// inset clamped card (16 pt margins) at accessibility sizes. Nil when no numbers are shown.
+    private var chartModel: ChartModel? {
+        guard let forecast = model.forecast, model.trustState.showsNumbers else { return nil }
+        let plotWidth = typeSize.isAccessibilitySize ? width - 32 : width
+        return ChartModel(forecast: forecast, now: model.now, window: range.window, scheme: scheme, plotWidth: plotWidth)
     }
 
     @ViewBuilder
@@ -132,6 +154,11 @@ struct MainView: View {
     }
 }
 
+extension ChartModel {
+    /// The plotted slot a scrub index selects (`WW_SCRUB` may name any hour inside a block).
+    func selected(_ index: Int?) -> HourPoint? { index.flatMap { point(containing: $0) } }
+}
+
 /// The hour under the finger (HANDOFF §6.4). `pinned` keeps a DEBUG screenshot selection alive.
 struct ScrubState {
     var index: Int?
@@ -150,48 +177,76 @@ struct ScrubState {
     }
 }
 
-/// The chart block. Default sizes (`Phone-Main.dc.html`, §6.4d): edge to edge — `card` fill with
-/// no radius, padding 12 top / 8 bottom, the title row (`Wed 9am → Fri 5am` + hint) keeps the
-/// 16 pt inset, the plot is the full screen width and ignores the horizontal safe area. At
-/// accessibility sizes (`Phone-Table-LargeType.dc.html`) it is the inset rounded card (radius 14,
-/// padding 8/0/10) with the clamped 152 pt plot and no title row.
+/// The chart block. Default sizes (`Phone-Main.dc.html`, `Phone-Main-7d.dc.html`, §6.4d): edge to
+/// edge — `card` fill with no radius, padding 12 top / 8 bottom. The title row keeps the 16 pt
+/// inset: the range title (`Wed 9am → Fri 5am`, Bold 15) over an 11 pt secondary line (the hint
+/// in 48 h; `HRRR hourly · NBM 3-hourly after Fri 5am` in 7 d; `release to return to now` while
+/// scrubbing either), and the `48 h | 7 d` control right. Then the sky band (14 pt + 2) when the
+/// payload has sky data, and the plot at the full screen width, ignoring the horizontal safe area.
+/// At accessibility sizes (`Phone-Table-LargeType.dc.html`) it is the inset rounded card (radius
+/// 14, padding 8/0/10) with the clamped 152 pt plot; the range control stays above it.
 struct ChartCard: View {
     let forecast: Forecast
+    let chart: ChartModel
     @Binding var scrub: ScrubState
+    @Binding var range: ChartRange
     let clamped: Bool
 
-    @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
 
+    private var selection: Int? { chart.selected(scrub.index)?.index }
+
     var body: some View {
-        let chart = ChartModel(forecast: forecast, now: model.now, window: .all, scheme: scheme)
+        let week = range == .days7
         if clamped {
-            WindChart(model: chart, style: .phoneClamped, selection: scrub.index, onScrub: { scrub.apply($0) })
+            VStack(alignment: .trailing, spacing: 8) {
+                SegmentedPicker(range: $range)
+                    .padding(.horizontal, 16)
+                VStack(spacing: 2) {
+                    SkyBand(model: chart, style: .phoneClamped)
+                    WindChart(model: chart, style: week ? .phoneClampedWeek : .phoneClamped, selection: selection, onScrub: { scrub.apply($0) })
+                }
                 .padding(.top, 8)
                 .padding(.bottom, 10)
                 .background(Tokens.card(scheme), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .padding(.horizontal, 16)
+            }
         } else {
             VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(Derivations.chartTitle(forecast: forecast))
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(Tokens.inkPrimary(scheme))
-                    Spacer()
-                    Text(scrub.index == nil ? "touch a bar for that hour" : "release to return to now")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(week ? Derivations.weekTitle(forecast: forecast) : Derivations.chartTitle(forecast: forecast))
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Tokens.inkPrimary(scheme))
+                            .frame(height: 20)
+                        Text(subtitle(week: week))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Tokens.inkSecondary(scheme))
+                            .frame(height: 14)
+                    }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    Spacer(minLength: 8)
+                    SegmentedPicker(range: $range)
                 }
-                .lineLimit(1)
                 .padding(.horizontal, 16)
-                WindChart(model: chart, style: .phonePortrait, selection: scrub.index, onScrub: { scrub.apply($0) })
-                    .ignoresSafeArea(.container, edges: .horizontal)
+                .padding(.bottom, 4)
+                VStack(spacing: 2) {
+                    SkyBand(model: chart, style: .phonePortrait)
+                    WindChart(model: chart, style: week ? .phonePortraitWeek : .phonePortrait, selection: selection, onScrub: { scrub.apply($0) })
+                }
+                .ignoresSafeArea(.container, edges: .horizontal)
             }
             .padding(.top, 12)
             .padding(.bottom, 8)
             .background(Tokens.card(scheme))
             .ignoresSafeArea(.container, edges: .horizontal)
         }
+    }
+
+    private func subtitle(week: Bool) -> String {
+        if scrub.index != nil { return "release to return to now" }
+        return week ? Derivations.weekSubtitle(forecast: forecast) : "touch a bar for that hour"
     }
 }
 

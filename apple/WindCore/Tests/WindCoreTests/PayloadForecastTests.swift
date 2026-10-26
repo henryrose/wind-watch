@@ -30,7 +30,8 @@ struct PayloadForecastTests {
         #expect(again == p)
         // Wire keys are exactly the design's names.
         let keys = try #require(try JSONSerialization.jsonObject(with: p.encoded()) as? [String: Any]).keys.sorted()
-        #expect(keys == ["dir", "fetched", "gust", "hours", "kn", "loc", "model", "peak", "run", "start", "summary", "sun", "v"])
+        #expect(keys == ["cloud", "dir", "extended", "fetched", "gust", "hours", "kn", "loc", "model", "peak", "precip", "run", "start",
+                         "summary", "sun", "temp", "v"])
     }
 
     @Test func extendedRunIsOptional() throws {
@@ -60,9 +61,9 @@ struct PayloadForecastTests {
         #expect(f.fetched == Date(timeIntervalSince1970: 1_792_598_400))
         #expect(f.start == Fixture.la(2026, 10, 21, 9))
         #expect(f.hours.count == 45)
-        #expect(f.hours[0] == Forecast.Hour(kn: 3, gust: 4, dirFrom: 290))
-        #expect(f.hours[15] == Forecast.Hour(kn: 15, gust: 25, dirFrom: 283))
-        #expect(f.hours[44] == Forecast.Hour(kn: 11, gust: 21, dirFrom: 296))
+        #expect(f.hours[0].kn == 3 && f.hours[0].gust == 4 && f.hours[0].dirFrom == 290)
+        #expect(f.hours[15].kn == 15 && f.hours[15].gust == 25 && f.hours[15].dirFrom == 283)
+        #expect(f.hours[44].kn == 11 && f.hours[44].gust == 21 && f.hours[44].dirFrom == 296)
         #expect(f.peakGust == Forecast.PeakGust(kn: 25, at: Fixture.la(2026, 10, 22, 0)))
         #expect(f.peakGust.at == f.date(ofHour: 15))
         #expect(f.sun.count == 3)

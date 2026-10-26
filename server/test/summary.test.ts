@@ -15,9 +15,10 @@ import {
 import { transform } from "../src/transform.js";
 import { serializePayload } from "../src/stableStringify.js";
 import type { Location, OpenMeteoForecast, OpenMeteoMeta, Payload } from "../src/types.js";
+import { withSky } from "./helpers.js";
 
 const reference = referenceFixture as Payload;
-const forecast = forecastFixture as OpenMeteoForecast;
+const forecast = withSky(forecastFixture as OpenMeteoForecast);
 const meta = metaFixture as OpenMeteoMeta;
 
 const TZ = "America/Los_Angeles";
@@ -46,6 +47,10 @@ function synthetic(opts: { start?: number; kn: number[]; gust: number[]; dir: nu
     peak: { gust: opts.gust[peakIdx] as number, at: start + peakIdx * HOUR },
     summary: "",
     sun: [],
+    temp: fill(hours, 12),
+    cloud: fill(hours, 50),
+    precip: fill(hours, 0),
+    extended: null,
   };
 }
 
@@ -86,8 +91,8 @@ describe("summary: live forecast fixture via transform()", () => {
     expect(p.summary).toBe(summary(p));
   });
 
-  it("serialised payload with summary and sun stays under 1,200 bytes", () => {
-    expect(new TextEncoder().encode(serializePayload(p)).byteLength).toBeLessThan(1200);
+  it("serialised payload with summary and sun stays under 2,000 bytes (no NBM)", () => {
+    expect(new TextEncoder().encode(serializePayload(p)).byteLength).toBeLessThan(2000);
   });
 });
 

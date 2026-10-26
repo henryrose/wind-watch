@@ -10,7 +10,7 @@
 <text x="394" y="143.7" text-anchor="end" font-size="21" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">10</text>
 <line x1="0" x2="396" y1="85.3" y2="85.3" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1"/>
 <text x="394" y="82.3" text-anchor="end" font-size="21" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">20</text>
-<circle cx="303.6" cy="23" r="5" fill="#FFB340"/>
+<circle cx="303.6" cy="23" r="4.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
 <rect x="4.6" y="189.6" width="23.76" height="18.4" rx="1.5" fill="#5C6B7A"/>
 <rect x="37.6" y="183.5" width="23.76" height="24.5" rx="1.5" fill="#4FA3D8"/>
 <rect x="70.6" y="195.7" width="23.76" height="12.3" rx="1.5" fill="#5C6B7A"/>

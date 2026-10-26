@@ -1,13 +1,12 @@
 import SwiftUI
 import WindCore
 
-/// HANDOFF §7.4, §8.3 round four / `Watch-Settings.dc.html`: `Location` Rounded Bold 13 (4 pt
-/// side inset), then the iPhone's Locations list in the same order, Crown-scrolled: full-width
-/// buttons (44 pt min, radius 12, plates 14 % / 8 % white, padding 0 10) with a two-line label
-/// (name Semibold 14 · `first in list` / `set on iPhone` Regular 10 secondary), a filled blue
-/// check on the selected row and an empty ring on the others; then the brand footer (HANDOFF
-/// §10a): round mark + `Wind Watch 1.0` Rounded Bold 11 over `Weather data by Open-Meteo.com`
-/// Regular 10 secondary. A tap selects locally; the phone's next change wins (DESIGN §7).
+/// HANDOFF §7.4 / §8.3: `Locations` Rounded Bold 13 (4 pt side inset), then the iPhone's list
+/// in the iPhone's order, Crown-scrolled: one full-width button per location (44 pt min, radius 12,
+/// plates 14 % / 8 % white, padding 0 10) with a two-line label (name Semibold 14 · coordinates
+/// Regular 10 secondary), a filled blue check on the selected row and an empty ring on the others.
+/// Tapping selects; editing stays on the iPhone. Then the brand footer (HANDOFF §10a): round mark +
+/// `Wind Watch 1.0` Rounded Bold 11 over `Weather data by Open-Meteo.com` Regular 10 secondary.
 struct SettingsView: View {
     @Environment(ForecastSession.self) private var session
 
@@ -24,24 +23,19 @@ struct SettingsView: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Location")
+            Text("Locations")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundStyle(Tokens.inkPrimary(.dark))
                 .padding(.horizontal, 4)
             VStack(spacing: 5) {
-                ForEach(Array(session.preferences.locations.enumerated()), id: \.element.id) { index, location in
+                ForEach(session.preferences.locations) { location in
                     let selected = location.id == session.preferences.selectedID
-                    plate(name: location.name, sub: index == 0 ? "first in list" : "set on iPhone",
-                          selected: selected, enabled: true) { session.select(location.id) }
-                        .accessibilityLabel(location.name)
-                        .accessibilityAddTraits(selected ? .isSelected : [])
+                    plate(name: location.name, sub: location.coordinateText, selected: selected, enabled: true) {
+                        session.select(location.id)
+                    }
+                    .accessibilityLabel(location.name)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
-            }
-            if session.preferences.locations.count == 1 {
-                Text("Add more on iPhone")
-                    .font(.system(size: 10))
-                    .foregroundStyle(Tokens.inkSecondary(.dark))
-                    .padding(.horizontal, 4)
             }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
@@ -57,7 +51,7 @@ struct SettingsView: View {
                     .foregroundStyle(Tokens.inkSecondary(.dark))
             }
             .padding(.horizontal, 4)
-            .padding(.top, 14)
+            .padding(.top, 6)
         }
         .padding(.horizontal, 8)
         .padding(.bottom, 12)

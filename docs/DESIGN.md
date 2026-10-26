@@ -148,6 +148,49 @@ Design notes:
 - **`fetched` only advances when Open-Meteo has new data.** The cron compares `meta.json`'s `last_run_availability_time` to the value stored with the last bake and skips the forecast fetch if unchanged. Consequences: the ETag is stable between model runs, 304s are the common case, and a silently stale upstream shows up as an old `fetched` rather than being masked by a fresh bake time.
 - **Estimated size:** ~800 bytes raw, ~450 bytes gzipped.
 
+#### 4.2a Additions, 26 Oct 2026 (design handoff `docs/design/handoff-2026-10-26/`, spec §12a/§12b)
+
+Additive; `v` stays 1 and every field above keeps its meaning and order. Clients that ignore the new keys
+are unaffected (the watch and complications read only the HRRR fields).
+
+```jsonc
+{
+  // …all §4.2 fields…
+  "temp":   [10.7, 11.2, ...],    // HRRR 2 m temperature, °C, one decimal, length == hours
+  "cloud":  [100, 67, ...],       // HRRR total cloud cover, %, integers 0..100, length == hours
+  "precip": [0.0, 0.4, ...],      // HRRR precipitation, mm/h, one decimal, length == hours
+  "extended": {                   // NBM after the HRRR horizon; null when NBM is unavailable
+    "model": "ncep_nbm_conus",
+    "run": 1793030400,            // unix s, NBM init (its meta.json last_run_initialisation_time)
+    "fetched": 1793034000,        // unix s, when the Worker last pulled NEW NBM data
+    "step": 3,                    // hours per block
+    "from": 1792760400,           // unix s, == start + hours*3600 (the first hour after HRRR). Server-enforced.
+    "blocks": 41,                 // block i covers [from + i*step h, from + (i+1)*step h); whole blocks only,
+                                  // ending at or before start + 168 h
+    "kn":     [10, 11, ...],      // max sustained in the block, knots, integers
+    "gust":   [17, 18, ...],      // max gust in the block, knots, integers
+    "dir":    [295, 290, ...],    // vector-mean FROM direction of the block's hours, integers 0..359
+    "temp":   [9.4, ...],         // mean °C, one decimal
+    "cloud":  [80, ...],          // mean %, integers
+    "precip": [0.6, ...]          // max mm/h, one decimal
+  }
+}
+```
+
+Rules:
+
+- **HRRR owns every hour it covers.** NBM is requested from `start + hours*3600` onward only, so near-term NBM never
+  reaches a device; clients never filter. `extended.from` is always exactly `start + hours*3600`.
+- `peak`, `summary` and everything the watch shows stay HRRR-only. The 7-day peak chip is computed on the device
+  across `kn/gust` and `extended`.
+- **Sky cells** (the 3-hour band above the chart) are derived on the device: HRRR hours are grouped from index 0 in
+  threes (last cell may be short), cloud = mean, precip = max; NBM blocks are already cells. Tones: cloud < 25 %
+  clear, 25–70 % partly cloudy, ≥ 70 % overcast; rain < 0.5 / 0.5–1.5 / > 1.5 mm/h = light / rain / heavy, 0 = none.
+- **Bakes.** The cron rebakes when either model's `meta.json` availability time changes. Top-level `fetched` keeps
+  meaning "new HRRR data"; `extended.fetched` advances only on new NBM data. An NBM fetch failure never fails the bake:
+  the previous bake's `extended` is kept if it still starts at the new `from`, otherwise `extended` is null.
+- Size: ~2.5 KB raw, ~1 KB gzipped.
+
 ### 4.3 What is computed where
 
 | Computed on the Worker | Computed on device |
@@ -264,11 +307,11 @@ The only blending I'd consider later is replacing `hours` beyond the HRRR horizo
 
 ## 7. Alternate location
 
-**Model:** `Location { name, lat, lon, tz }`. `Location.default` is compiled in. At most one custom location in v1, stored in `UserDefaults(suiteName: appGroup)` on each device as `customLocation` plus a `useCustom: Bool`.
+**Model (26 Oct 2026, HANDOFF §8.3):** a list of up to 12 `SavedLocation { id, name, suggestedNames, lat, lon, tz, createdAt }` plus a selected id, stored as one JSON blob under `locations` in `UserDefaults(suiteName: appGroup)` on each device. Port Townsend Bay is seeded as row 1 (fixed id) but is an ordinary row: renamable, reorderable, deletable; the last remaining row cannot be deleted. The selected row drives every surface. The row at the server default's coordinates is fetched from `/v1/wind` with no query whatever it is called; every other row uses `?lat&lon`. Names are the user's, never re-geocoded; the server's empty `loc.name` for custom points is never shown. Installs from before the list migrate once on first read: the old `customLocation` + `useCustom` keys become `[Port Townsend Bay, custom]` with the previous selection, and the old keys are removed.
 
-**Set on the iPhone only.** Settings screen: search by name (`MKLocalSearch`) or long-press a map; store the placemark's coordinate and time zone (`MKPlacemark.timeZone`, falling back to the Worker's `tz` from `timezone=auto`). Then `WCSession.default.updateApplicationContext(["customLocation": ..., "useCustom": ...])`. Application context is delivered when the watch is next reachable and persists on the watch, so the watch keeps working standalone after that.
+**Set on the iPhone only.** Locations screen: search (`MKLocalSearch`), paste `lat, lon`, or long-press the map; the point is refused outside the HRRR grid, named once by the reverse geocoder (4 s timeout), and saved from the naming sheet. Every edit sends the whole list with `WCSession.default.updateApplicationContext(["locations": <JSON>])`. Application context is delivered when the watch is next reachable and persists on the watch, so the watch keeps working standalone after that. A watch receiving a pre-list context migrates it the same way.
 
-**On the watch:** a single toggle in settings, "Port Townsend Bay / <custom name>", so you can switch from the wrist without the phone. No editing on the watch.
+**On the watch:** Settings shows the same list in the same order, Crown-scrolled; a tap selects. No editing on the watch; the next context from the iPhone wins.
 
 **Worker:** `?lat&lon` → round to 2 decimals (cache key), fetch with `cell_selection=nearest&timezone=auto`, transform with the same function, store in the Cache API for 10 minutes, same response shape with `loc.cell = "nearest"` and `loc.name` empty (the device shows its own stored name). No KV, no cron for custom locations.
 

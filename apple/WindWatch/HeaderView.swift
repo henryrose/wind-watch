@@ -2,8 +2,11 @@ import SwiftUI
 import WindCore
 
 /// Location name (Bold 22, HANDOFF §6.4), trust line 13 with `· ends Fri 5am`, and a 44 pt
-/// `card` circle with the gear → Location settings (`Phone-Main.dc.html`).
+/// `card` circle with the gear → Location settings (`Phone-Main.dc.html`). In 7 d the trust line
+/// names both runs and the NBM end: `as of 09:00 · HRRR 15Z + NBM 13Z · ends Tue 9am` (§12a).
 struct HeaderView: View {
+    var range: ChartRange = .hours48
+
     @Environment(ForecastSession.self) private var model
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -25,7 +28,10 @@ struct HeaderView: View {
                     forecast: model.forecast,
                     now: model.now,
                     // AX sizes drop the horizon suffix (`Phone-Table-LargeType`).
-                    suffix: typeSize.isAccessibilitySize ? nil : model.forecast.map { Derivations.horizonWeekdayLabel(forecast: $0) }
+                    suffix: typeSize.isAccessibilitySize ? nil : model.forecast.map {
+                        range == .days7 ? Derivations.weekEndLabel(forecast: $0) : Derivations.horizonWeekdayLabel(forecast: $0)
+                    },
+                    showsNBM: range == .days7
                 )
             }
             Spacer(minLength: 0)

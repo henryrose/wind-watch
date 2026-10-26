@@ -12,6 +12,9 @@ import SwiftUI
 ///   the clock (stale = fetched + 2 h, old = + 7 h, horizon = horizon + 2 h) or the cache meta.
 /// - `WW_NOW=<ISO 8601>`: pins the clock.
 /// - `WW_TYPE_SIZE=xl|xxl|xxxl|ax1…ax5`: forces a Dynamic Type size.
+/// - `WW_NBM=none`: drops the fixture's NBM `extended` blocks.
+/// - `WW_LOCATIONS=<1…12>` (fixture only): the design's sample location list, Marrowstone Pt
+///   selected, held in memory until the first edit.
 @MainActor
 @Observable
 public final class ForecastSession {
@@ -23,7 +26,7 @@ public final class ForecastSession {
     public private(set) var typeSizeOverride: DynamicTypeSize?
     /// iPhone first launch: show the Welcome location chooser (`Welcome`).
     public private(set) var needsWelcome = false
-    /// Called after a local edit of the Locations list (select, add, delete, rename, move); the
+    /// Called after a local edit of the location list (add, rename, select, delete, move); the
     /// iPhone app uses it to push the context to the watch. WindCore stays free of WatchConnectivity.
     @ObservationIgnored public var onPreferencesChanged: (@MainActor (LocationSettings.Preferences) -> Void)?
 
@@ -57,6 +60,9 @@ public final class ForecastSession {
         pinnedNow = environment["WW_NOW"].flatMap { ISO8601DateFormatter().date(from: $0) }
         now = pinnedNow ?? .now
         preferences = LocationSettings.load(from: defaults)
+        if isFixture, let n = environment["WW_LOCATIONS"].flatMap(Int.init) {
+            preferences = LocationSettings.fixture(count: n)
+        }
         typeSizeOverride = Self.typeSize(environment["WW_TYPE_SIZE"])
 
         if isFixture {
@@ -87,13 +93,13 @@ public final class ForecastSession {
             needsWelcome = true
         } else if !isFixture {
             needsWelcome = Welcome.shouldShow(done: Welcome.isDone(in: defaults),
-                                              hasCustom: preferences != .default, hasCache: cached != nil)
+                                              hasCustom: preferences.hasNonDefault, hasCache: cached != nil)
             // Someone upgrading with data already on device has effectively chosen; never ask later.
             if !needsWelcome { Welcome.markDone(in: defaults) }
         }
     }
 
-    /// Ends the Welcome chooser; the choice itself is made with `selectDefault` / `trySaveCustom`.
+    /// Ends the Welcome chooser; the choice itself is made with `selectDefault` / `tryAddLocation`.
     public func completeWelcome() {
         needsWelcome = false
         if !isFixture { Welcome.markDone(in: defaults) }
@@ -126,7 +132,8 @@ public final class ForecastSession {
         return forecast.hero(at: now)
     }
 
-    /// The selected row's name (rows are renamable, so never the payload's `loc.name`).
+    /// The selected location's name, verbatim from the device list (the server sends an empty
+    /// name for custom points, and a rename of the default must win over the payload's).
     public var locationName: String { preferences.selected.name }
 
     public var canReachNetwork: Bool { client != nil && !isFixture }
@@ -155,152 +162,97 @@ public final class ForecastSession {
         isUpdating = false
         setCached(result)
         tick()
-        recordCellIfMissing()
         return result != nil && result?.meta.savedAt != before
     }
 
-    // MARK: - Locations (HANDOFF §8.3)
+    // MARK: - Location
 
-    public func select(_ id: UUID) {
-        guard id != preferences.selectedID else { return }
-        var next = preferences
-        next.select(id)
-        apply(next)
-    }
-
-    /// Welcome's one tap: the Port Townsend Bay row (seeded on a fresh install).
+    /// Selects the server-default row (Welcome's one-tap choice); no-op when it was deleted.
     public func selectDefault() {
-        if let row = preferences.locations.first(where: \.isDefaultPoint) { select(row.id) }
+        guard let id = preferences.locations.first(where: \.isServerDefault)?.id else { return }
+        select(id)
     }
 
-    /// Deletes a row; the last one stays. Deleting the selected row falls back to row 1.
-    public func delete(_ id: UUID) {
+    /// Tap a row: switch every surface to it.
+    public func select(_ id: UUID) {
         var next = preferences
-        guard next.delete(id) else { return }
-        apply(next)
+        guard next.select(id) else { return }
+        commit(next)
     }
 
-    public func rename(_ id: UUID, to name: String) {
-        var next = preferences
-        next.rename(id, to: name)
-        guard next != preferences else { return }
-        apply(next)
-    }
-
-    public func move(fromOffsets source: IndexSet, toOffset destination: Int) {
-        var next = preferences
-        next.move(fromOffsets: source, toOffset: destination)
-        guard next != preferences else { return }
-        apply(next)
-    }
-
-    /// Adds and selects without a network check (DEBUG launch hooks); false when full.
+    /// Adds and selects a location with no network check (fixture mode, debug switches).
     @discardableResult
-    public func add(_ location: SavedLocation) -> Bool {
+    public func addLocation(_ location: SavedLocation) -> Bool {
         var next = preferences
         guard next.add(location) else { return false }
-        apply(next)
+        commit(next)
         return true
     }
 
-    /// Replaces the whole list (DEBUG launch hooks and screenshots); `selectedIndex` defaults to row 1.
-    public func replaceLocations(_ locations: [SavedLocation], selectedIndex: Int = 0) {
-        guard !locations.isEmpty else { return }
-        let list = Array(locations.prefix(LocationSettings.maxCount))
-        apply(.init(locations: list, selectedID: list[min(max(selectedIndex, 0), list.count - 1)].id))
+    /// Renames in place; the pin, the cell and the cached forecast are untouched.
+    @discardableResult
+    public func renameLocation(_ id: UUID, to name: String) -> Bool {
+        var next = preferences
+        guard next.rename(id, to: name) else { return false }
+        commit(next)
+        return true
+    }
+
+    /// False for the last remaining location.
+    @discardableResult
+    public func deleteLocation(_ id: UUID) -> Bool {
+        var next = preferences
+        guard next.delete(id) else { return false }
+        commit(next)
+        return true
+    }
+
+    public func moveLocations(fromOffsets source: IndexSet, toOffset destination: Int) {
+        var next = preferences
+        next.move(fromOffsets: source, toOffset: destination)
+        guard next != preferences else { return }
+        commit(next)
     }
 
     public enum AddOutcome: Sendable, Equatable {
         case saved
         /// Nothing changed: the point is outside the HRRR grid (`HRRRCoverage`, or the server's 422).
         case outsideCoverage
-        /// Nothing changed: 12 of 12.
+        /// Nothing changed: the list already holds `Preferences.maxCount` locations.
         case full
     }
 
-    /// What the naming sheet learns about a point before it is saved: the HRRR cell from the
-    /// payload's `loc`, and the payload itself so Save can switch without a second fetch.
-    public struct PointProbe: Sendable, Equatable {
-        public let cellLat: Double
-        public let cellLon: Double
-        /// Nil in fixture mode (no network); Save then fetches as usual.
-        let payload: Data?
-        let etag: String?
-    }
-
-    public enum ProbeOutcome: Sendable, Equatable {
-        case found(PointProbe)
-        /// Outside the HRRR grid (`HRRRCoverage`, or the server's 422).
-        case outsideCoverage
-        /// Offline or server trouble: the sheet still saves, the cell fills in on a later refresh.
-        case unavailable
-    }
-
-    /// Fetches a point's forecast once to learn its HRRR cell (location-naming handoff §3, tile 6).
-    public func probe(_ location: SavedLocation) async -> ProbeOutcome {
-        guard location.isInHRRRCoverage else { return .outsideCoverage }
-        guard let client, !isFixture else {
-            // Fixture mode: a cell 1.1 km NE of the pin, so screenshots show the tile filled.
-            return .found(PointProbe(cellLat: location.lat + 0.0070, cellLon: location.lon + 0.0105, payload: nil, etag: nil))
-        }
-        let result = await client.fetch(ifNoneMatch: nil, location: location.isDefaultPoint ? nil : location.customLocation)
-        switch result {
-        case .updated(let data, let etag):
-            guard let payload = try? Payload.decode(data) else { return .unavailable }
-            return .found(PointProbe(cellLat: payload.loc.lat, cellLon: payload.loc.lon, payload: data, etag: etag))
-        case .failed(let error) where error as? WindClientError == .outsideCoverage:
-            return .outsideCoverage
-        default:
-            return .unavailable
-        }
-    }
-
-    /// The naming sheet's Save for a new location. With a probe the cell is stored and the probed
-    /// payload is used directly; without one the point is fetched first, so the current forecast
-    /// stays on screen until the new one is in hand and a point the server refuses changes nothing.
-    /// Any other failure (offline, server down) adds anyway and the next refresh fills it in.
-    public func tryAdd(_ location: SavedLocation, probe: PointProbe? = nil) async -> AddOutcome {
+    /// The naming sheet's Save for a new pin: adds it and selects it. Fetches the new point first,
+    /// so the current forecast stays on screen until the new one is in hand and a point the server
+    /// refuses changes nothing. Any other failure (offline, server down) saves anyway and the next
+    /// refresh fills it in.
+    public func tryAddLocation(_ location: SavedLocation) async -> AddOutcome {
         guard !preferences.isFull else { return .full }
         guard location.isInHRRRCoverage else { return .outsideCoverage }
-        var row = location
-        if row.createdAt == nil { row.createdAt = .now }
-        if let probe { row.cellLat = probe.cellLat; row.cellLon = probe.cellLon }
-        if let probe, let data = probe.payload {
-            var next = preferences
-            guard next.add(row) else { return .full }
-            apply(next, prefetched: (data, probe.etag))
-            return .saved
-        }
-        guard let client, !isFixture, !isUpdating, !row.isDefaultPoint else {
-            var next = preferences
-            guard next.add(row) else { return .full }
-            apply(next)
+        var next = preferences
+        guard next.add(location) else { return .full }
+        guard let client, !isFixture, !isUpdating, !location.isServerDefault else {
+            commit(next)
             return .saved
         }
         isUpdating = true
-        let result = await client.fetch(ifNoneMatch: nil, location: row.customLocation)
+        let result = await client.fetch(ifNoneMatch: nil, location: location.customLocation)
         isUpdating = false
         switch result {
         case .failed(let error) where error as? WindClientError == .outsideCoverage:
             return .outsideCoverage
         case .updated(let data, let etag):
-            if let payload = try? Payload.decode(data) { row.cellLat = payload.loc.lat; row.cellLon = payload.loc.lon }
-            // Re-apply on the latest list in case it changed while the fetch was in flight.
-            var latest = preferences
-            guard latest.add(row) else { return .full }
-            apply(latest, prefetched: (data, etag))
+            commit(next, prefetched: (data, etag))
         default:
-            var latest = preferences
-            guard latest.add(row) else { return .full }
-            apply(latest)
+            commit(next)
         }
         return .saved
     }
 
-    /// Re-reads the preference from the group defaults after an external write (the watch's
-    /// `WCSession` handler, D5). Returns true when the *active* location changed; only then is the
-    /// cache dropped (a different location is a different payload). Fixture mode keeps its data and
-    /// just rebuilds `forecast` with the new `isDefault` flag.
+    /// Re-reads the list from the group defaults after an external write (the watch's `WCSession`
+    /// handler, D5). Returns true when the *fetched* location changed; only then is the cache
+    /// dropped (a different point is a different payload). Fixture mode keeps its data and just
+    /// rebuilds `forecast` with the new `isDefault` flag.
     @discardableResult
     public func reloadPreferences() -> Bool {
         let fresh = LocationSettings.load(from: defaults)
@@ -316,15 +268,14 @@ public final class ForecastSession {
         return activeChanged
     }
 
-    /// Persists and adopts an edited list. The cache is dropped (and refetched) only when the
-    /// fetched point changed; a rename or reorder keeps it. `prefetched` is the new point's
-    /// payload when the caller already has it (`tryAdd`).
-    private func apply(_ next: LocationSettings.Preferences, prefetched: (data: Data, etag: String?)? = nil) {
+    /// Stores `next`, tells the watch, and swaps the forecast only when the fetched point changed.
+    /// `prefetched` is the new location's payload when the caller already has it (`tryAddLocation`).
+    private func commit(_ next: LocationSettings.Preferences, prefetched: (data: Data, etag: String?)? = nil) {
         let activeChanged = next.activeCustom != preferences.activeCustom
         preferences = next
         LocationSettings.save(preferences, to: defaults)
         if isFixture || !activeChanged {
-            setCached(cached) // rebuilds `forecast` with the new isDefault flag
+            setCached(cached) // same payload; rebuilds `forecast` with the new isDefault flag
         } else if let prefetched {
             try? store.clear()
             try? store.save(payloadData: prefetched.data, etag: prefetched.etag, at: .now)
@@ -340,22 +291,15 @@ public final class ForecastSession {
 
     // MARK: - Private
 
-    /// Rows saved before build 9 (or added offline) learn their HRRR cell from the first payload
-    /// fetched for them. The name is never touched.
-    private func recordCellIfMissing() {
-        guard !isFixture, let loc = cached?.payload.loc, preferences.selected.cellLat == nil else { return }
-        var next = preferences
-        next.setCell(next.selectedID, lat: loc.lat, lon: loc.lon)
-        apply(next)
-    }
-
     private func setCached(_ value: Cached?) {
         cached = value
-        forecast = value.map { Forecast(payload: $0.payload, isDefault: !preferences.effectiveUseCustom) }
+        forecast = value.map { Forecast(payload: $0.payload, isDefault: preferences.selectedIsServerDefault) }
     }
 
     private func applyFixture(state: String?) {
-        let payload = PreviewData.payload
+        var payload = PreviewData.payload
+        // `WW_NBM=none`: the payload without its NBM `extended` (7 d stops at the HRRR edge).
+        if environment["WW_NBM"] == "none" { payload.extended = nil }
         let fetched = payload.fetchedDate
         let base = fetched.addingTimeInterval(30 * 60)
         try? store.clear()
@@ -415,8 +359,9 @@ public enum FixtureFlag {
     }
 }
 
-/// The iPhone's one-time location chooser. Shown only on a true first launch: no flag, no custom
-/// location, nothing cached. Stored in the App Group defaults beside the location preference.
+/// The iPhone's one-time location chooser. Shown only on a true first launch: no flag, nothing in
+/// the list beyond the seeded default, nothing cached. Stored in the App Group defaults beside the
+/// location list.
 public enum Welcome {
     public static let key = "ww.welcomeDone"
 

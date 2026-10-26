@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iPhone main, 7-day range</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#0B0E12}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 402px; height: 874px; box-sizing: border-box; padding: 58px 0 0 0; background: #0B0E12; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 12px; overflow: hidden; font-variant-numeric: tabular-nums">
+
+  <!-- header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 0 16px">
+    <div style="display: flex; flex-direction: column; gap: 3px">
+      <div style="margin-bottom: 4px"><div style="display: flex; align-items: center; gap: 7px"><svg width="17" height="17" viewBox="0 0 180 180" aria-hidden="true"><defs><clipPath id="wk22"><rect width="180" height="180" rx="40"/></clipPath></defs><g clip-path="url(#wk22)"><rect width="180" height="180" fill="#0B0E12"/></g><g transform="translate(117,103.1) rotate(103)"><line x1="0" x2="0" y1="66" y2="96" stroke="#3FC2A0" stroke-width="26" stroke-linecap="round"/><path d="M0,-54 L40.5,54 L0,21.6 L-40.5,54 Z" fill="#FFFFFF"/></g></svg><span style="font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif; font-size: 15px; line-height: 1; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF; white-space: nowrap">Wind<span style="font-weight: 500; color: #9AA4B1"> Watch</span></span></div></div>
+      <div style="font-size: 22px; line-height: 26px; font-weight: 700; letter-spacing: -0.01em">Port Townsend Bay</div>
+      <div style="font-size: 13px; line-height: 18px; font-weight: 500; color: #9AA4B1">as of 09:00 · HRRR 15Z + NBM 06Z · ends Tue 9am</div>
+    </div>
+    <a href="Phone-Location.dc.html" aria-label="Location settings" style="width: 44px; height: 44px; margin-top: -6px; border-radius: 22px; background: #171C23; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3" fill="none" stroke="#FFFFFF" stroke-width="1.8"/><path d="M10,1.5 L10,4 M10,16 L10,18.5 M1.5,10 L4,10 M16,10 L18.5,10 M4,4 L5.8,5.8 M14.2,14.2 L16,16 M16,4 L14.2,5.8 M5.8,14.2 L4,16" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg></a>
+  </div>
+
+  <!-- readout: FIXED 96 pt tall in both states so the chart never moves -->
+  <div style="margin: 0 12px; height: 96px; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; background: #171C23; display: flex; align-items: center; gap: 12px; box-shadow: none">
+    <div style="display: flex; flex-direction: column; gap: 4px; width: 138px">
+      <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; line-height: 16px; font-weight: 700; white-space: nowrap"><span style="width: 2px; height: 14px; background: #4FA3D8; border-radius: 1px"></span>Now · Wed 9:25am</div>
+      <div style="display: flex; align-items: baseline; gap: 5px; font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif">
+        <div style="font-size: 56px; line-height: 52px; font-weight: 800; letter-spacing: -0.03em">3</div>
+        <div style="font-size: 18px; line-height: 22px; font-weight: 600; color: #9AA4B1">kn</div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 18px">
+      <div style="font-size: 24px; line-height: 26px; font-weight: 700; font-family: -apple-system, 'SF Pro Rounded', system-ui, sans-serif"><span style="color: #9AA4B1; font-size: 16px; font-weight: 600">G</span> 4</div>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap"><svg width="16" height="16" viewBox="-9 -9 18 18" aria-hidden="true"><g transform="rotate(110)"><path d="M0,-8 L6,8 L0,3.2 L-6,8 Z" fill="#FFFFFF"/></g></svg><span>from W</span></div>
+    </div>
+    <div style="flex: 1 1 auto"></div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding-top: 18px">
+      <div style="font-size: 12px; line-height: 16px; font-weight: 500; color: #9AA4B1; white-space: nowrap; text-align: right">peak G32 · Sat 1pm · NBM</div>
+      <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700"><span style="display: inline-block; min-width: 24px; padding: 2px 0; border-radius: 6px; background: #5C6B7A; color: #000000; text-align: center">1</span></div>
+    </div>
+  </div>
+
+  <!-- chart: edge to edge -->
+  <div style="padding: 12px 0 8px 0; background: #171C23">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; padding: 0 16px">
+      <div style="display: flex; flex-direction: column; gap: 1px"><div style="font-size: 15px; line-height: 20px; font-weight: 700">Wed 9am → Tue 9am</div><div style="font-size: 11px; line-height: 14px; font-weight: 500; color: #9AA4B1">HRRR hourly · NBM 3-hourly after Fri 5am</div></div>
+      <div role="radiogroup" aria-label="Forecast range" style="display: inline-flex; padding: 2px; border-radius: 8px; background: #0B0E12; box-shadow: inset 0 0 0 1px #2A2F36">
+        <button type="button" role="radio" aria-checked="false" style="min-width: 44px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: #9AA4B1; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">48 h</button>
+        <button type="button" role="radio" aria-checked="true" style="min-width: 44px; height: 26px; border: 0; border-radius: 6px; background: #2A2F36; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">7 d</button>
+      </div>
+    </div>
+    <div style="position: relative">
+      <div role="img" aria-label="Seven-day wind chart: HRRR hourly to Friday 5am, then NBM three-hourly. Southwest front Saturday afternoon, 18 knots gusting 32, clearing northwest Sunday, light Monday" style="width: 402px; height: 262px; overflow: visible"><svg width="100%" viewBox="0 0 402 262" aria-hidden="true" style="display:block;overflow:visible">
+<defs><linearGradient id="gp7" x1="0" x2="1"><stop offset="0.0000" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.0548" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.0579" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.1318" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.1350" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.1974" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.2006" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.2748" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.2780" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.3401" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.3433" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.4178" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.4209" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.4827" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.4859" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.5607" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.5639" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.6254" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.6286" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.7037" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.7068" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.7681" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.7712" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.8466" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.8498" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.9107" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="0.9139" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.9896" stop-color="#FFFFFF" stop-opacity="0.000"/><stop offset="0.9928" stop-color="#FFFFFF" stop-opacity="0.070"/><stop offset="1.0000" stop-color="#FFFFFF" stop-opacity="0.070"/></linearGradient></defs>
+<rect x="0" y="38" width="402.0" height="206.0" fill="url(#gp7)"/>
+<rect x="107.7" y="38" width="294.3" height="206.0" fill="#4FA3D8" fill-opacity="0.045"/>
+<line x1="0" x2="402" y1="192.5" y2="192.5" stroke="#FFFFFF" stroke-opacity="0.12"/>
+<text x="400" y="189.5" text-anchor="end" font-size="10" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">10</text>
+<line x1="0" x2="402" y1="141.0" y2="141.0" stroke="#FFFFFF" stroke-opacity="0.12"/>
+<text x="400" y="138.0" text-anchor="end" font-size="10" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">20</text>
+<line x1="0" x2="402" y1="89.5" y2="89.5" stroke="#FFFFFF" stroke-opacity="0.12"/>
+<text x="400" y="86.5" text-anchor="end" font-size="10" fill="#FFFFFF" fill-opacity="0.45" font-family="-apple-system,system-ui,sans-serif">30</text>
+<circle cx="22.0" cy="37" r="2.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
+<circle cx="54.3" cy="37" r="3" fill="#FFB340"/>
+<circle cx="79.4" cy="37" r="2.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
+<circle cx="111.7" cy="37" r="3" fill="#FFB340"/>
+<circle cx="136.7" cy="37" r="2.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
+<circle cx="169.2" cy="37" r="3" fill="#FFB340"/>
+<circle cx="194.1" cy="37" r="2.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
+<circle cx="226.7" cy="37" r="3" fill="#FFB340"/>
+<circle cx="251.4" cy="37" r="2.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
+<circle cx="284.2" cy="37" r="3" fill="#FFB340"/>
+<circle cx="308.8" cy="37" r="2.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
+<circle cx="341.6" cy="37" r="3" fill="#FFB340"/>
+<circle cx="366.1" cy="37" r="2.25" fill="none" stroke="#FFB340" stroke-width="1.5"/>
+<circle cx="399.1" cy="37" r="3" fill="#FFB340"/>
+<rect x="1.0" y="223.4" width="5.2" height="20.6" rx="1.5" fill="#4FA3D8"/>
+<rect x="8.2" y="223.4" width="5.2" height="20.6" rx="1.5" fill="#4FA3D8"/>
+<rect x="15.4" y="223.4" width="5.2" height="20.6" rx="1.5" fill="#4FA3D8"/>
+<rect x="22.5" y="202.8" width="5.2" height="41.2" rx="1.5" fill="#3FC2A0"/>
+<rect x="29.7" y="177.1" width="5.2" height="66.9" rx="1.5" fill="#8DD44A"/>
+<rect x="36.9" y="166.8" width="5.2" height="77.2" rx="1.5" fill="#8DD44A"/>
+<rect x="44.1" y="182.2" width="5.2" height="61.8" rx="1.5" fill="#8DD44A"/>
+<rect x="51.3" y="192.5" width="5.2" height="51.5" rx="1.5" fill="#3FC2A0"/>
+<rect x="58.4" y="207.9" width="5.2" height="36.1" rx="1.5" fill="#3FC2A0"/>
+<rect x="65.6" y="197.7" width="5.2" height="46.3" rx="1.5" fill="#3FC2A0"/>
+<rect x="72.8" y="202.8" width="5.2" height="41.2" rx="1.5" fill="#3FC2A0"/>
+<rect x="80.0" y="187.3" width="5.2" height="56.7" rx="1.5" fill="#8DD44A"/>
+<rect x="87.1" y="187.3" width="5.2" height="56.7" rx="1.5" fill="#8DD44A"/>
+<rect x="94.3" y="192.5" width="5.2" height="51.5" rx="1.5" fill="#3FC2A0"/>
+<rect x="101.5" y="187.3" width="5.2" height="56.7" rx="1.5" fill="#8DD44A"/>
+<rect x="108.7" y="192.5" width="5.2" height="51.5" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="115.9" y="187.3" width="5.2" height="56.7" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="123.0" y="192.5" width="5.2" height="51.5" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="130.2" y="197.7" width="5.2" height="46.3" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="137.4" y="202.8" width="5.2" height="41.2" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="144.6" y="207.9" width="5.2" height="36.1" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="151.8" y="202.8" width="5.2" height="41.2" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="158.9" y="192.5" width="5.2" height="51.5" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="166.1" y="182.2" width="5.2" height="61.8" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="173.3" y="166.8" width="5.2" height="77.2" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="180.5" y="151.3" width="5.2" height="92.7" rx="1.5" fill="#F2D13D" fill-opacity="0.7"/>
+<rect x="187.6" y="156.4" width="5.2" height="87.6" rx="1.5" fill="#F2D13D" fill-opacity="0.7"/>
+<rect x="194.8" y="171.9" width="5.2" height="72.1" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="202.0" y="187.3" width="5.2" height="56.7" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="209.2" y="197.7" width="5.2" height="46.3" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="216.4" y="192.5" width="5.2" height="51.5" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="223.5" y="177.1" width="5.2" height="66.9" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="230.7" y="171.9" width="5.2" height="72.1" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="237.9" y="182.2" width="5.2" height="61.8" rx="1.5" fill="#8DD44A" fill-opacity="0.7"/>
+<rect x="245.1" y="197.7" width="5.2" height="46.3" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="252.3" y="207.9" width="5.2" height="36.1" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="259.4" y="218.2" width="5.2" height="25.8" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="266.6" y="223.4" width="5.2" height="20.6" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="273.8" y="228.6" width="5.2" height="15.4" rx="1.5" fill="#5C6B7A" fill-opacity="0.7"/>
+<rect x="281.0" y="223.4" width="5.2" height="20.6" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="288.1" y="218.2" width="5.2" height="25.8" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="295.3" y="213.1" width="5.2" height="30.9" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="302.5" y="213.1" width="5.2" height="30.9" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="309.7" y="218.2" width="5.2" height="25.8" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="316.9" y="218.2" width="5.2" height="25.8" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="324.0" y="213.1" width="5.2" height="30.9" rx="1.5" fill="#4FA3D8" fill-opacity="0.7"/>
+<rect x="331.2" y="202.8" width="5.2" height="41.2" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<rect x="338.4" y="192.5" width="5.2" height="51.5" rx="1.5" fill="#3FC2A0" fill-opacity="0.7"/>
+<polyline points="3.6,218.2 10.8,223.4 17.9,213.1 25.1,166.8 32.3,120.4 39.5,115.2 46.7,130.7 53.8,166.8 61.0,182.2 68.2,161.6 75.4,161.6 82.6,130.7 89.7,141.0 96.9,141.0 104.1,135.8" fill="none" stroke="#FFFFFF" stroke-opacity="0.75" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="111.3,156.4 118.4,151.3 125.6,161.6 132.8,166.8 140.0,177.1 147.2,182.2 154.3,171.9 161.5,156.4 168.7,141.0 175.9,110.1 183.1,79.2 190.2,89.5 197.4,115.2 204.6,146.2 211.8,161.6 218.9,151.3 226.1,135.8 233.3,130.7 240.5,146.2 247.7,166.8 254.8,182.2 262.0,197.7 269.2,207.9 276.4,213.1 283.6,207.9 290.7,202.8 297.9,192.5 305.1,192.5 312.3,197.7 319.4,202.8 326.6,192.5 333.8,177.1 341.0,161.6" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="4 3"/>
+<line x1="0.0" x2="7.2" y1="218.2" y2="218.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="7.2" x2="14.4" y1="223.4" y2="223.4" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="14.4" x2="21.5" y1="213.1" y2="213.1" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="21.5" x2="28.7" y1="166.8" y2="166.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="28.7" x2="35.9" y1="120.4" y2="120.4" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="35.9" x2="43.1" y1="115.2" y2="115.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="43.1" x2="50.2" y1="130.7" y2="130.7" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="50.3" x2="57.4" y1="166.8" y2="166.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="57.4" x2="64.6" y1="182.2" y2="182.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="64.6" x2="71.8" y1="161.6" y2="161.6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="71.8" x2="79.0" y1="161.6" y2="161.6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="79.0" x2="86.1" y1="130.7" y2="130.7" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="86.1" x2="93.3" y1="141.0" y2="141.0" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="93.3" x2="100.5" y1="141.0" y2="141.0" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="100.5" x2="107.7" y1="135.8" y2="135.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="107.7" x2="114.9" y1="156.4" y2="156.4" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="114.9" x2="122.0" y1="151.3" y2="151.3" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="122.0" x2="129.2" y1="161.6" y2="161.6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="129.2" x2="136.4" y1="166.8" y2="166.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="136.4" x2="143.6" y1="177.1" y2="177.1" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="143.6" x2="150.7" y1="182.2" y2="182.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="150.8" x2="157.9" y1="171.9" y2="171.9" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="157.9" x2="165.1" y1="156.4" y2="156.4" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="165.1" x2="172.3" y1="141.0" y2="141.0" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="172.3" x2="179.5" y1="110.1" y2="110.1" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="179.5" x2="186.6" y1="79.2" y2="79.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="186.6" x2="193.8" y1="89.5" y2="89.5" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="193.8" x2="201.0" y1="115.2" y2="115.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="201.0" x2="208.2" y1="146.2" y2="146.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="208.2" x2="215.4" y1="161.6" y2="161.6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="215.4" x2="222.5" y1="151.3" y2="151.3" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="222.5" x2="229.7" y1="135.8" y2="135.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="229.7" x2="236.9" y1="130.7" y2="130.7" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="236.9" x2="244.1" y1="146.2" y2="146.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="244.1" x2="251.2" y1="166.8" y2="166.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="251.3" x2="258.4" y1="182.2" y2="182.2" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="258.4" x2="265.6" y1="197.7" y2="197.7" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="265.6" x2="272.8" y1="207.9" y2="207.9" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="272.8" x2="280.0" y1="213.1" y2="213.1" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="280.0" x2="287.1" y1="207.9" y2="207.9" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="287.1" x2="294.3" y1="202.8" y2="202.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="294.3" x2="301.5" y1="192.5" y2="192.5" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="301.5" x2="308.7" y1="192.5" y2="192.5" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="308.7" x2="315.9" y1="197.7" y2="197.7" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="315.9" x2="323.0" y1="202.8" y2="202.8" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="323.0" x2="330.2" y1="192.5" y2="192.5" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="330.2" x2="337.4" y1="177.1" y2="177.1" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="337.4" x2="344.6" y1="161.6" y2="161.6" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+<g transform="translate(3.6,248.0) rotate(117)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(17.9,248.0) rotate(165)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(32.3,248.0) rotate(104)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(46.7,248.0) rotate(110)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(61.0,248.0) rotate(152)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(75.4,248.0) rotate(135)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(89.7,248.0) rotate(115)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(104.1,248.0) rotate(114)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(118.4,248.0) rotate(110)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(132.8,248.0) rotate(100)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(147.2,248.0) rotate(70)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(161.5,248.0) rotate(40)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(175.9,248.0) rotate(30)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(190.2,248.0) rotate(30)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(204.6,248.0) rotate(55)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(218.9,248.0) rotate(110)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(233.3,248.0) rotate(130)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(247.7,248.0) rotate(140)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(262.0,248.0) rotate(150)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(276.4,248.0) rotate(240)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(290.7,248.0) rotate(300)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(305.1,248.0) rotate(0)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(319.4,248.0) rotate(5)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<g transform="translate(333.8,248.0) rotate(355)"><path d="M0,-4.5 L3.4,4.5 L0,1.8 L-3.4,4.5 Z" fill="#FFFFFF" fill-opacity="0.9"/></g>
+<line x1="35.9" x2="35.9" y1="20" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2 3"/>
+<line x1="93.3" x2="93.3" y1="20" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2 3"/>
+<line x1="150.8" x2="150.8" y1="20" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2 3"/>
+<line x1="208.2" x2="208.2" y1="20" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2 3"/>
+<line x1="265.6" x2="265.6" y1="20" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2 3"/>
+<line x1="323.0" x2="323.0" y1="20" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2 3"/>
+<text x="17.9" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">Wed</text>
+<text x="64.6" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">Thu</text>
+<text x="122.0" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">Fri</text>
+<text x="179.5" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">Sat</text>
+<text x="236.9" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">Sun</text>
+<text x="294.3" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">Mon</text>
+<text x="351.8" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">Tue</text>
+<line x1="107.7" x2="107.7" y1="32" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="103.7" y="30" text-anchor="end" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.7" font-family="-apple-system,system-ui,sans-serif">HRRR</text>
+<text x="111.7" y="30" font-size="11" font-weight="600" fill="#9BB7D4" font-family="-apple-system,system-ui,sans-serif">NBM · 3-hourly</text>
+<line x1="1.0" x2="1.0" y1="32" y2="244.0" stroke="#FFFFFF" stroke-width="1.5"/>
+<text x="5.0" y="30" font-size="11" font-weight="600" fill="#FFFFFF" font-family="-apple-system,system-ui,sans-serif">now</text>
+<line x1="402.0" x2="402.0" y1="32" y2="244.0" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="398.0" y="30" text-anchor="end" font-size="11" font-weight="600" fill="#FFFFFF" fill-opacity="0.7" font-family="-apple-system,system-ui,sans-serif">ends Tue 9am</text>
+</svg></div>
+
+    </div>
+  </div>
+
+  <div style="font-size: 15px; line-height: 20px; color: #C7CED8; padding: 0 16px">Light and variable this morning, building to 15 kn W by late afternoon, gusts to 25 overnight. Easing by dawn.</div>
+
+  <!-- collapsible hourly table, collapsed by default -->
+  <button type="button" aria-expanded="false" aria-controls="hourly-table" style="margin: 2px 12px 0 12px; min-height: 52px; box-sizing: border-box; border: 0; border-radius: 12px; background: #171C23; color: #FFFFFF; padding: 0 14px 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font: inherit; text-align: left; cursor: pointer">
+    <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 17px; font-weight: 600">Hourly table</span><span style="font-size: 13px; color: #9AA4B1">7 days · NBM after Fri 5am</span></div>
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3,5 L7,9 L11,5" fill="none" stroke="#9AA4B1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div id="hourly-table" hidden></div>
+
+  <div style="flex: 1 1 auto"></div>
+  <div style="padding: 0 16px 10px 16px; font-size: 12px; line-height: 16px; color: #5C6B7A">Wind Watch · weather data by Open-Meteo.com</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

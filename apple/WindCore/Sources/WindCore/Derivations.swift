@@ -21,9 +21,18 @@ public enum Derivations {
 
     /// Chart Y upper bound: `max(20, ceil((maxGust + 3) / 10) × 10)`, over the hours plotted.
     public static func yDomainMax(hours: [Forecast.Hour]) -> Int {
-        let maxGust = hours.map(\.gust).max() ?? 0
+        yDomainMax(maxGust: hours.map(\.gust).max() ?? 0)
+    }
+
+    /// `max(20, ceil((maxGust + 3) / 10) × 10)`.
+    public static func yDomainMax(maxGust: Int) -> Int {
         let rounded = Int((Double(maxGust + 3) / 10).rounded(.up)) * 10
         return max(20, rounded)
+    }
+
+    /// Complication strip Y upper bound (§6.3): `max(20, maxGust rounded up to 5)`.
+    public static func stripYMax(maxGust: Int) -> Int {
+        max(20, Int((Double(maxGust) / 5).rounded(.up)) * 5)
     }
 
     /// `HRRR ends 05:00`; `short` drops the model name (`ends 05:00`) when the edge is near the now marker.

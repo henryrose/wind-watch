@@ -1,6 +1,6 @@
 // Wire payload and upstream input types.
-// The Payload shape is the contract in docs/DESIGN.md §4.2; key order here is the
-// order the payload is serialised in (see stableStringify.ts).
+// The Payload shape is the contract in docs/DESIGN.md §4.2 and §4.2a; key order here is
+// the order the payload is serialised in (see stableStringify.ts).
 
 /** Unix seconds. */
 export type UnixSeconds = number;
@@ -51,12 +51,49 @@ export interface Payload {
   summary: string;
   /** One entry per local civil day touched by [start, horizon] (B2). */
   sun: SunDay[];
+  /** HRRR 2 m temperature, °C, one decimal, length == hours (§4.2a). */
+  temp: number[];
+  /** HRRR total cloud cover, %, integers 0..100, length == hours. */
+  cloud: number[];
+  /** HRRR precipitation, mm/h, one decimal, length == hours. */
+  precip: number[];
+  /** NBM in 3-hour blocks after the HRRR horizon; null when NBM is unavailable (§4.2a). */
+  extended: Extended | null;
+}
+
+/** NBM beyond the HRRR horizon (DESIGN §4.2a). Block i covers [from + i*step h, from + (i+1)*step h). */
+export interface Extended {
+  model: "ncep_nbm_conus";
+  /** NBM init time (its meta.json `last_run_initialisation_time`). */
+  run: UnixSeconds;
+  /** When the Worker first pulled this NBM run. */
+  fetched: UnixSeconds;
+  /** Hours per block. */
+  step: 3;
+  /** Always `start + hours*3600`: the first hour after HRRR. */
+  from: UnixSeconds;
+  /** Whole blocks only, ending at or before `start + 168 h`. */
+  blocks: number;
+  /** Max sustained in the block, knots, integers. */
+  kn: number[];
+  /** Max gust in the block, knots, integers. */
+  gust: number[];
+  /** Vector-mean FROM direction of the block's hours, integers 0..359. */
+  dir: number[];
+  /** Mean °C, one decimal. */
+  temp: number[];
+  /** Mean %, integers. */
+  cloud: number[];
+  /** Max mm/h, one decimal. */
+  precip: number[];
 }
 
 /**
- * Open-Meteo forecast response with `timeformat=unixtime`, `timezone=GMT`,
- * `hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m`, `wind_speed_unit=kn`.
- * Only the fields the transform reads are typed. Hours beyond the model horizon are null.
+ * Open-Meteo forecast response with `timeformat=unixtime`, `wind_speed_unit=kn` and
+ * `hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,cloud_cover,precipitation`,
+ * for HRRR and NBM alike. Only the fields the transform reads are typed. Hours beyond the
+ * model horizon are null. The sky/temperature series are optional only because the
+ * 21 Oct fixture predates them; the transform refuses a response without them.
  */
 export interface OpenMeteoForecast {
   latitude: number;
@@ -68,10 +105,13 @@ export interface OpenMeteoForecast {
     wind_speed_10m: (number | null)[];
     wind_direction_10m: (number | null)[];
     wind_gusts_10m: (number | null)[];
+    temperature_2m?: (number | null)[];
+    cloud_cover?: (number | null)[];
+    precipitation?: (number | null)[];
   };
 }
 
-/** `https://api.open-meteo.com/data/ncep_hrrr_conus/static/meta.json`. */
+/** `https://api.open-meteo.com/data/<model>/static/meta.json` (HRRR and NBM have the same shape). */
 export interface OpenMeteoMeta {
   last_run_initialisation_time: UnixSeconds;
   last_run_availability_time: UnixSeconds;

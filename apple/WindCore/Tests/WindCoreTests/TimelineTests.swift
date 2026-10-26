@@ -135,6 +135,61 @@ struct TimelineTests {
         #expect(zip(entries, entries.dropFirst()).allSatisfy { $0.date < $1.date })
     }
 
+    @Test("Strip domain: floor 20, rounds to 5, never shrinks across entries (§6.3)") func stripDomainsGrowOnly() throws {
+        let f = try Fixture.forecast()
+        let entries = TimelineBuilder.entries(forecast: f, now: f.start)
+        let domains = TimelineBuilder.stripDomains(forecast: f, entries: entries)
+        #expect(domains.count == entries.count)
+        #expect(domains.last! == nil) // past-horizon entry
+        let shown = domains.dropLast().compactMap { $0 }
+        #expect(shown.count == entries.count - 1)
+        #expect(zip(shown, shown.dropFirst()).allSatisfy { $0 <= $1 })
+        // Hours 0–2 see max gust 15–18 → 20; hour 3's window reaches the 24 kn gust → 25.
+        #expect(entries.firstIndex { $0.hourIndex == 3 }.map { domains[$0] } == 25)
+        #expect(domains.first! == 20)
+        // Hour 20's own window (max 19 → 20) keeps 25: the peak scrolled out but the scale holds.
+        let h20 = try #require(entries.firstIndex { $0.hourIndex == 20 })
+        let own = ChartModel(forecast: f, now: entries[h20].date, window: .complication, scheme: .dark)
+        #expect(own.yMax == 20 && domains[h20] == 25)
+        #expect(ChartModel(forecast: f, now: entries[h20].date, window: .complication, scheme: .dark, yMaxFloor: domains[h20]).yMax == 25)
+    }
+
+    @Test("Strip domain carried between reloads of the same run; reset on a new run or place") func stripDomainsCarried() throws {
+        let f = try Fixture.forecast()
+        // A reload at hour 20: on its own the window gives 20.
+        let late = TimelineBuilder.entries(forecast: f, now: f.date(ofHour: 20))
+        #expect(TimelineBuilder.stripDomains(forecast: f, entries: late).first! == 20)
+        // Carried from the previous build at hour 0 (domain 20): the hours the old timeline showed
+        // since then (windows 0–19, peak 25) are folded in.
+        let fromStart = StripScale(forecast: f, yMax: 20, asOf: f.start)
+        #expect(TimelineBuilder.stripDomains(forecast: f, entries: late, carried: fromStart).first! == 25)
+        // A carried higher value holds.
+        let high = StripScale(forecast: f, yMax: 35, asOf: f.date(ofHour: 19))
+        #expect(TimelineBuilder.stripDomains(forecast: f, entries: late, carried: high).compactMap { $0 }.allSatisfy { $0 == 35 })
+        // New run: starts again from its own window.
+        var newRun = high
+        newRun.runDate = f.runDate.addingTimeInterval(3600)
+        #expect(TimelineBuilder.stripDomains(forecast: f, entries: late, carried: newRun).first! == 20)
+        // Another place: also a fresh scale.
+        var elsewhere = high
+        elsewhere.lat += 1
+        #expect(!elsewhere.matches(f))
+        #expect(TimelineBuilder.stripDomains(forecast: f, entries: late, carried: elsewhere).first! == 20)
+        // Round-trips through defaults.
+        let defaults = try #require(UserDefaults(suiteName: "StripScaleTests"))
+        defaults.removePersistentDomain(forName: "StripScaleTests")
+        #expect(StripScale.load(from: defaults) == nil)
+        high.save(to: defaults)
+        #expect(StripScale.load(from: defaults) == high)
+        defaults.removePersistentDomain(forName: "StripScaleTests")
+    }
+
+    @Test func stripDomainsPastHorizonOnly() throws {
+        let f = try Fixture.forecast()
+        let entries = TimelineBuilder.entries(forecast: f, now: f.horizon.addingTimeInterval(7200))
+        #expect(TimelineBuilder.stripDomains(forecast: f, entries: entries) == [nil])
+    }
+
     @Test func nextReload() {
         let now = Date(timeIntervalSince1970: 1_792_600_000)
         #expect(TimelineBuilder.nextReload(after: now) == now.addingTimeInterval(1800))

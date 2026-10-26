@@ -4,12 +4,26 @@ import Testing
 
 @Suite("SavedLocation and LocationSettings")
 struct SavedLocationTests {
+    typealias Preferences = LocationSettings.Preferences
+
+    func loc(_ name: String, _ lat: Double = 47.6, _ lon: Double = -122.3) -> SavedLocation {
+        SavedLocation(name: name, lat: lat, lon: lon, tz: "America/Los_Angeles")
+    }
+
     @Test func roundTripsThroughJSON() throws {
-        let loc = SavedLocation(name: "Seattle", lat: 47.6062, lon: -122.3321, tz: "America/Los_Angeles")
+        let loc = SavedLocation(name: "Seattle", lat: 47.6062, lon: -122.3321, tz: "America/Los_Angeles",
+                                suggestedNames: ["Elliott Bay", "Seattle"], createdAt: Date(timeIntervalSince1970: 1_000))
         let data = try JSONEncoder().encode(loc)
         #expect(try JSONDecoder().decode(SavedLocation.self, from: data) == loc)
         #expect(loc.customLocation == CustomLocation(lat: 47.6062, lon: -122.3321))
         #expect(loc.timeZone.identifier == "America/Los_Angeles")
+    }
+
+    @Test func decodesThePreListShape() throws {
+        let old = Data(#"{"name":"Seattle","lat":47.6,"lon":-122.3,"tz":"America/Los_Angeles"}"#.utf8)
+        let loc = try JSONDecoder().decode(SavedLocation.self, from: old)
+        #expect(loc.name == "Seattle" && loc.lat == 47.6 && loc.lon == -122.3)
+        #expect(loc.suggestedNames.isEmpty)
     }
 
     @Test func coordinateText() {
@@ -25,143 +39,228 @@ struct SavedLocationTests {
         #expect(SavedLocation.parseCoordinates("1, 2, 3") == nil)
     }
 
-    let seattle = SavedLocation(name: "Seattle", lat: 47.6, lon: -122.3, tz: "America/Los_Angeles")
+    @Test func serverDefaultIsByCoordinatesNotName() {
+        var ptb = SavedLocation.portTownsendBay
+        #expect(ptb.isServerDefault)
+        ptb.name = "Home water"
+        #expect(ptb.isServerDefault) // renaming keeps the KV fetch
+        #expect(!loc("Port Townsend Bay", 48.1, -122.78).isServerDefault)
+        var prefs = Preferences.default
+        #expect(prefs.activeCustom == nil)
+        do { let r = prefs.rename(ptb.id, to: "Home water"); #expect(r) }
+        #expect(prefs.activeCustom == nil && prefs.selectedIsServerDefault)
+    }
 
-    @Test func freshInstallSeedsPortTownsendBayOnly() throws {
+    // MARK: List rules
+
+    @Test func defaultIsPortTownsendBaySelected() {
+        let p = Preferences.default
+        #expect(p.locations == [.portTownsendBay])
+        #expect(p.selected == .portTownsendBay)
+        #expect(!p.canDelete && !p.isFull && !p.hasNonDefault)
+    }
+
+    @Test func addsUpToTwelveThenRefuses() {
+        var p = Preferences.default
+        for i in 1..<12 { let r = p.add(loc("Spot \(i)", 47 + Double(i) / 100)); #expect(r) }
+        #expect(p.count == 12 && p.isFull)
+        #expect(p.selected.name == "Spot 11") // a new pin is selected
+        do { let r = p.add(loc("Thirteen")); #expect(!r) }
+        #expect(p.count == 12)
+        // Same id twice is refused too.
+        var q = Preferences.default
+        do { let r = q.add(.portTownsendBay); #expect(!r) }
+    }
+
+    @Test func addNormalisesTheName() {
+        var p = Preferences.default
+        do { let r = p.add(loc("  Mystery   Bay \n")); #expect(r) }
+        #expect(p.selected.name == "Mystery Bay")
+    }
+
+    @Test func initClampsAndRepairs() {
+        let many = (0..<15).map { loc("S\($0)") }
+        let p = Preferences(locations: many, selectedID: many[14].id)
+        #expect(p.count == 12)
+        #expect(p.selectedID == many[0].id) // selected row was dropped → first
+        #expect(Preferences(locations: []).locations == [.portTownsendBay])
+    }
+
+    @Test func lastLocationCannotBeDeleted() {
+        var p = Preferences.default
+        do { let r = p.delete(SavedLocation.portTownsendBay.id); #expect(!r) }
+        let a = loc("A")
+        p.add(a)
+        do { let r = p.delete(SavedLocation.portTownsendBay.id); #expect(r) } // the seeded default is ordinary
+        #expect(p.locations == [p.location(id: a.id)!])
+        do { let r = p.delete(a.id); #expect(!r) }
+        do { let r = p.delete(UUID()); #expect(!r) }
+    }
+
+    @Test func deletingTheSelectedRowSelectsItsNeighbour() {
+        let a = loc("A"), b = loc("B"), c = loc("C")
+        var p = Preferences(locations: [a, b, c], selectedID: b.id)
+        do { let r = p.delete(b.id); #expect(r) }
+        #expect(p.selectedID == c.id) // the row that slid into place
+        do { let r = p.delete(c.id); #expect(r) }
+        #expect(p.selectedID == a.id) // was last → new last
+        var q = Preferences(locations: [a, b, c], selectedID: a.id)
+        do { let r = q.delete(c.id); #expect(r) }
+        #expect(q.selectedID == a.id) // unselected delete keeps the selection
+    }
+
+    @Test func reorderFollowsListOnMove() {
+        let a = loc("A"), b = loc("B"), c = loc("C"), d = loc("D")
+        var p = Preferences(locations: [a, b, c, d], selectedID: c.id)
+        p.move(fromOffsets: [0], toOffset: 3)
+        #expect(p.locations.map(\.name) == ["B", "C", "A", "D"])
+        p.move(fromOffsets: [3], toOffset: 0)
+        #expect(p.locations.map(\.name) == ["D", "B", "C", "A"])
+        p.move(fromOffsets: [1, 3], toOffset: 4)
+        #expect(p.locations.map(\.name) == ["D", "C", "B", "A"])
+        p.move(fromOffsets: [0], toOffset: 1) // no-op
+        #expect(p.locations.map(\.name) == ["D", "C", "B", "A"])
+        #expect(p.selectedID == c.id) // order means nothing to the selection
+    }
+
+    @Test func selectAndRename() {
+        let a = loc("A", 48.1, -122.68)
+        var p = Preferences(locations: [.portTownsendBay, a])
+        do { let r = p.select(a.id); #expect(r) }
+        do { let r = p.select(a.id); #expect(!r) } // already selected
+        do { let r = p.select(UUID()); #expect(!r) }
+        do { let r = p.rename(a.id, to: "  Marrowstone   Pt "); #expect(r) }
+        #expect(p.selected.name == "Marrowstone Pt")
+        #expect(p.selected.lat == 48.1 && p.selected.lon == -122.68) // the pin never moves
+        do { let r = p.rename(a.id, to: "   "); #expect(!r) }
+        do { let r = p.rename(a.id, to: String(repeating: "x", count: 41)); #expect(!r) }
+        #expect(p.selected.name == "Marrowstone Pt")
+    }
+
+    // MARK: Names
+
+    @Test func nameNormalisationAndValidation() {
+        #expect(LocationName.normalize("  Point \t  Wilson\n") == "Point Wilson")
+        #expect(LocationName.normalize("Admiralty Inlet mid") == "Admiralty Inlet mid")
+        #expect(!LocationName.isValid(""))
+        #expect(!LocationName.isValid("   \n"))
+        #expect(LocationName.isValid("A"))
+        #expect(LocationName.isValid(String(repeating: "x", count: 40)))
+        #expect(!LocationName.isValid(String(repeating: "x", count: 41)))
+        #expect(LocationName.isValid(" " + String(repeating: "x", count: 40) + "  ")) // trimmed first
+        #expect(LocationName.clamp(String(repeating: "y", count: 45)).count == 40)
+        #expect(LocationName.clamp("short") == "short")
+        #expect(LocationName.normalize("Café · Ünïcode") == "Café · Ünïcode") // verbatim otherwise
+    }
+
+    @Test func duplicateGetsANumberSuggestedNotBlocked() {
+        let names = ["Mystery Bay", "Oak Bay", "Oak Bay 2"]
+        #expect(LocationName.duplicateSuggestion(for: "Point Wilson", existing: names) == nil)
+        #expect(LocationName.duplicateSuggestion(for: "mystery  bay ", existing: names) == "mystery bay 2")
+        #expect(LocationName.duplicateSuggestion(for: "Oak Bay", existing: names) == "Oak Bay 3")
+        #expect(LocationName.duplicateSuggestion(for: "", existing: names) == nil)
+        let long = String(repeating: "z", count: 40)
+        let s = LocationName.duplicateSuggestion(for: long, existing: [long])
+        #expect(s?.count == 40 && s?.hasSuffix(" 2") == true)
+        // Not a block: the list takes the duplicate as typed.
+        var p = Preferences.default
+        do { let r = p.add(loc("Port Townsend Bay")); #expect(r) }
+    }
+
+    // MARK: Geocoder field order
+
+    @Test func geocoderOrderAreasOfInterestFirst() {
+        let g = GeocodedNames(areasOfInterest: ["Fort Flagler Historical State Park"], inlandWater: "Kilisut Harbor",
+                              ocean: nil, locality: "Nordland", subLocality: nil, administrativeArea: "WA")
+        #expect(g.suggestion == "Fort Flagler Historical State Park")
+        #expect(g.chips == ["Kilisut Harbor", "Nordland", "WA"])
+    }
+
+    @Test func geocoderFallsThroughEmptyFieldsInOrder() {
+        #expect(GeocodedNames(inlandWater: "Port Townsend Bay", locality: "Port Townsend").suggestion == "Port Townsend Bay")
+        #expect(GeocodedNames(ocean: "Pacific Ocean", locality: "Neah Bay").suggestion == "Pacific Ocean")
+        #expect(GeocodedNames(inlandWater: "Lake Union", ocean: "Pacific Ocean").chips == ["Pacific Ocean"])
+        #expect(GeocodedNames(areasOfInterest: ["  "], locality: "Nordland", subLocality: "Marrowstone").suggestion == "Nordland")
+        #expect(GeocodedNames(subLocality: "Marrowstone", administrativeArea: "Washington").suggestion == "Marrowstone")
+        #expect(GeocodedNames(administrativeArea: "Washington").suggestion == "Washington")
+        #expect(GeocodedNames().suggestion == nil)
+        #expect(GeocodedNames().chips.isEmpty)
+    }
+
+    @Test func geocoderDeduplicatesAndCapsChipsAtFour() {
+        let g = GeocodedNames(areasOfInterest: ["Marrowstone Island", "Fort Flagler", "marrowstone island"],
+                              inlandWater: "Kilisut Harbor", ocean: "Salish Sea", locality: "Nordland",
+                              subLocality: "Nordland", administrativeArea: "Washington")
+        #expect(g.suggestion == "Marrowstone Island")
+        #expect(g.chips == ["Fort Flagler", "Kilisut Harbor", "Salish Sea", "Nordland"])
+    }
+
+    // MARK: Storage and migration
+
+    func withDefaults(_ body: (UserDefaults) throws -> Void) throws {
         let suite = "WindCoreTests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
-        let prefs = LocationSettings.load(from: defaults)
-        #expect(prefs == .default)
-        #expect(prefs.locations == [.portTownsendBay])
-        #expect(prefs.selected == .portTownsendBay)
-        #expect(!prefs.effectiveUseCustom && prefs.activeCustom == nil)
-        #expect(!prefs.canDelete)
+        try body(defaults)
     }
 
     @Test func defaultsRoundTrip() throws {
-        let suite = "WindCoreTests-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let prefs = Preferences(locations: [.portTownsendBay, seattle], selectedID: seattle.id)
-        LocationSettings.save(prefs, to: defaults)
-        let loaded = LocationSettings.load(from: defaults)
-        #expect(loaded == prefs)
-        #expect(loaded.effectiveUseCustom)
-        #expect(loaded.activeCustom == seattle.customLocation)
-        // The legacy pair is written too, for a watch app on build ≤ 7.
-        #expect(defaults.bool(forKey: LocationSettings.useCustomKey))
-        #expect(defaults.data(forKey: LocationSettings.customLocationKey) != nil)
-    }
-
-    @Test func migratesTheBuild7Preference() throws {
-        let suite = "WindCoreTests-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        // Build ≤ 7 stored a SavedLocation without an id plus useCustom.
-        let old = #"{"name":"Seattle","lat":47.6,"lon":-122.3,"tz":"America/Los_Angeles"}"#.data(using: .utf8)!
-        defaults.set(old, forKey: LocationSettings.customLocationKey)
-        defaults.set(true, forKey: LocationSettings.useCustomKey)
-        let migrated = LocationSettings.load(from: defaults)
-        #expect(migrated.locations.map(\.name) == ["Port Townsend Bay", "Seattle"])
-        #expect(migrated.selected.name == "Seattle")
-        #expect(migrated.activeCustom == CustomLocation(lat: 47.6, lon: -122.3))
-        defaults.set(false, forKey: LocationSettings.useCustomKey)
-        #expect(LocationSettings.load(from: defaults).selected == .portTownsendBay)
-    }
-
-    @Test func listRules() {
-        var p = Preferences.default
-        let deletedLast = p.delete(SavedLocation.portTownsendBay.id)
-        #expect(!deletedLast) // last row
-        for i in 0..<11 {
-            let added = p.add(SavedLocation(name: "P\(i)", lat: 47, lon: -122 + Double(i) / 10, tz: "UTC"))
-            #expect(added)
+        try withDefaults { defaults in
+            #expect(LocationSettings.load(from: defaults) == .default)
+            let p = LocationSettings.fixture(count: 5)
+            LocationSettings.save(p, to: defaults)
+            #expect(LocationSettings.load(from: defaults) == p)
+            #expect(p.selected.name == "Marrowstone Pt" && p.count == 5)
         }
-        #expect(p.isFull && p.locations.count == 12)
-        let addedThirteenth = p.add(seattle)
-        #expect(!addedThirteenth)
-        #expect(p.selected.name == "P10") // add selects
-        p.move(fromOffsets: IndexSet(integer: 0), toOffset: 12)
-        #expect(p.locations.last == .portTownsendBay)
-        #expect(p.locations.first?.name == "P0")
-        p.rename(SavedLocation.portTownsendBay.id, to: "  Home  ")
-        #expect(p.locations.last?.name == "Home")
-        #expect(p.locations.last?.isDefaultPoint == true)
-        p.rename(SavedLocation.portTownsendBay.id, to: "   ")
-        #expect(p.locations.last?.name == "Home") // blank names are ignored
-        let selected = p.selectedID
-        let deleted = p.delete(selected)
-        #expect(deleted)
-        #expect(p.selectedID == p.locations[0].id) // falls back to row 1
-        // An unknown selection falls back to row 1 as well.
-        #expect(Preferences(locations: [seattle, .portTownsendBay], selectedID: UUID()).selected == seattle)
+    }
+
+    @Test func migratesDefaultOnly() throws {
+        #expect(LocationSettings.migrate(custom: nil, useCustom: false) == .default)
+        #expect(LocationSettings.migrate(custom: nil, useCustom: true) == .default) // orphan flag
+        try withDefaults { defaults in
+            defaults.set(false, forKey: LocationSettings.legacyUseCustomKey)
+            #expect(LocationSettings.load(from: defaults) == .default)
+            #expect(defaults.object(forKey: LocationSettings.legacyUseCustomKey) == nil) // rewritten
+            #expect(defaults.data(forKey: LocationSettings.locationsKey) != nil)
+        }
+    }
+
+    @Test func migratesACustomLocationKeepingTheSelection() throws {
+        let old = Data(#"{"name":"Seattle","lat":47.6,"lon":-122.3,"tz":"America/Los_Angeles"}"#.utf8)
+        for useCustom in [true, false] {
+            try withDefaults { defaults in
+                defaults.set(old, forKey: LocationSettings.legacyCustomLocationKey)
+                defaults.set(useCustom, forKey: LocationSettings.legacyUseCustomKey)
+                let p = LocationSettings.load(from: defaults)
+                #expect(p.locations.map(\.name) == ["Port Townsend Bay", "Seattle"])
+                #expect(p.locations[1].lat == 47.6 && p.locations[1].lon == -122.3)
+                #expect(p.selected.name == (useCustom ? "Seattle" : "Port Townsend Bay"))
+                #expect(p.activeCustom == (useCustom ? CustomLocation(lat: 47.6, lon: -122.3) : nil))
+                // Rewritten once: the legacy keys are gone and a second load is stable (same ids).
+                #expect(defaults.data(forKey: LocationSettings.legacyCustomLocationKey) == nil)
+                #expect(LocationSettings.load(from: defaults) == p)
+            }
+        }
     }
 
     @Test func applicationContextRoundTrip() {
-        let prefs = Preferences(locations: [.portTownsendBay, seattle], selectedID: seattle.id)
-        let ctx = LocationSettings.applicationContext(prefs)
-        #expect(ctx[LocationSettings.locationsKey] is Data)
-        #expect(ctx[LocationSettings.useCustomKey] as? Bool == true)
-        #expect(ctx[LocationSettings.customLocationKey] is Data) // legacy pair for older watch apps
-        #expect(LocationSettings.preferences(fromApplicationContext: ctx) == prefs)
+        let p = LocationSettings.fixture(count: 12)
+        let ctx = LocationSettings.applicationContext(p)
+        #expect(ctx.count == 1 && ctx[LocationSettings.locationsKey] is Data) // plist-safe
+        let back = LocationSettings.preferences(fromApplicationContext: ctx)
+        #expect(back == p)
+        #expect(back.locations.map(\.id) == p.locations.map(\.id)) // same order, same ids
+        #expect(back.selectedID == p.selectedID)
         #expect(LocationSettings.preferences(fromApplicationContext: [:]) == .default)
-        // A context from a phone on build ≤ 7 (legacy keys only).
-        let legacyCtx: [String: Any] = [LocationSettings.useCustomKey: true,
-                                        LocationSettings.customLocationKey: try! JSONEncoder().encode(seattle)]
-        let fromOld = LocationSettings.preferences(fromApplicationContext: legacyCtx)
-        #expect(fromOld.locations == [.portTownsendBay, seattle])
-        #expect(fromOld.selected == seattle)
-        // Plist-safe: only Bool, String and Data values.
-        #expect(ctx.values.allSatisfy { $0 is Bool || $0 is Data || $0 is String })
+        #expect(LocationSettings.preferences(fromApplicationContext: [LocationSettings.locationsKey: Data("junk".utf8)]) == .default)
     }
 
-    typealias Preferences = LocationSettings.Preferences
-}
-
-@Suite("Location naming (handoff 2026-10-25)")
-struct LocationNamingTests {
-    @Test func normalizeTrimsCollapsesAndCaps() {
-        #expect(LocationName.normalize("  Marrowstone   Pt \n") == "Marrowstone Pt")
-        #expect(LocationName.normalize("   ").isEmpty)
-        #expect(LocationName.normalize(String(repeating: "a", count: 41)).count == 40)
-    }
-
-    @Test func duplicateGetsASuffixSuggestionNotABlock() {
-        #expect(LocationName.duplicateSuggestion(for: "Mystery Bay", among: ["Mystery Bay", "Oak Bay"]) == "Mystery Bay 2")
-        #expect(LocationName.duplicateSuggestion(for: "mystery bay", among: ["Mystery Bay", "Mystery Bay 2"]) == "mystery bay 3")
-        #expect(LocationName.duplicateSuggestion(for: "Oak Bay", among: ["Mystery Bay"]) == nil)
-        let long = String(repeating: "x", count: 40)
-        #expect(LocationName.duplicateSuggestion(for: long, among: [long])?.count == 40)
-    }
-
-    @Test func forecastPointText() {
-        // The live server put the cell for 48.10, −122.68 at 48.10515, −122.70064: 1.6 km W(NW).
-        let t = ForecastPoint.text(pinLat: 48.10, pinLon: -122.68, cellLat: 48.10515, cellLon: -122.70064)
-        #expect(t == "HRRR cell 1.6 km W")
-        #expect(ForecastPoint.text(pinLat: 48.1, pinLon: -122.7, cellLat: 48.1007, cellLon: -122.7015) == "at pin")
-        #expect(ForecastPoint.text(pinLat: 48.1, pinLon: -122.683, cellLat: 48.107, cellLon: -122.6725) == "HRRR cell 1.1 km NE")
-        #expect(ForecastPoint.eightPoint(0) == "N" && ForecastPoint.eightPoint(359) == "N" && ForecastPoint.eightPoint(200) == "S")
-    }
-
-    @Test func olderRowsDecodeAndNewFieldsRoundTrip() throws {
-        let build8 = #"{"id":"6F1D4E2A-0000-4000-8000-000000000001","name":"Port Townsend Bay","lat":48.0907,"lon":-122.7773,"tz":"America/Los_Angeles"}"#
-        let old = try JSONDecoder().decode(SavedLocation.self, from: Data(build8.utf8))
-        #expect(old.suggestedName == nil && old.cellLat == nil && old.createdAt == nil && old.forecastPointText == nil)
-        let row = SavedLocation(name: "Marrowstone Pt", lat: 48.1, lon: -122.683, tz: "America/Los_Angeles",
-                                suggestedName: "Marrowstone Island", cellLat: 48.107, cellLon: -122.6725,
-                                createdAt: Date(timeIntervalSince1970: 1_792_000_000))
-        #expect(try JSONDecoder().decode(SavedLocation.self, from: JSONEncoder().encode(row)) == row)
-    }
-
-    @Test func renameAndCellNeverTouchEachOther() {
-        let row = SavedLocation(name: "Marrowstone Island", lat: 48.1, lon: -122.683, tz: "UTC", suggestedName: "Marrowstone Island")
-        var p = LocationSettings.Preferences(locations: [.portTownsendBay, row])
-        p.rename(row.id, to: "  Marrowstone   Pt ")
-        p.setCell(row.id, lat: 48.107, lon: -122.6725)
-        let saved = p.locations[1]
-        #expect(saved.name == "Marrowstone Pt")
-        #expect(saved.lat == 48.1 && saved.lon == -122.683)
-        #expect(saved.cellLat == 48.107 && saved.suggestedName == "Marrowstone Island")
+    @Test func applicationContextFromAPreListPhone() throws {
+        let custom = loc("Seattle")
+        let ctx: [String: Any] = [LocationSettings.legacyCustomLocationKey: try JSONEncoder().encode(custom),
+                                  LocationSettings.legacyUseCustomKey: true]
+        let p = LocationSettings.preferences(fromApplicationContext: ctx)
+        #expect(p.locations.map(\.name) == ["Port Townsend Bay", "Seattle"])
+        #expect(p.selected.name == "Seattle")
     }
 }

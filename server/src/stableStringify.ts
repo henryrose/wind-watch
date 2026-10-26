@@ -7,7 +7,7 @@
 // any Payload (hand-built in a test, decoded from KV, produced by transform)
 // serialises identically. No whitespace, no undefined, integers stay integers.
 
-import type { Payload } from "./types.js";
+import type { Extended, Payload } from "./types.js";
 
 type Json = null | boolean | number | string | Json[] | { [k: string]: Json };
 
@@ -41,7 +41,24 @@ function stringifyValue(value: Json): string {
   }
 }
 
-/** Serialise a Payload in the DESIGN §4.2 key order regardless of how it was built. */
+function extendedInOrder(e: Extended) {
+  return {
+    model: e.model,
+    run: e.run,
+    fetched: e.fetched,
+    step: e.step,
+    from: e.from,
+    blocks: e.blocks,
+    kn: e.kn,
+    gust: e.gust,
+    dir: e.dir,
+    temp: e.temp,
+    cloud: e.cloud,
+    precip: e.precip,
+  };
+}
+
+/** Serialise a Payload in the DESIGN §4.2/§4.2a key order regardless of how it was built. */
 export function serializePayload(p: Payload): string {
   const ordered = {
     v: p.v,
@@ -57,6 +74,11 @@ export function serializePayload(p: Payload): string {
     peak: { gust: p.peak.gust, at: p.peak.at },
     summary: p.summary,
     sun: p.sun.map((d) => ({ dawn: d.dawn, rise: d.rise, set: d.set, dusk: d.dusk })),
+    // §4.2a, appended after `sun` so the §4.2 prefix is unchanged.
+    temp: p.temp,
+    cloud: p.cloud,
+    precip: p.precip,
+    extended: p.extended === null ? null : extendedInOrder(p.extended),
   };
   return stableStringify(ordered);
 }

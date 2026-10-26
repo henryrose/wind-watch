@@ -95,7 +95,13 @@ Work in both modes (in live mode they are debugging aids only):
 | `state` | `fresh` `stale` `old` `offline` `horizon` `firstrun` `updating` | Forces a HANDOFF §3 trust state. Each also picks a default `now` (stale = fetched + 2 h, old = fetched + 7 h, horizon = past the last hour) unless `now` is given. `firstrun` ignores the cache. |
 | `now` | ISO 8601, e.g. `2026-10-22T06:30:00Z`, or `live` | Pins the clock (`live` = real clock, also in fixture mode). |
 | `scheme` | `dark` `light` | Forces a colour scheme instead of `prefers-color-scheme` (headless screenshots). |
-| `hover` | hour index, e.g. `15` | Applies the chart hover state (highlight + tooltip) for that hour on render, for screenshots. |
+| `hover` | slot index, e.g. `15` | Applies the chart hover state (highlight + tooltip) for that slot on render, for screenshots. In 48 h a slot is an hour; in 7 d the HRRR slots come first (hourly on desktop, 3-hourly under the slot rule), then one per NBM block. |
+| `fixture` | `1` | Fixture mode (the reference payload) even when `config.js` names a live API base. |
+| `range` | `48h` `7d` | Presets the chart range control (not saved). |
+| `unit` | `f` `c` | Presets the °F / °C footer control (not saved). |
+| `table` | `1` `0` | Opens / closes the hourly table (not saved). |
+| `nbm` | `stale` `old` `off` | Reshapes the payload: NBM fetched 2 h / 7 h before HRRR, or `extended: null` (7 d then stops at the HRRR edge with `NBM unavailable`). |
+| `sky` | `off` | Drops `temp`/`cloud`/`precip` (no sky band, no temperature), as the server served before §4.2a. |
 
 Examples:
 
@@ -105,6 +111,24 @@ http://localhost:8080/web/?state=old&scheme=light
 http://localhost:8080/web/?state=offline&now=2026-10-22T06:30:00Z
 http://localhost:8080/web/?state=horizon
 ```
+
+## 26 Oct handoff (spec §12a/§12b, `docs/design/handoff-2026-10-26/`)
+
+- **Range control** `48 h | 7 d` in the chart head (`localStorage` `ww.range`, default 48 h). 7 d draws HRRR to its
+  horizon, then the NBM blocks from `extended`: seam labels `HRRR` / `NBM · 3-hourly`, NBM region tint, NBM bars 70 %,
+  NBM gust line dashed 4/3 at 60 %, day names on the bottom axis, midnight dividers, `ends Tue 9am`. Under 4 px per
+  hour (the phone breakpoint) the whole chart goes 3-hourly. Tooltip `Sat 12–3pm · NBM`, peak chip
+  `peak G32 · Sat 1pm · NBM`, table rows `Fri 06–09 NBM` under `NBM from Fri 6am · 3-hourly`, trust line
+  `… HRRR 15Z + NBM 13Z · forecast ends Tue 9am` with the NBM run amber on its own when NBM is stale (its chart region
+  desaturates). `extended` null/missing → 7 d stops at the HRRR edge, `NBM unavailable`.
+- **Sun days.** The payload's `sun` covers the HRRR days; for 7 d the missing days are computed in
+  `lib/sun.js`, a port of `server/src/sun.ts` (keep the two in step).
+- **Sky band** 14 px above the chart (3-h cells, cloud tones, 1–3 rain ticks), whenever the payload has `cloud`.
+- **Temperature** only in the tooltip (`Thu 12am · midnight · Overcast · rain · 46°F`) and a table column after
+  Beaufort (hidden under 360 px); footer `°F | °C` control (`localStorage` `tempUnit`, default °F), shown only when the
+  payload has `temp`.
+- **Sun markers**: sunrise filled r 3, sunset ring r 2.25 stroke 1.5. **Item 3**: the first day label is hidden when
+  `now` is in the first hour; a tick label that would be clipped by the plot edge is dropped.
 
 ## Tests
 
@@ -120,5 +144,9 @@ exact §4.1 ramp hexes. `test/chart.test.js` checks the chart port
 against the numbers in `docs/design/reference/charts/webhover.svg` and
 `webphone48.svg`: bars, gust polyline and caps, arrows, ticks, 12-hour labels,
 day band, sun dots, now and edge rules, gradient stops, hour selection.
+`test/range.test.js` covers the 26 Oct handoff: `extended` parsing and its absence, range spans, the slot rule,
+HRRR 3-h aggregation, the 7-day layout (seam, NBM bars/gust split, arrows, bottom day names, hit-testing), sun
+markers every day, block labels, the range peak chip, sky tones/rain ticks/cells, temperature formatting, table rows
+and captions, and the two-model trust line.
 `test/cache.test.js` checks the live-mode cache record (200 / 304 / error
 folding, serialize/parse).

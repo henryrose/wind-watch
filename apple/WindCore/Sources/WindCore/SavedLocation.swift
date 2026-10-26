@@ -1,73 +1,62 @@
 import Foundation
 
-/// One row of the Locations list (HANDOFF §8.3 round four): stored on device and synced
-/// phone → watch. Every row is equal; Port Townsend Bay is only the seed.
+/// One row of the location list (HANDOFF §8.3, location-naming §1), stored on device and synced
+/// phone → watch. `name` is the user's: stored verbatim (after `LocationName.normalize`), never
+/// re-geocoded, and renaming never touches `lat`/`lon`. The HRRR cell the forecast comes from is
+/// derived from the pin (`HRRRCoverage.cell`), so it can never drift from it.
 public struct SavedLocation: Codable, Sendable, Hashable, Identifiable {
     public var id: UUID
-    /// User-owned (location-naming handoff §1): stored verbatim, never re-geocoded or corrected.
     public var name: String
+    /// What the geocoder offered at pin time, best first; feeds the sheet's chips. Never shown as
+    /// the title and never refreshed.
+    public var suggestedNames: [String]
+    /// The pin, as placed.
     public var lat: Double
     public var lon: Double
     /// IANA identifier, informational; the payload's `loc.tz` drives display.
     public var tz: String
-    /// What the geocoder said when the pin was placed; kept for the chips, never shown as the title.
-    public var suggestedName: String?
-    /// The HRRR grid cell the forecast comes from (the payload's `loc`), once known.
-    public var cellLat: Double?
-    public var cellLon: Double?
-    /// Nil for rows saved before build 9.
-    public var createdAt: Date?
+    public var createdAt: Date
 
     public init(id: UUID = UUID(), name: String, lat: Double, lon: Double, tz: String,
-                suggestedName: String? = nil, cellLat: Double? = nil, cellLon: Double? = nil, createdAt: Date? = nil) {
+                suggestedNames: [String] = [], createdAt: Date = .now) {
         self.id = id
         self.name = name
+        self.suggestedNames = suggestedNames
         self.lat = lat
         self.lon = lon
         self.tz = tz
-        self.suggestedName = suggestedName
-        self.cellLat = cellLat
-        self.cellLon = cellLon
         self.createdAt = createdAt
     }
 
-    /// Rows saved before the list existed (builds ≤ 7) have no `id`; they get a fresh one. Rows
-    /// before build 9 have no suggestion, cell or date.
+    /// Decodes the current shape and the pre-list one (`name, lat, lon, tz` only, D5).
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         name = try c.decode(String.self, forKey: .name)
+        suggestedNames = try c.decodeIfPresent([String].self, forKey: .suggestedNames) ?? []
         lat = try c.decode(Double.self, forKey: .lat)
         lon = try c.decode(Double.self, forKey: .lon)
-        tz = try c.decode(String.self, forKey: .tz)
-        suggestedName = try c.decodeIfPresent(String.self, forKey: .suggestedName)
-        cellLat = try c.decodeIfPresent(Double.self, forKey: .cellLat)
-        cellLon = try c.decodeIfPresent(Double.self, forKey: .cellLon)
-        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt)
+        tz = try c.decodeIfPresent(String.self, forKey: .tz) ?? TimeZone.current.identifier
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date(timeIntervalSince1970: 0)
     }
 
-    /// `HRRR cell 1.1 km NE`, or `at pin` within 0.3 km; nil until the cell is known.
-    public var forecastPointText: String? {
-        guard let cellLat, let cellLon else { return nil }
-        return ForecastPoint.text(pinLat: lat, pinLon: lon, cellLat: cellLat, cellLon: cellLon)
-    }
-
-    /// The seed row (DESIGN §0): Port Townsend Bay, the `cell_selection=sea` point. Its id is fixed
-    /// so the phone and watch seed the same row.
+    /// The server's baked default (DESIGN §0): Port Townsend Bay, the `cell_selection=sea` point.
+    /// Seeded as row 1 on first install with a fixed id so phone and watch agree before any sync.
     public static let portTownsendBay = SavedLocation(
-        id: UUID(uuidString: "6F1D4E2A-0000-4000-8000-000000000001")!,
-        name: "Port Townsend Bay", lat: 48.0907, lon: -122.7773, tz: "America/Los_Angeles")
+        id: UUID(uuidString: "00000000-0000-4000-8000-0000000000B1")!,
+        name: "Port Townsend Bay", lat: 48.0907, lon: -122.7773, tz: "America/Los_Angeles",
+        createdAt: Date(timeIntervalSince1970: 0))
 
-    /// True for the Port Townsend Bay sea point, whatever the row is called: that point is fetched
-    /// from the baked default `/v1/wind`, every other point from `?lat&lon`.
-    public var isDefaultPoint: Bool {
-        abs(lat - Self.portTownsendBay.lat) < 0.0005 && abs(lon - Self.portTownsendBay.lon) < 0.0005
+    /// True for the pin at the server default's coordinates, whatever it is called: that one is
+    /// fetched from `/v1/wind` (the KV bake), every other location with `?lat&lon`.
+    public var isServerDefault: Bool {
+        abs(lat - Self.portTownsendBay.lat) < 1e-6 && abs(lon - Self.portTownsendBay.lon) < 1e-6
     }
 
     public var customLocation: CustomLocation { CustomLocation(lat: lat, lon: lon) }
     public var timeZone: TimeZone { TimeZone(identifier: tz) ?? .current }
 
-    /// `48.09, −122.78` (two decimals, true minus sign).
+    /// `48.091, −122.777` (three decimals, true minus sign).
     public var coordinateText: String {
         Self.coordinateText(lat: lat, lon: lon)
     }
@@ -91,202 +80,246 @@ public struct SavedLocation: Codable, Sendable, Hashable, Identifiable {
     }
 }
 
-/// Reads and writes the Locations list in the shared (App Group) `UserDefaults`, and encodes it
-/// for `WCSession` application context. Builds ≤ 7 stored one optional custom location plus a
-/// `useCustom` flag; those keys are migrated on load and still written so an older watch app can
-/// follow a newer phone.
-public enum LocationSettings {
-    public static let locationsKey = "locations"
-    public static let selectedKey = "selectedLocationID"
-    public static let customLocationKey = "customLocation"
-    public static let useCustomKey = "useCustom"
-    /// HANDOFF §8.3: up to 12 locations.
-    public static let maxCount = 12
-
-    public struct Preferences: Sendable, Equatable {
-        /// Never empty; at most `maxCount`.
-        public private(set) var locations: [SavedLocation]
-        public private(set) var selectedID: UUID
-
-        public init(locations: [SavedLocation], selectedID: UUID? = nil) {
-            let list = Array((locations.isEmpty ? [SavedLocation.portTownsendBay] : locations).prefix(LocationSettings.maxCount))
-            self.locations = list
-            self.selectedID = selectedID.flatMap { id in list.contains { $0.id == id } ? id : nil } ?? list[0].id
-        }
-
-        /// A fresh install: Port Townsend Bay as the only row, selected.
-        public static let `default` = Preferences(locations: [.portTownsendBay])
-
-        /// The pre-list preference (builds ≤ 7): Port Townsend Bay first, then the custom spot.
-        public static func legacy(custom: SavedLocation?, useCustom: Bool) -> Preferences {
-            guard let custom else { return .default }
-            let list = custom.isDefaultPoint ? [custom] : [.portTownsendBay, custom]
-            return Preferences(locations: list, selectedID: useCustom ? custom.id : list[0].id)
-        }
-
-        public var selected: SavedLocation { locations.first { $0.id == selectedID } ?? locations[0] }
-        public var isFull: Bool { locations.count >= LocationSettings.maxCount }
-        public var canDelete: Bool { locations.count > 1 }
-
-        /// The selected point is not the baked default, so it is fetched with `?lat&lon`.
-        public var effectiveUseCustom: Bool { !selected.isDefaultPoint }
-        public var activeCustom: CustomLocation? { effectiveUseCustom ? selected.customLocation : nil }
-
-        // MARK: Edits (callers persist and sync)
-
-        public mutating func select(_ id: UUID) {
-            if locations.contains(where: { $0.id == id }) { selectedID = id }
-        }
-
-        /// Appends and selects; false when the list is full.
-        @discardableResult
-        public mutating func add(_ location: SavedLocation) -> Bool {
-            guard !isFull else { return false }
-            locations.append(location)
-            selectedID = location.id
-            return true
-        }
-
-        /// Deletes a row unless it is the last one. Deleting the selected row selects row 1 (the fallback).
-        @discardableResult
-        public mutating func delete(_ id: UUID) -> Bool {
-            guard canDelete, let i = locations.firstIndex(where: { $0.id == id }) else { return false }
-            locations.remove(at: i)
-            if selectedID == id { selectedID = locations[0].id }
-            return true
-        }
-
-        /// Renames without touching the pin or the cell. Blank names are ignored.
-        public mutating func rename(_ id: UUID, to name: String) {
-            let clean = LocationName.normalize(name)
-            guard !clean.isEmpty, let i = locations.firstIndex(where: { $0.id == id }) else { return }
-            locations[i].name = clean
-        }
-
-        /// Records the HRRR cell a row resolves to (from its payload's `loc`). Never touches the name.
-        public mutating func setCell(_ id: UUID, lat: Double, lon: Double) {
-            guard let i = locations.firstIndex(where: { $0.id == id }) else { return }
-            locations[i].cellLat = lat
-            locations[i].cellLon = lon
-        }
-
-        public mutating func move(fromOffsets source: IndexSet, toOffset destination: Int) {
-            var list = locations
-            let moving = source.sorted().map { list[$0] }
-            for i in source.sorted(by: >) { list.remove(at: i) }
-            let before = source.filter { $0 < destination }.count
-            list.insert(contentsOf: moving, at: max(0, min(destination - before, list.count)))
-            locations = list
-        }
-
-        /// The legacy pair an older watch app understands: the selected spot when it isn't the
-        /// default point, else the first row that isn't.
-        var legacyCustom: SavedLocation? {
-            effectiveUseCustom ? selected : locations.first { !$0.isDefaultPoint }
-        }
-    }
-
-    public static func load(from defaults: UserDefaults) -> Preferences {
-        if let data = defaults.data(forKey: locationsKey),
-           let list = try? JSONDecoder().decode([SavedLocation].self, from: data), !list.isEmpty {
-            let id = defaults.string(forKey: selectedKey).flatMap(UUID.init(uuidString:))
-            return Preferences(locations: list, selectedID: id)
-        }
-        let custom = defaults.data(forKey: customLocationKey).flatMap { try? JSONDecoder().decode(SavedLocation.self, from: $0) }
-        return .legacy(custom: custom, useCustom: defaults.bool(forKey: useCustomKey))
-    }
-
-    public static func save(_ prefs: Preferences, to defaults: UserDefaults) {
-        if let data = try? JSONEncoder().encode(prefs.locations) {
-            defaults.set(data, forKey: locationsKey)
-        }
-        defaults.set(prefs.selectedID.uuidString, forKey: selectedKey)
-        if let custom = prefs.legacyCustom, let data = try? JSONEncoder().encode(custom) {
-            defaults.set(data, forKey: customLocationKey)
-        } else {
-            defaults.removeObject(forKey: customLocationKey)
-        }
-        defaults.set(prefs.effectiveUseCustom, forKey: useCustomKey)
-    }
-
-    /// Plist-safe dictionary for `WCSession.updateApplicationContext`: the list, the selection,
-    /// and the legacy pair for watch apps from builds ≤ 7.
-    public static func applicationContext(_ prefs: Preferences) -> [String: Any] {
-        var ctx: [String: Any] = [useCustomKey: prefs.effectiveUseCustom, selectedKey: prefs.selectedID.uuidString]
-        if let data = try? JSONEncoder().encode(prefs.locations) { ctx[locationsKey] = data }
-        if let custom = prefs.legacyCustom, let data = try? JSONEncoder().encode(custom) {
-            ctx[customLocationKey] = data
-        }
-        return ctx
-    }
-
-    /// Reads a context from this build or from a phone on builds ≤ 7 (legacy keys only).
-    public static func preferences(fromApplicationContext ctx: [String: Any]) -> Preferences {
-        if let data = ctx[locationsKey] as? Data,
-           let list = try? JSONDecoder().decode([SavedLocation].self, from: data), !list.isEmpty {
-            let id = (ctx[selectedKey] as? String).flatMap(UUID.init(uuidString:))
-            return Preferences(locations: list, selectedID: id)
-        }
-        let custom = (ctx[customLocationKey] as? Data).flatMap { try? JSONDecoder().decode(SavedLocation.self, from: $0) }
-        return .legacy(custom: custom, useCustom: ctx[useCustomKey] as? Bool ?? false)
-    }
-}
-
-/// Location names (location-naming handoff §1): user-owned, 1–40 characters after trimming and
-/// collapsing runs of whitespace; duplicates are allowed and only get a ` 2` suggestion.
+/// Name rules (location-naming §1): trimmed, internal whitespace collapsed to one space, 1–40
+/// characters. Duplicates are allowed; the sheet only suggests a ` 2` suffix.
 public enum LocationName {
     public static let maxLength = 40
-    /// Shown in the sheet when the geocoder found nothing, and stored if nothing better exists.
-    public static let fallback = "Pinned location"
+    /// Shown in the empty field when the geocoder gave nothing (or timed out).
+    public static let placeholder = "Name this spot"
 
     public static func normalize(_ raw: String) -> String {
-        let words = raw.split(whereSeparator: { $0.isWhitespace })
-        return String(words.joined(separator: " ").prefix(maxLength))
+        raw.split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 
-    /// `Mystery Bay 2` (or ` 3`, …) when `name` already names another row, else nil.
-    public static func duplicateSuggestion(for name: String, among others: [String]) -> String? {
-        let clean = normalize(name)
-        let taken = Set(others.map { normalize($0).lowercased() })
-        guard !clean.isEmpty, taken.contains(clean.lowercased()) else { return nil }
+    public static func isValid(_ raw: String) -> Bool {
+        let n = normalize(raw)
+        return !n.isEmpty && n.count <= maxLength
+    }
+
+    /// Typing past 40 characters is blocked: the field keeps the first 40.
+    public static func clamp(_ raw: String) -> String {
+        raw.count > maxLength ? String(raw.prefix(maxLength)) : raw
+    }
+
+    /// `"Mystery Bay 2"` (or the first free number) when `raw` matches a name in `existing`
+    /// (case-insensitive, after normalising); nil when it is unique or empty.
+    public static func duplicateSuggestion(for raw: String, existing: [String]) -> String? {
+        let name = normalize(raw)
+        guard !name.isEmpty else { return nil }
+        let taken = Set(existing.map { normalize($0).lowercased() })
+        guard taken.contains(name.lowercased()) else { return nil }
         var n = 2
         while true {
             let suffix = " \(n)"
-            let candidate = String(clean.prefix(maxLength - suffix.count)) + suffix
+            let candidate = String(name.prefix(maxLength - suffix.count)) + suffix
             if !taken.contains(candidate.lowercased()) { return candidate }
             n += 1
         }
     }
 }
 
-/// The FORECAST POINT tile: distance and 8-point bearing from the pin to the HRRR cell centre.
-public enum ForecastPoint {
-    public static func distanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
-        let r = 6371.0
-        let p1 = lat1 * .pi / 180, p2 = lat2 * .pi / 180
-        let dp = (lat2 - lat1) * .pi / 180, dl = (lon2 - lon1) * .pi / 180
-        let a = sin(dp / 2) * sin(dp / 2) + cos(p1) * cos(p2) * sin(dl / 2) * sin(dl / 2)
-        return 2 * r * atan2(sqrt(a), sqrt(1 - a))
+/// The reverse-geocoder's fields, platform-neutral (`CLPlacemark` on iOS 18–25, `MKMapItem` on
+/// iOS 26+), and the suggestion rule (location-naming §6): the first non-empty of
+/// areasOfInterest → inlandWater / ocean → locality → subLocality → administrativeArea is the
+/// suggestion; the rest, deduplicated, are the chips (at most 4).
+public struct GeocodedNames: Sendable, Equatable {
+    public var areasOfInterest: [String]
+    public var inlandWater: String?
+    public var ocean: String?
+    public var locality: String?
+    public var subLocality: String?
+    public var administrativeArea: String?
+
+    public init(areasOfInterest: [String] = [], inlandWater: String? = nil, ocean: String? = nil,
+                locality: String? = nil, subLocality: String? = nil, administrativeArea: String? = nil) {
+        self.areasOfInterest = areasOfInterest
+        self.inlandWater = inlandWater
+        self.ocean = ocean
+        self.locality = locality
+        self.subLocality = subLocality
+        self.administrativeArea = administrativeArea
     }
 
-    /// Initial bearing from point 1 to point 2, degrees 0..<360.
-    public static func bearing(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
-        let p1 = lat1 * .pi / 180, p2 = lat2 * .pi / 180, dl = (lon2 - lon1) * .pi / 180
-        let y = sin(dl) * cos(p2)
-        let x = cos(p1) * sin(p2) - sin(p1) * cos(p2) * cos(dl)
-        let deg = atan2(y, x) * 180 / .pi
-        return (deg + 360).truncatingRemainder(dividingBy: 360)
+    public static let maxChips = 4
+
+    /// Every name in priority order, normalised and clamped, empties and repeats (case-insensitive)
+    /// dropped.
+    public var ordered: [String] {
+        let raw = areasOfInterest + [inlandWater, ocean, locality, subLocality, administrativeArea].compactMap { $0 }
+        var seen = Set<String>()
+        var out: [String] = []
+        for name in raw.map({ LocationName.clamp(LocationName.normalize($0)) }) where !name.isEmpty {
+            if seen.insert(name.lowercased()).inserted { out.append(name) }
+        }
+        return out
     }
 
-    public static func eightPoint(_ degrees: Double) -> String {
-        let names = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-        return names[Int(((degrees + 22.5) / 45).rounded(.down)) % 8]
+    /// The pre-filled name; nil when the geocoder found nothing.
+    public var suggestion: String? { ordered.first }
+
+    /// The other nearby names for the chips.
+    public var chips: [String] { Array(ordered.dropFirst().prefix(Self.maxChips)) }
+}
+
+/// Reads and writes the location list in the shared (App Group) `UserDefaults`, migrates the
+/// pre-list preference, and encodes the list for `WCSession` application context.
+public enum LocationSettings {
+    /// JSON `Preferences` (`{"locations":[…],"selectedID":"…"}`).
+    public static let locationsKey = "locations"
+    /// Pre-list keys (one custom location + a flag), read once for migration and then removed.
+    public static let legacyCustomLocationKey = "customLocation"
+    public static let legacyUseCustomKey = "useCustom"
+
+    /// The list and which row is selected. Always non-empty, at most `maxCount`, and `selectedID`
+    /// always names a row; every mutation keeps that true. Order is the user's and means nothing
+    /// else: the selected row drives every surface.
+    public struct Preferences: Codable, Sendable, Equatable {
+        public static let maxCount = 12
+
+        public private(set) var locations: [SavedLocation]
+        public private(set) var selectedID: UUID
+
+        public init(locations: [SavedLocation], selectedID: UUID? = nil) {
+            var list = Array(locations.prefix(Self.maxCount))
+            if list.isEmpty { list = [SavedLocation.portTownsendBay] }
+            self.locations = list
+            self.selectedID = selectedID.flatMap { id in list.contains { $0.id == id } ? id : nil } ?? list[0].id
+        }
+
+        public init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            self.init(locations: try c.decode([SavedLocation].self, forKey: .locations),
+                      selectedID: try c.decodeIfPresent(UUID.self, forKey: .selectedID))
+        }
+
+        /// Fresh install: Port Townsend Bay, selected.
+        public static let `default` = Preferences(locations: [.portTownsendBay])
+
+        public var selected: SavedLocation { locations.first { $0.id == selectedID } ?? locations[0] }
+        public var count: Int { locations.count }
+        public var isFull: Bool { locations.count >= Self.maxCount }
+
+        /// The server-default row is selected (fetch `/v1/wind` with no query).
+        public var selectedIsServerDefault: Bool { selected.isServerDefault }
+        /// The point to fetch with `?lat&lon`, nil for the server default.
+        public var activeCustom: CustomLocation? { selectedIsServerDefault ? nil : selected.customLocation }
+        /// Anything beyond the seeded default (Welcome treats this as "already chosen").
+        public var hasNonDefault: Bool { locations.contains { !$0.isServerDefault } }
+
+        /// The last remaining location cannot be deleted.
+        public var canDelete: Bool { locations.count > 1 }
+
+        public func location(id: UUID) -> SavedLocation? { locations.first { $0.id == id } }
+
+        @discardableResult
+        public mutating func select(_ id: UUID) -> Bool {
+            guard id != selectedID, location(id: id) != nil else { return false }
+            selectedID = id
+            return true
+        }
+
+        /// Appends (and by default selects) a location; false when the list is full.
+        @discardableResult
+        public mutating func add(_ location: SavedLocation, select: Bool = true) -> Bool {
+            guard !isFull, self.location(id: location.id) == nil else { return false }
+            var stored = location
+            stored.name = LocationName.normalize(location.name)
+            locations.append(stored)
+            if select { selectedID = stored.id }
+            return true
+        }
+
+        /// Removes a row. Deleting the selected one selects the row that slides into its place
+        /// (or the new last row). False for the last remaining location or an unknown id.
+        @discardableResult
+        public mutating func delete(_ id: UUID) -> Bool {
+            guard canDelete, let index = locations.firstIndex(where: { $0.id == id }) else { return false }
+            locations.remove(at: index)
+            if id == selectedID { selectedID = locations[min(index, locations.count - 1)].id }
+            return true
+        }
+
+        /// `List.onMove` semantics: `destination` is an index in the list before the move.
+        public mutating func move(fromOffsets source: IndexSet, toOffset destination: Int) {
+            let indices = source.sorted().filter { locations.indices.contains($0) }
+            guard !indices.isEmpty else { return }
+            let moving = indices.map { locations[$0] }
+            let before = indices.filter { $0 < destination }.count
+            for index in indices.reversed() { locations.remove(at: index) }
+            locations.insert(contentsOf: moving, at: max(0, min(destination - before, locations.count)))
+        }
+
+        /// Stores the normalised name; never touches the pin. False when the name is invalid.
+        @discardableResult
+        public mutating func rename(_ id: UUID, to raw: String) -> Bool {
+            guard LocationName.isValid(raw), let index = locations.firstIndex(where: { $0.id == id }) else { return false }
+            locations[index].name = LocationName.normalize(raw)
+            return true
+        }
     }
 
-    public static func text(pinLat: Double, pinLon: Double, cellLat: Double, cellLon: Double) -> String {
-        let km = distanceKm(lat1: pinLat, lon1: pinLon, lat2: cellLat, lon2: cellLon)
-        guard km >= 0.3 else { return "at pin" }
-        let dir = eightPoint(bearing(lat1: pinLat, lon1: pinLon, lat2: cellLat, lon2: cellLon))
-        return "HRRR cell \(String(format: "%.1f", km)) km \(dir)"
+    /// The pre-list preference → the list: `[Port Townsend Bay]`, plus the custom location when
+    /// one was saved, with the previous selection kept (custom only when `useCustom` was on).
+    public static func migrate(custom: SavedLocation?, useCustom: Bool) -> Preferences {
+        guard let custom else { return .default }
+        let selected = useCustom ? custom.id : SavedLocation.portTownsendBay.id
+        return Preferences(locations: [.portTownsendBay, custom], selectedID: selected)
+    }
+
+    /// The stored list; migrates (and rewrites) the pre-list keys on first read; `.default` when
+    /// nothing is stored.
+    public static func load(from defaults: UserDefaults) -> Preferences {
+        if let data = defaults.data(forKey: locationsKey), let prefs = try? JSONDecoder().decode(Preferences.self, from: data) {
+            return prefs
+        }
+        let legacyCustom = defaults.data(forKey: legacyCustomLocationKey).flatMap { try? JSONDecoder().decode(SavedLocation.self, from: $0) }
+        guard legacyCustom != nil || defaults.object(forKey: legacyUseCustomKey) != nil else { return .default }
+        let migrated = migrate(custom: legacyCustom, useCustom: defaults.bool(forKey: legacyUseCustomKey))
+        save(migrated, to: defaults)
+        return migrated
+    }
+
+    /// Writes the list and drops the pre-list keys.
+    public static func save(_ prefs: Preferences, to defaults: UserDefaults) {
+        if let data = try? JSONEncoder().encode(prefs) {
+            defaults.set(data, forKey: locationsKey)
+        }
+        defaults.removeObject(forKey: legacyCustomLocationKey)
+        defaults.removeObject(forKey: legacyUseCustomKey)
+    }
+
+    /// Plist-safe dictionary for `WCSession.updateApplicationContext`: the whole list as JSON.
+    public static func applicationContext(_ prefs: Preferences) -> [String: Any] {
+        guard let data = try? JSONEncoder().encode(prefs) else { return [:] }
+        return [locationsKey: data]
+    }
+
+    /// Decodes a context from this build or from a pre-list iPhone build (migrated on the fly).
+    public static func preferences(fromApplicationContext ctx: [String: Any]) -> Preferences {
+        if let data = ctx[locationsKey] as? Data, let prefs = try? JSONDecoder().decode(Preferences.self, from: data) {
+            return prefs
+        }
+        let custom = (ctx[legacyCustomLocationKey] as? Data).flatMap { try? JSONDecoder().decode(SavedLocation.self, from: $0) }
+        return migrate(custom: custom, useCustom: ctx[legacyUseCustomKey] as? Bool ?? false)
+    }
+
+    /// `WW_LOCATIONS=<n>`: the design's sample list (`Phone-Location*.dc.html`), Port Townsend
+    /// Bay first and Marrowstone Pt selected. Screenshots and tests only.
+    public static func fixture(count: Int) -> Preferences {
+        let samples: [(String, Double, Double)] = [
+            ("Marrowstone Pt", 48.100, -122.683), ("Point Wilson", 48.144, -122.755),
+            ("Mystery Bay", 48.059, -122.693), ("Kilisut Harbor", 48.071, -122.705),
+            ("Admiralty Inlet mid", 48.140, -122.660), ("Port Ludlow", 47.924, -122.684),
+            ("Fort Flagler", 48.093, -122.712), ("Discovery Bay", 48.040, -122.860),
+            ("Protection Island", 48.128, -122.926), ("Mats Mats Bay", 47.958, -122.680),
+            ("Oak Bay", 47.996, -122.699),
+        ]
+        let rows = samples.prefix(max(0, min(count, Preferences.maxCount) - 1)).enumerated().map { i, s in
+            SavedLocation(id: UUID(uuidString: String(format: "00000000-0000-4000-8000-%012d", i + 1))!,
+                          name: s.0, lat: s.1, lon: s.2, tz: "America/Los_Angeles",
+                          suggestedNames: i == 0 ? ["Marrowstone Island", "Nordland", "Kilisut Harbor"] : [],
+                          createdAt: Date(timeIntervalSince1970: 0))
+        }
+        return Preferences(locations: [.portTownsendBay] + rows, selectedID: rows.first?.id)
     }
 }

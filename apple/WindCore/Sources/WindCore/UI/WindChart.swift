@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The wind chart (HANDOFF §6): one drawing for the watch strip, the phone (portrait, landscape,
-/// clamped) and the complication mini strip, driven by `ChartGeometry`, a port of
+/// clamped) and the complication strip, driven by `ChartGeometry`, a port of
 /// `chart_reference.py::svg()`. Twilight shading, Beaufort bars, gust line with caps, sun dots,
 /// gridlines, now and horizon rules, day band, direction arrows, hour ticks, and the hour
 /// selection (scrub) highlight.
@@ -53,10 +53,10 @@ public struct WindChart: View {
         let textFont = Font.system(size: style.fontSize, weight: .semibold)
 
         // Day/night shading: one horizontal gradient over the plot.
-        if style.showsDaylight {
+        if style.showsShading {
             ctx.fill(Path(plotRect), with: .linearGradient(
-            Gradient(stops: model.shadeStops),
-            startPoint: CGPoint(x: 0, y: g.plotTop), endPoint: CGPoint(x: g.width, y: g.plotTop)))
+                Gradient(stops: model.shadeStops),
+                startPoint: CGPoint(x: 0, y: g.plotTop), endPoint: CGPoint(x: g.width, y: g.plotTop)))
         }
 
         // Gridlines every 10 kn below the top, labels right-aligned inside the plot at 45 %.
@@ -72,28 +72,45 @@ public struct WindChart: View {
             }
         }
 
-        // Sun dots on the plot's top edge.
-        for pt in (style.showsDaylight ? g.sunPoints : []) {
-            let r = style.sunRadius
-            ctx.fill(Path(ellipseIn: CGRect(x: pt.x - r, y: pt.y - r, width: 2 * r, height: 2 * r)), with: .color(theme.sun))
+        // NBM region (7 d): a flat #4FA3D8 tint at 4.5 % from the seam to the plot end.
+        if let region = g.nbmRegion {
+            ctx.fill(Path(region), with: .color(Tokens.nbmTint.opacity(0.045)))
         }
 
-        // Sustained bars, Beaufort-stepped; non-selected bars dim to 45 % while scrubbing.
-        for p in model.points {
-            let rect = g.barRect(p)
-            let token = Beaufort.colorToken(step: p.step)
-            let dim = selection != nil && selection != p.index
-            let path = Path(roundedRect: rect, cornerRadius: style.barCornerRadius)
-            ctx.fill(path, with: .color(token.color(for: model.scheme).opacity(dim ? 0.45 : 1)))
-            if let stroke = token.strokeColor(for: model.scheme), rect.height > 4 {
-                ctx.stroke(Path(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: max(style.barCornerRadius - 1, 0.5)),
-                           with: .color(stroke.opacity(dim ? 0.45 : 1)), lineWidth: 2)
+        // Sun markers on the plot's top edge: sunrise filled, sunset a ring ("on after it rises,
+        // off after it sets").
+        for mark in g.sunMarks {
+            let pt = mark.point
+            if mark.isRise {
+                let r = style.sunRadius
+                ctx.fill(Path(ellipseIn: CGRect(x: pt.x - r, y: pt.y - r, width: 2 * r, height: 2 * r)), with: .color(theme.sun))
+            } else {
+                let r = g.sunsetRingRadius
+                ctx.stroke(Path(ellipseIn: CGRect(x: pt.x - r, y: pt.y - r, width: 2 * r, height: 2 * r)),
+                           with: .color(theme.sun), lineWidth: 1.5 * u)
+            }
+        }
+
+        // Bars, gust line and caps: HRRR, then NBM (7 d) in its own layer so a stale NBM run can
+        // desaturate only its region (§12a).
+        let hrrr = model.points.filter { !$0.isNBM }
+        let nbm = model.points.filter(\.isNBM)
+        drawMarks(hrrr, g, in: &ctx)
+        if !nbm.isEmpty {
+            if model.nbmTier == .old && model.ageTier != .old {
+                ctx.drawLayer { layer in
+                    layer.addFilter(.saturation(0.35))
+                    layer.opacity = 0.7
+                    drawMarks(nbm, g, in: &layer)
+                }
+            } else {
+                drawMarks(nbm, g, in: &ctx)
             }
         }
 
         // Selection: full-height rule through the slot centre and a white outline on the bar.
         if let sel = selection, let p = model.point(index: sel) {
-            let cx = g.selectionRuleX(index: sel)
+            let cx = g.centreX(p)
             var rule = Path()
             rule.move(to: CGPoint(x: cx, y: g.plotTop - 6 * u))
             rule.addLine(to: CGPoint(x: cx, y: g.plotBottom + style.bottomInset))
@@ -101,29 +118,11 @@ public struct WindChart: View {
             ctx.stroke(Path(roundedRect: g.selectionOutline(p), cornerRadius: 2.5), with: .color(ink), lineWidth: 1.5)
         }
 
-        // Gust polyline through the cap centres, 75 % ink; caps bar + 2 wide, 100 % ink.
-        if model.points.count > 1 {
-            var line = Path()
-            for (i, p) in model.points.enumerated() {
-                let pt = g.gustPoint(p)
-                if i == 0 { line.move(to: pt) } else { line.addLine(to: pt) }
-            }
-            ctx.stroke(line, with: .color(ink.opacity(0.75)),
-                       style: StrokeStyle(lineWidth: style.gustLineWidth, lineJoin: .round))
-        }
-        for p in model.points {
-            let pt = g.gustPoint(p)
-            var cap = Path()
-            cap.move(to: CGPoint(x: pt.x - g.capWidth / 2, y: pt.y))
-            cap.addLine(to: CGPoint(x: pt.x + g.capWidth / 2, y: pt.y))
-            ctx.stroke(cap, with: .color(numberInk), style: StrokeStyle(lineWidth: style.gustLineWidth, lineCap: .round))
-        }
-
         // Direction arrows (TO = from + 180) in the bottom inset, 90 % ink.
         for p in g.arrowPoints {
             let s = style.arrowSize
             let base = ArrowShape().path(in: CGRect(x: -s / 2, y: -s / 2, width: s, height: s))
-            let transform = CGAffineTransform(translationX: g.centreX(index: p.index), y: g.arrowY)
+            let transform = CGAffineTransform(translationX: g.centreX(p), y: g.arrowY)
                 .rotated(by: Compass.arrowRotation(dirFrom: p.dirFrom) * .pi / 180)
             ctx.fill(base.applying(transform), with: .color(numberInk.opacity(0.9)))
         }
@@ -141,7 +140,7 @@ public struct WindChart: View {
         }
 
         // Day band: name at the left of each day; dotted divider at midnight (never the first day).
-        // The first day's name is dropped while `now` is in the window (round five).
+        // 7 d moves the names to the bottom axis, centred per day; the dividers stay.
         let nowX = g.nowX
         for mark in g.dayMarks {
             if mark.divider {
@@ -150,12 +149,28 @@ public struct WindChart: View {
                 line.addLine(to: CGPoint(x: mark.x, y: g.plotBottom))
                 ctx.stroke(line, with: .color(ink.opacity(0.28)), style: StrokeStyle(lineWidth: u, dash: [2 * u, 3 * u]))
             }
-            drawText(&ctx, mark.name, font: .system(size: style.fontSize, weight: .bold), color: ink.opacity(0.75),
-                     x: mark.labelX, baseline: g.plotTop - 22 * u, anchor: .leading)
+            if !style.dayLabelsAtBottom {
+                drawText(&ctx, mark.name, font: .system(size: style.fontSize, weight: .bold), color: ink.opacity(0.75),
+                         x: mark.labelX, baseline: g.plotTop - 22 * u, anchor: .leading)
+            }
+        }
+        for mark in g.bottomDayMarks {
+            drawText(&ctx, mark.name, font: textFont, color: ink.opacity(0.6), x: mark.x, baseline: g.labelBaselineY, anchor: .center)
+        }
+
+        // Seam (7 d): the HRRR-edge rule, `HRRR` left and `NBM · 3-hourly` right in #9BB7D4.
+        if let seamX = g.seamX {
+            var rule = Path()
+            rule.move(to: CGPoint(x: seamX, y: g.plotTop - 6 * u))
+            rule.addLine(to: CGPoint(x: seamX, y: g.plotBottom))
+            ctx.stroke(rule, with: .color(ink.opacity(0.7)), style: StrokeStyle(lineWidth: u, dash: [3 * u, 3 * u]))
+            drawText(&ctx, "HRRR", font: textFont, color: ink.opacity(0.7), x: seamX - 4 * u, baseline: g.plotTop - 8 * u, anchor: .trailing)
+            drawText(&ctx, "NBM · \(model.nbmStep)-hourly", font: textFont, color: Tokens.nbmLabel(model.scheme),
+                     x: seamX + 4 * u, baseline: g.plotTop - 8 * u, anchor: .leading)
         }
 
         // Now marker: 1.5 pt rule from `top − 6`, label 4 pt right of it.
-        if style.showsMarkers, let nowX {
+        if let nowX {
             var rule = Path()
             rule.move(to: CGPoint(x: nowX, y: g.plotTop - 6 * u))
             rule.addLine(to: CGPoint(x: nowX, y: g.plotBottom))
@@ -164,7 +179,7 @@ public struct WindChart: View {
         }
 
         // Horizon edge: 1 pt dash 3/3 at 70 %, label right-aligned 4 pt left of it.
-        if style.showsMarkers, let edgeX = g.edgeX {
+        if let edgeX = g.edgeX {
             var rule = Path()
             rule.move(to: CGPoint(x: edgeX, y: g.plotTop - 6 * u))
             rule.addLine(to: CGPoint(x: edgeX, y: g.plotBottom))
@@ -172,6 +187,44 @@ public struct WindChart: View {
             if let label = g.edgeLabel {
                 drawText(&ctx, label, font: textFont, color: ink.opacity(0.7), x: edgeX - 4 * u, baseline: g.plotTop - 8 * u, anchor: .trailing)
             }
+        }
+    }
+
+    /// Bars (Beaufort-stepped; NBM at 70 %), the gust polyline (solid 75 % on HRRR, dashed 4/3 at
+    /// 60 % on NBM) and the caps for one model's points. While scrubbing, unselected bars dim to
+    /// 45 % (NBM 35 %).
+    private func drawMarks(_ points: [HourPoint], _ g: ChartGeometry, in ctx: inout GraphicsContext) {
+        guard let first = points.first else { return }
+        let nbm = first.isNBM
+        for p in points {
+            let rect = g.barRect(p)
+            let token = Beaufort.colorToken(step: p.step)
+            let dim = selection != nil && selection != p.index
+            let alpha = dim ? (nbm ? 0.35 : 0.45) : (nbm ? 0.7 : 1)
+            let path = Path(roundedRect: rect, cornerRadius: style.barCornerRadius)
+            ctx.fill(path, with: .color(token.color(for: model.scheme).opacity(alpha)))
+            if let stroke = token.strokeColor(for: model.scheme), rect.height > 4 {
+                ctx.stroke(Path(roundedRect: rect.insetBy(dx: 1, dy: 1), cornerRadius: max(style.barCornerRadius - 1, 0.5)),
+                           with: .color(stroke.opacity(alpha)), lineWidth: 2)
+            }
+        }
+        if points.count > 1 {
+            var line = Path()
+            for (i, p) in points.enumerated() {
+                let pt = g.gustPoint(p)
+                if i == 0 { line.move(to: pt) } else { line.addLine(to: pt) }
+            }
+            let u = g.unit
+            ctx.stroke(line, with: .color(ink.opacity(nbm ? 0.6 : 0.75)),
+                       style: StrokeStyle(lineWidth: style.gustLineWidth, lineJoin: .round, dash: nbm ? [4 * u, 3 * u] : []))
+        }
+        for p in points {
+            let pt = g.gustPoint(p)
+            let w = g.capWidth(p)
+            var cap = Path()
+            cap.move(to: CGPoint(x: pt.x - w / 2, y: pt.y))
+            cap.addLine(to: CGPoint(x: pt.x + w / 2, y: pt.y))
+            ctx.stroke(cap, with: .color(numberInk), style: StrokeStyle(lineWidth: style.gustLineWidth, lineCap: .round))
         }
     }
 
@@ -194,11 +247,17 @@ public struct WindChart: View {
     }
 
     private var accessibilityText: String {
-        let hours = model.points.count
+        let hours = model.window == .week ? model.slotCount : model.points.count
         let ends = TimeFormat.weekdayLong(model.horizon, tz: model.timeZone) + " " + TimeFormat.hhmm(model.horizon, tz: model.timeZone)
         let kn = model.points.map(\.kn)
         guard let lo = kn.min(), let hi = kn.max() else { return "Wind chart: no forecast" }
-        return "\(hours)-hour wind chart: sustained \(lo) to \(hi) knots, gusts to \(model.maxGust) knots, ends \(ends)"
+        var text = "\(hours)-hour wind chart: sustained \(lo) to \(hi) knots, gusts to \(model.maxGust) knots, ends \(ends)"
+        if model.seamSlot != nil {
+            text += ". HRRR hourly to \(TimeFormat.weekdayLong(model.date(ofSlot: model.seamSlot ?? 0), tz: model.timeZone)) \(TimeFormat.hhmm(model.date(ofSlot: model.seamSlot ?? 0), tz: model.timeZone)), then NBM 3-hourly"
+        } else if model.nbmUnavailable {
+            text += ". NBM unavailable"
+        }
+        return text
     }
 }
 
@@ -228,14 +287,16 @@ private struct ScrubAccessibility: ViewModifier {
     let onScrub: ((Int?) -> Void)?
 
     func body(content: Content) -> some View {
-        if let onScrub, let first = model.points.first, let last = model.points.last {
+        if let onScrub, let first = model.points.first {
             content
                 .accessibilityValue(Text(value))
                 .accessibilityAdjustableAction { direction in
-                    let current = selection ?? max(Int(model.nowIndex.rounded(.down)), first.index)
+                    // Steps one plotted slot (an hour, or a 3-hour block).
+                    let current = selection ?? model.point(containing: max(Int(model.nowIndex.rounded(.down)), first.index))?.index ?? first.index
+                    let i = model.points.firstIndex { $0.index == current } ?? 0
                     switch direction {
-                    case .increment: onScrub(min(current + 1, last.index))
-                    case .decrement: onScrub(max(current - 1, first.index))
+                    case .increment: onScrub(model.points[min(i + 1, model.points.count - 1)].index)
+                    case .decrement: onScrub(model.points[max(i - 1, 0)].index)
                     @unknown default: break
                     }
                 }
@@ -246,6 +307,6 @@ private struct ScrubAccessibility: ViewModifier {
 
     private var value: String {
         guard let sel = selection, let p = model.point(index: sel) else { return "" }
-        return "\(TimeFormat.weekdayLong(p.date, tz: model.timeZone)) \(TimeFormat.hhmm(p.date, tz: model.timeZone)), \(p.kn) knots gusting \(p.gust) \(Compass.spokenFromText(dirFrom: p.dirFrom)), Beaufort \(p.step)"
+        return "\(Derivations.spokenSlot(p, tz: model.timeZone)), \(p.kn) knots gusting \(p.gust) \(Compass.spokenFromText(dirFrom: p.dirFrom)), Beaufort \(p.step)"
     }
 }

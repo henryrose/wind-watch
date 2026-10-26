@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iPhone location name and details</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#262D36}
+a{color:#9BB7D4}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 900px; height: 960px; box-sizing: border-box; padding: 24px; background: #262D36; display: flex; gap: 40px; align-items: flex-start; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #FFFFFF">
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="width: 402px; height: 874px; box-sizing: border-box; background: #0B0E12; border-radius: 48px; overflow: hidden; position: relative; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #FFFFFF">
+      <div style="position: absolute; inset: 0; padding: 62px 16px 0 16px; opacity: 0.35">
+        <div style="font-size: 28px; line-height: 34px; font-weight: 700">Locations</div>
+        <div style="margin-top: 12px; border-radius: 14px; background: #171C23; height: 260px"></div>
+      </div>
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 640px; box-sizing: border-box; border-radius: 28px 28px 0 0; background: #171C23; padding: 10px 16px 24px 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -8px 30px rgba(0,0,0,0.5)">
+        <div style="width: 36px; height: 5px; border-radius: 3px; background: #3A424D; margin: 0 auto"></div>
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <button type="button" style="min-width: 44px; height: 44px; margin-left: -8px; border: 0; background: transparent; color: #4FA3D8; font: inherit; font-size: 17px; cursor: pointer">Cancel</button>
+          <div style="font-size: 17px; font-weight: 600">New Location</div>
+          <button type="button" style="min-width: 44px; height: 44px; margin-right: -8px; border: 0; background: transparent; color: #4FA3D8; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer">Save</button>
+        </div>
+        <label for="loc-name-Save" style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; font-weight: 600; color: #9AA4B1; letter-spacing: 0.02em">NAME</span>
+          <span style="display: flex; align-items: center; gap: 8px; background: #0B0E12; border-radius: 12px; padding: 0 12px; min-height: 50px; box-shadow: inset 0 0 0 1.5px #4FA3D8">
+            <input id="loc-name-Save" type="text" value="Marrowstone Island" autocomplete="off" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 20px; font-weight: 600; outline: none">
+            <button type="button" aria-label="Clear name" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: #3A424D; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1,1 L9,9 M9,1 L1,9" stroke="#0B0E12" stroke-width="2" stroke-linecap="round"/></svg></button>
+          </span>
+          <span style="font-size: 13px; line-height: 18px; color: #9AA4B1">Suggested from the map. Change it to what you call this spot; your name is never overwritten.</span>
+        </label>
+        <div style="border-radius: 12px; overflow: hidden"><svg width="370" height="150" viewBox="0 0 370 150" aria-hidden="true" style="display: block">
+        <rect width="370" height="150" fill="#0E141B"/>
+        <path d="M0,120 C60,105 100,80 150,70 C210,60 250,30 290,10 L370,0 L370,150 L0,150 Z" fill="#162029"/>
+        <path d="M0,120 C60,105 100,80 150,70 C210,60 250,30 290,10 L370,0" fill="none" stroke="#2A3845" stroke-width="1"/>
+        <rect x="153" y="34" width="54" height="54" fill="#4FA3D8" fill-opacity="0.12" stroke="#4FA3D8" stroke-opacity="0.6" stroke-width="1" stroke-dasharray="3 2"/>
+        <g transform="translate(180,78)"><path d="M0,0 C-9,-12 -9,-24 0,-28 C9,-24 9,-12 0,0 Z" fill="#4FA3D8"/><circle cx="0" cy="-19" r="4" fill="#0E141B"/></g>
+        <text x="214" y="48" font-size="10" fill="#9AA4B1" font-family="system-ui">3 km HRRR cell</text>
+      </svg></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px">
+          <div style="background: #0B0E12; border-radius: 10px; padding: 10px 12px"><div style="color: #9AA4B1; font-size: 11px; font-weight: 600; letter-spacing: 0.04em">POSITION</div><div style="margin-top: 2px; font-variant-numeric: tabular-nums">48.100, −122.683</div></div>
+          <div style="background: #0B0E12; border-radius: 10px; padding: 10px 12px"><div style="color: #9AA4B1; font-size: 11px; font-weight: 600; letter-spacing: 0.04em">FORECAST POINT</div><div style="margin-top: 2px">HRRR cell 1.1 km NE</div></div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; font-size: 13px; color: #9AA4B1; flex-wrap: wrap"><span>Suggestions:</span><button type="button" style="border: 0; border-radius: 999px; background: #0B0E12; color: #C7CED8; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer">Marrowstone Island</button><button type="button" style="border: 0; border-radius: 999px; background: #0B0E12; color: #C7CED8; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer">Nordland</button><button type="button" style="border: 0; border-radius: 999px; background: #0B0E12; color: #C7CED8; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer">Kilisut Harbor</button></div>
+        <div style="flex: 1 1 auto"></div>
+        
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #B8BEC7; line-height: 1.45; max-width: 402px"><b style="color:#FFFFFF">After a long-press on the map</b> (or picking a search result). The field is focused with the suggestion selected, so typing replaces it in one go. Save needs a non-empty name; a duplicate gets a " 2" suffix suggestion, not a block. The chips are the other nearby place names the geocoder returned.</div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="width: 402px; height: 874px; box-sizing: border-box; background: #0B0E12; border-radius: 48px; overflow: hidden; position: relative; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #FFFFFF">
+      <div style="position: absolute; inset: 0; padding: 62px 16px 0 16px; opacity: 0.35">
+        <div style="font-size: 28px; line-height: 34px; font-weight: 700">Locations</div>
+        <div style="margin-top: 12px; border-radius: 14px; background: #171C23; height: 260px"></div>
+      </div>
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 640px; box-sizing: border-box; border-radius: 28px 28px 0 0; background: #171C23; padding: 10px 16px 24px 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -8px 30px rgba(0,0,0,0.5)">
+        <div style="width: 36px; height: 5px; border-radius: 3px; background: #3A424D; margin: 0 auto"></div>
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <button type="button" style="min-width: 44px; height: 44px; margin-left: -8px; border: 0; background: transparent; color: #4FA3D8; font: inherit; font-size: 17px; cursor: pointer">Cancel</button>
+          <div style="font-size: 17px; font-weight: 600">Marrowstone Pt</div>
+          <button type="button" style="min-width: 44px; height: 44px; margin-right: -8px; border: 0; background: transparent; color: #4FA3D8; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer">Done</button>
+        </div>
+        <label for="loc-name-Done" style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; font-weight: 600; color: #9AA4B1; letter-spacing: 0.02em">NAME</span>
+          <span style="display: flex; align-items: center; gap: 8px; background: #0B0E12; border-radius: 12px; padding: 0 12px; min-height: 50px; box-shadow: inset 0 0 0 1.5px #4FA3D8">
+            <input id="loc-name-Done" type="text" value="Marrowstone Pt" autocomplete="off" style="flex: 1 1 auto; min-width: 0; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 20px; font-weight: 600; outline: none">
+            <button type="button" aria-label="Clear name" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: #3A424D; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1,1 L9,9 M9,1 L1,9" stroke="#0B0E12" stroke-width="2" stroke-linecap="round"/></svg></button>
+          </span>
+          <span style="font-size: 13px; line-height: 18px; color: #9AA4B1">Renaming does not move the pin or change the forecast point.</span>
+        </label>
+        <div style="border-radius: 12px; overflow: hidden"><svg width="370" height="150" viewBox="0 0 370 150" aria-hidden="true" style="display: block">
+        <rect width="370" height="150" fill="#0E141B"/>
+        <path d="M0,120 C60,105 100,80 150,70 C210,60 250,30 290,10 L370,0 L370,150 L0,150 Z" fill="#162029"/>
+        <path d="M0,120 C60,105 100,80 150,70 C210,60 250,30 290,10 L370,0" fill="none" stroke="#2A3845" stroke-width="1"/>
+        <rect x="153" y="34" width="54" height="54" fill="#4FA3D8" fill-opacity="0.12" stroke="#4FA3D8" stroke-opacity="0.6" stroke-width="1" stroke-dasharray="3 2"/>
+        <g transform="translate(180,78)"><path d="M0,0 C-9,-12 -9,-24 0,-28 C9,-24 9,-12 0,0 Z" fill="#4FA3D8"/><circle cx="0" cy="-19" r="4" fill="#0E141B"/></g>
+        <text x="214" y="48" font-size="10" fill="#9AA4B1" font-family="system-ui">3 km HRRR cell</text>
+      </svg></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px">
+          <div style="background: #0B0E12; border-radius: 10px; padding: 10px 12px"><div style="color: #9AA4B1; font-size: 11px; font-weight: 600; letter-spacing: 0.04em">POSITION</div><div style="margin-top: 2px; font-variant-numeric: tabular-nums">48.100, −122.683</div></div>
+          <div style="background: #0B0E12; border-radius: 10px; padding: 10px 12px"><div style="color: #9AA4B1; font-size: 11px; font-weight: 600; letter-spacing: 0.04em">FORECAST POINT</div><div style="margin-top: 2px">HRRR cell 1.1 km NE</div></div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; font-size: 13px; color: #9AA4B1; flex-wrap: wrap"><span>Suggestions:</span><button type="button" style="border: 0; border-radius: 999px; background: #0B0E12; color: #C7CED8; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer">Marrowstone Island</button><button type="button" style="border: 0; border-radius: 999px; background: #0B0E12; color: #C7CED8; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer">Nordland</button><button type="button" style="border: 0; border-radius: 999px; background: #0B0E12; color: #C7CED8; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer">Kilisut Harbor</button></div>
+        <div style="flex: 1 1 auto"></div>
+        <button type="button" style="width: 100%; min-height: 50px; border: 0; border-radius: 12px; background: rgba(255,69,58,0.12); color: #FF453A; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer">Delete Location</button>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #B8BEC7; line-height: 1.45; max-width: 402px"><b style="color:#FFFFFF">Details for an existing location</b>, opened from the ⓘ on its row. Same sheet: rename, see the position and the HRRR cell it resolves to, delete. Watch and complications pick up the new name on their next refresh.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

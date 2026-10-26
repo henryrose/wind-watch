@@ -129,3 +129,14 @@ public enum PreviewData {
     .background(Tokens.ground(.dark))
     .environment(\.colorScheme, .dark)
 }
+
+#Preview("WindChart · phone · 7 d · dark") {
+    VStack(spacing: 2) {
+        let model = ChartModel(forecast: PreviewData.forecast, now: PreviewData.now, window: .week, scheme: .dark, plotWidth: 402)
+        SkyBand(model: model, style: .phonePortrait)
+        WindChart(model: model, style: .phonePortraitWeek)
+    }
+    .frame(width: 402)
+    .background(Tokens.card(.dark))
+    .environment(\.colorScheme, .dark)
+}

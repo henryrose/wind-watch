@@ -212,26 +212,33 @@ struct ChartReferenceTests {
         #expect(g.edgeLabel == "ends 05:00")
     }
 
-    @Test("mini6 / mini-short: complication strip at 2× (150×62)") func mini() throws {
+    @Test("comp-rect46 / comp-rect42: rectangular complication strip at 2× (336×58, 300×50)", arguments: [
+        ("comp-rect46", CGFloat(168), CGFloat(29)), ("comp-rect42", CGFloat(150), CGFloat(25)),
+    ]) func complicationStrip(name: String, width: CGFloat, height: CGFloat) throws {
         let f = try Fixture.forecast()
-        let m = ChartModel(forecast: f, now: f.date(ofHour: 15), window: .next6, scheme: .dark)
-        let g = ChartGeometry(model: m, style: .mini, width: 75)
-        #expect(m.yMax == 25 && g.boxHeight == 31)
-        // The reference `mini` call pins ymax=30; the §6.3 rule rounds to 5 (25). Compare x only.
-        let svg = try SVG("mini6")
+        let m = ChartModel(forecast: f, now: f.date(ofHour: 15), window: .complication, scheme: .dark)
+        let g = ChartGeometry(model: m, style: .complication(height: height), width: width)
+        #expect(m.yMax == 25 && m.points.count == 12 && g.boxHeight == height && g.capWidth == g.barWidth + 1)
+        let svg = try SVG(name)
+        #expect(svg.bars.count == 12 && svg.gustVertices.count == 12 && svg.caps.count == 12)
         for (bar, p) in zip(svg.bars, m.points) {
-            #expect(close(bar.x, g.barRect(p).minX, scale: 2) && close(bar.w, g.barWidth, scale: 2))
+            let r = g.barRect(p)
+            #expect(close(bar.x, r.minX, scale: 2) && close(bar.w, r.width, scale: 2), "bar x \(p.index)")
+            #expect(close(bar.y, r.minY, scale: 2) && close(bar.h, r.height, scale: 2), "bar y \(p.index)")
         }
-        // `minishort` in the reference stretches 4 bars over 4 slots; §6.3 keeps 6 slots with an
-        // empty tail (doc wins), so only the y values and counts are comparable.
-        let short = ChartModel(forecast: f, now: f.date(ofHour: 41), window: .next6, scheme: .dark)
-        let gs = ChartGeometry(model: short, style: .mini, width: 75)
-        #expect(short.points.count == 4 && short.yMax == 25 && short.slotCount == 6 && short.horizonEdgeSlot == 4)
-        let shortSVG = try SVG("mini-short")
-        #expect(shortSVG.bars.count == 4)
-        for (bar, p) in zip(shortSVG.bars, short.points) {
-            #expect(close(bar.y, gs.barRect(p).minY, scale: 2) && close(bar.h, gs.barRect(p).height, scale: 2))
+        for (v, p) in zip(svg.gustVertices, m.points) {
+            let pt = g.gustPoint(p)
+            #expect(close(v.0, pt.x, scale: 2) && close(v.1, pt.y, scale: 2), "gust \(p.index)")
         }
-        #expect(gs.barRect(short.points[3]).maxX <= gs.x(slot: 4))
+        for (c, p) in zip(svg.caps, m.points) {
+            #expect(close(c.x2 - c.x1, g.capWidth, scale: 2, tolerance: 0.11) && close(c.y, g.gustPoint(p).y, scale: 2), "cap \(p.index)")
+        }
+        // 0.5 pt ticks every 3 h (00/03/06/09) under the baseline.
+        let ticks = svg.ticks
+        #expect(ticks.count == g.tickPoints.count)
+        for (x, p) in zip(ticks, g.tickPoints) { #expect(close(x, g.centreX(index: p.index), scale: 2)) }
+        // No shading, sun markers, rules, arrows or grid on the rectangular (§6.3).
+        #expect(svg.stops.allSatisfy { $0.1 == 0 } && g.sunMarks.isEmpty && g.nowX == nil && g.edgeX == nil)
+        #expect(g.arrowPoints.isEmpty && g.gridValues.isEmpty)
     }
 }

@@ -31,6 +31,11 @@ public enum Tokens {
     public static func trustAmber(_ scheme: ColorScheme) -> Color { pick(scheme, "#FFB340", "#B86E00") }
     /// Sun markers.
     public static func sun(_ scheme: ColorScheme) -> Color { pick(scheme, "#FFB340", "#E08A00") }
+    /// NBM region tint (§12a): `#4FA3D8`, used at 4.5 %.
+    public static let nbmTint = Color(hex: "#4FA3D8")
+    /// NBM seam label and `NBM` tags (§12a): the link blue `#9BB7D4`; a darker blue on light ground
+    /// (the design gives only the dark value).
+    public static func nbmLabel(_ scheme: ColorScheme) -> Color { pick(scheme, "#9BB7D4", "#3E6A99") }
     /// Rectangular / circular complication background.
     public static func complicationPlate(_ scheme: ColorScheme) -> Color { Color.white.opacity(0.10) }
 
