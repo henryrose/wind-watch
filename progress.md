@@ -114,6 +114,9 @@ clients, so builds ≤ 7 in the field keep working against the same `/v1/wind` a
 | R5b | Scrub readout: degrees back, small and secondary, only while scrubbing; at rest `peak G25 · 12am` over a number-only Beaufort chip; 124 pt number column | done | main + scrub screenshots vs `Phone-Main*.png` | landscape readout follows the same degrees rule. `Derivations.peakReadoutText` adds the day when the peak is ≥ 18 h away |
 | R5c | Chart: first day label suppressed while `now` is on the plot; first tick label dropped at the plot edge (portrait phone) | done | `ChartReferenceTests` now also compare tick labels (phone/web) with the refreshed `phonebig`/`phonesel`/`land` SVGs; web `chart.test.js` vs `webhover.svg` | landscape and web keep `9am` in slot 0, as the reference does |
 | R5d | Build 8: version 1.0 (8), haptic actor warning fixed | done | `./build.sh all`: 141 Swift tests, both builds zero warnings; server 89, web 38 | |
+| R5e | Deploy: Worker redeployed (code unchanged) and checked with old-client requests (200 + ETag, 304, `?lat&lon` 200, outside HRRR 422, payload `v` 1); web on Pages (custom domain serves the new `derive.js`); archive `apple/build/WindWatch-1.0-8.xcarchive` (Release, zero warnings, watch app + complications embedded) | done | 2026-10-25 | |
+| R5f | Upload 1.0 (8) to TestFlight | blocked | `xcodebuild -exportArchive` → "App Store Connect access for 76DTB9437K is required" | Xcode's Apple ID session expired. Henry: Xcode → Settings → Accounts, sign in again; then rerun the export (command in the deploy-Mac memory / HANDOFF §7) |
+
 
 ## Needs the other machine (from plan §7)
 
@@ -195,6 +198,7 @@ clients, so builds ≤ 7 in the field keep working against the same `/v1/wind` a
 
 | Date | Task | What is blocked | What was tried |
 |---|---|---|---|
+| 2026-10-25 | R5f | TestFlight upload of 1.0 (8) | export-upload refused: Xcode account session for team 76DTB9437K expired; needs Henry to sign in under Xcode → Settings → Accounts |
 
 ## Screenshots index
 
