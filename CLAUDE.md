@@ -57,7 +57,7 @@ cd apple && ./build.sh gen      # regenerate WindWatch.xcodeproj from project.ym
 ./build.sh all                  # gen + swift test + ios + watch
 # Run with fixture data: launch with env WW_FIXTURE=1 (+ WW_STATE=stale|old|offline|horizon|firstrun|updating,
 # WW_NOW=<ISO8601>, WW_TYPE_SIZE=ax3, WW_SCREEN=location|about, WW_SCRUB=<hour index>, WW_LANDSCAPE=1,
-# WW_TABLE=1|0 (hourly table open/closed), WW_CANDIDATE="Name,lat,lon" (unsaved point on the Location screen), WW_WELCOME=1 (first-launch chooser) on iPhone; WW_PAGE=strip|now|settings|complications on watch, strip is the default). Wait ~7 s before a screenshot (first frame compiles a gradient).
+# WW_TABLE=1|0 (hourly table open/closed), WW_CANDIDATE="Name,lat,lon" (unsaved point on the Locations screen), WW_LOCATIONS="Name,lat,lon;…" + WW_SELECTED=<row> (replace the Locations list, up to 12), WW_SAVE_CUSTOM="Name,lat,lon" (add + select), WW_WELCOME=1 (first-launch chooser) on iPhone; WW_PAGE=strip|now|settings|complications on watch, strip is the default; WW_RECT=42 on the complications page draws the 41/42 mm rectangular). Wait ~7 s before a screenshot (first frame compiles a gradient).
 # Always address simulators by UDID when two are booted (`xcrun simctl list devices`).
 
 # Web (static page, no build step)
@@ -68,7 +68,7 @@ python3 -m http.server 8080     # from the repo root, then open http://localhost
 ## Layout
 
 - `server/` — Worker: `src/transform.ts` (Open-Meteo → payload), `sun.ts`, `summary.ts`, `index.ts` (fetch + scheduled), tests in `test/`.
-- `apple/WindCore/` — Swift package: `Payload`, `Forecast`, `Beaufort`, `Compass`, `Trust`, `Twilight`, `TimelineBuilder`, `WindClient`, `AppGroupStore`, `ForecastSession`, `SavedLocation`, and `UI/` (tokens, glyphs, `ChartStyle`, `ChartGeometry`, `ChartModel`, `WindChart`, `MiniStrip`, `TrustLineView`). `Tests/…/ChartReferenceTests` checks the geometry against the reference SVGs.
+- `apple/WindCore/` — Swift package: `Payload`, `Forecast`, `Beaufort`, `Compass`, `Trust`, `Twilight`, `TimelineBuilder`, `WindClient`, `AppGroupStore`, `ForecastSession`, `SavedLocation` (the Locations list, up to 12, with migration from the build ≤ 7 single custom spot), and `UI/` (tokens, glyphs, `ChartStyle`, `ChartGeometry`, `ChartModel`, `WindChart`, `ComplicationStrip`, `MiniStrip`, `TrustLineView`). `Tests/…/ChartReferenceTests` checks the geometry against the reference SVGs.
 - `apple/WindWatch/` iOS app · `apple/WindWatchWatch/` watchOS app · `apple/WindWatchComplications/` widget extension · `apple/Shared/` views compiled into more than one target.
 - `apple/Config/Shared.xcconfig` (tracked) + `Local.xcconfig` (untracked: team id, bundle prefix).
 - `web/` — `index.html`, `app.js`, `lib/derive.js` (pure derivations), `config.js` (API base).

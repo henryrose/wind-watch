@@ -25,45 +25,95 @@ struct SavedLocationTests {
         #expect(SavedLocation.parseCoordinates("1, 2, 3") == nil)
     }
 
+    let seattle = SavedLocation(name: "Seattle", lat: 47.6, lon: -122.3, tz: "America/Los_Angeles")
+
+    @Test func freshInstallSeedsPortTownsendBayOnly() throws {
+        let suite = "WindCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let prefs = LocationSettings.load(from: defaults)
+        #expect(prefs == .default)
+        #expect(prefs.locations == [.portTownsendBay])
+        #expect(prefs.selected == .portTownsendBay)
+        #expect(!prefs.effectiveUseCustom && prefs.activeCustom == nil)
+        #expect(!prefs.canDelete)
+    }
+
     @Test func defaultsRoundTrip() throws {
         let suite = "WindCoreTests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
-
-        #expect(LocationSettings.load(from: defaults) == .default)
-        let custom = SavedLocation(name: "Seattle", lat: 47.6, lon: -122.3, tz: "America/Los_Angeles")
-        LocationSettings.save(Preferences(custom: custom, useCustom: true), to: defaults)
+        let prefs = Preferences(locations: [.portTownsendBay, seattle], selectedID: seattle.id)
+        LocationSettings.save(prefs, to: defaults)
         let loaded = LocationSettings.load(from: defaults)
-        #expect(loaded == Preferences(custom: custom, useCustom: true))
+        #expect(loaded == prefs)
         #expect(loaded.effectiveUseCustom)
-        #expect(loaded.activeCustom == custom.customLocation)
+        #expect(loaded.activeCustom == seattle.customLocation)
+        // The legacy pair is written too, for a watch app on build ≤ 7.
+        #expect(defaults.bool(forKey: LocationSettings.useCustomKey))
+        #expect(defaults.data(forKey: LocationSettings.customLocationKey) != nil)
+    }
 
-        LocationSettings.save(Preferences(custom: custom, useCustom: false), to: defaults)
-        #expect(LocationSettings.load(from: defaults).activeCustom == nil)
+    @Test func migratesTheBuild7Preference() throws {
+        let suite = "WindCoreTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        // Build ≤ 7 stored a SavedLocation without an id plus useCustom.
+        let old = #"{"name":"Seattle","lat":47.6,"lon":-122.3,"tz":"America/Los_Angeles"}"#.data(using: .utf8)!
+        defaults.set(old, forKey: LocationSettings.customLocationKey)
+        defaults.set(true, forKey: LocationSettings.useCustomKey)
+        let migrated = LocationSettings.load(from: defaults)
+        #expect(migrated.locations.map(\.name) == ["Port Townsend Bay", "Seattle"])
+        #expect(migrated.selected.name == "Seattle")
+        #expect(migrated.activeCustom == CustomLocation(lat: 47.6, lon: -122.3))
+        defaults.set(false, forKey: LocationSettings.useCustomKey)
+        #expect(LocationSettings.load(from: defaults).selected == .portTownsendBay)
+    }
 
-        LocationSettings.save(Preferences(custom: nil, useCustom: true), to: defaults)
-        let orphan = LocationSettings.load(from: defaults)
-        #expect(orphan.custom == nil && orphan.useCustom && !orphan.effectiveUseCustom)
+    @Test func listRules() {
+        var p = Preferences.default
+        let deletedLast = p.delete(SavedLocation.portTownsendBay.id)
+        #expect(!deletedLast) // last row
+        for i in 0..<11 {
+            let added = p.add(SavedLocation(name: "P\(i)", lat: 47, lon: -122 + Double(i) / 10, tz: "UTC"))
+            #expect(added)
+        }
+        #expect(p.isFull && p.locations.count == 12)
+        let addedThirteenth = p.add(seattle)
+        #expect(!addedThirteenth)
+        #expect(p.selected.name == "P10") // add selects
+        p.move(fromOffsets: IndexSet(integer: 0), toOffset: 12)
+        #expect(p.locations.last == .portTownsendBay)
+        #expect(p.locations.first?.name == "P0")
+        p.rename(SavedLocation.portTownsendBay.id, to: "  Home  ")
+        #expect(p.locations.last?.name == "Home")
+        #expect(p.locations.last?.isDefaultPoint == true)
+        p.rename(SavedLocation.portTownsendBay.id, to: "   ")
+        #expect(p.locations.last?.name == "Home") // blank names are ignored
+        let selected = p.selectedID
+        let deleted = p.delete(selected)
+        #expect(deleted)
+        #expect(p.selectedID == p.locations[0].id) // falls back to row 1
+        // An unknown selection falls back to row 1 as well.
+        #expect(Preferences(locations: [seattle, .portTownsendBay], selectedID: UUID()).selected == seattle)
     }
 
     @Test func applicationContextRoundTrip() {
-        let custom = SavedLocation(name: "Seattle", lat: 47.6, lon: -122.3, tz: "America/Los_Angeles")
-        let prefs = Preferences(custom: custom, useCustom: true)
+        let prefs = Preferences(locations: [.portTownsendBay, seattle], selectedID: seattle.id)
         let ctx = LocationSettings.applicationContext(prefs)
-        #expect(ctx["useCustom"] as? Bool == true)
-        #expect(ctx["customLocation"] is Data)
+        #expect(ctx[LocationSettings.locationsKey] is Data)
+        #expect(ctx[LocationSettings.useCustomKey] as? Bool == true)
+        #expect(ctx[LocationSettings.customLocationKey] is Data) // legacy pair for older watch apps
         #expect(LocationSettings.preferences(fromApplicationContext: ctx) == prefs)
         #expect(LocationSettings.preferences(fromApplicationContext: [:]) == .default)
-        // useCustom false with a custom location, and useCustom true with none.
-        let off = Preferences(custom: custom, useCustom: false)
-        #expect(LocationSettings.preferences(fromApplicationContext: LocationSettings.applicationContext(off)) == off)
-        let orphan = Preferences(custom: nil, useCustom: true)
-        let orphanCtx = LocationSettings.applicationContext(orphan)
-        #expect(orphanCtx["customLocation"] == nil)
-        #expect(LocationSettings.preferences(fromApplicationContext: orphanCtx) == orphan)
-        #expect(!LocationSettings.preferences(fromApplicationContext: orphanCtx).effectiveUseCustom)
-        // Plist-safe: only Bool and Data values.
-        #expect(ctx.values.allSatisfy { $0 is Bool || $0 is Data })
+        // A context from a phone on build ≤ 7 (legacy keys only).
+        let legacyCtx: [String: Any] = [LocationSettings.useCustomKey: true,
+                                        LocationSettings.customLocationKey: try! JSONEncoder().encode(seattle)]
+        let fromOld = LocationSettings.preferences(fromApplicationContext: legacyCtx)
+        #expect(fromOld.locations == [.portTownsendBay, seattle])
+        #expect(fromOld.selected == seattle)
+        // Plist-safe: only Bool, String and Data values.
+        #expect(ctx.values.allSatisfy { $0 is Bool || $0 is Data || $0 is String })
     }
 
     typealias Preferences = LocationSettings.Preferences

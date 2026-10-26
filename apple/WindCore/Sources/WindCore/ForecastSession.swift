@@ -23,7 +23,7 @@ public final class ForecastSession {
     public private(set) var typeSizeOverride: DynamicTypeSize?
     /// iPhone first launch: show the Welcome location chooser (`Welcome`).
     public private(set) var needsWelcome = false
-    /// Called after a local preference edit (`saveCustom`, `selectDefault`, `selectCustom`); the
+    /// Called after a local edit of the Locations list (select, add, delete, rename, move); the
     /// iPhone app uses it to push the context to the watch. WindCore stays free of WatchConnectivity.
     @ObservationIgnored public var onPreferencesChanged: (@MainActor (LocationSettings.Preferences) -> Void)?
 
@@ -87,7 +87,7 @@ public final class ForecastSession {
             needsWelcome = true
         } else if !isFixture {
             needsWelcome = Welcome.shouldShow(done: Welcome.isDone(in: defaults),
-                                              hasCustom: preferences.custom != nil, hasCache: cached != nil)
+                                              hasCustom: preferences != .default, hasCache: cached != nil)
             // Someone upgrading with data already on device has effectively chosen; never ask later.
             if !needsWelcome { Welcome.markDone(in: defaults) }
         }
@@ -126,10 +126,8 @@ public final class ForecastSession {
         return forecast.hero(at: now)
     }
 
-    public var locationName: String {
-        if preferences.effectiveUseCustom, let custom = preferences.custom { return custom.name }
-        return forecast?.location.name ?? SavedLocation.portTownsendBay.name
-    }
+    /// The selected row's name (rows are renamable, so never the payload's `loc.name`).
+    public var locationName: String { preferences.selected.name }
 
     public var canReachNetwork: Bool { client != nil && !isFixture }
 
@@ -160,39 +158,75 @@ public final class ForecastSession {
         return result != nil && result?.meta.savedAt != before
     }
 
-    // MARK: - Location
+    // MARK: - Locations (HANDOFF §8.3)
 
+    public func select(_ id: UUID) {
+        guard id != preferences.selectedID else { return }
+        var next = preferences
+        next.select(id)
+        apply(next)
+    }
+
+    /// Welcome's one tap: the Port Townsend Bay row (seeded on a fresh install).
     public func selectDefault() {
-        guard preferences.useCustom else { return }
-        preferences.useCustom = false
-        locationChanged()
+        if let row = preferences.locations.first(where: \.isDefaultPoint) { select(row.id) }
     }
 
-    public func selectCustom() {
-        guard preferences.custom != nil, !preferences.useCustom else { return }
-        preferences.useCustom = true
-        locationChanged()
+    /// Deletes a row; the last one stays. Deleting the selected row falls back to row 1.
+    public func delete(_ id: UUID) {
+        var next = preferences
+        guard next.delete(id) else { return }
+        apply(next)
     }
 
-    public func saveCustom(_ location: SavedLocation) {
-        preferences.custom = location
-        preferences.useCustom = true
-        locationChanged()
+    public func rename(_ id: UUID, to name: String) {
+        var next = preferences
+        next.rename(id, to: name)
+        guard next != preferences else { return }
+        apply(next)
     }
 
-    public enum SaveCustomOutcome: Sendable, Equatable {
+    public func move(fromOffsets source: IndexSet, toOffset destination: Int) {
+        var next = preferences
+        next.move(fromOffsets: source, toOffset: destination)
+        guard next != preferences else { return }
+        apply(next)
+    }
+
+    /// Adds and selects without a network check (DEBUG launch hooks); false when full.
+    @discardableResult
+    public func add(_ location: SavedLocation) -> Bool {
+        var next = preferences
+        guard next.add(location) else { return false }
+        apply(next)
+        return true
+    }
+
+    /// Replaces the whole list (DEBUG launch hooks and screenshots); `selectedIndex` defaults to row 1.
+    public func replaceLocations(_ locations: [SavedLocation], selectedIndex: Int = 0) {
+        guard !locations.isEmpty else { return }
+        let list = Array(locations.prefix(LocationSettings.maxCount))
+        apply(.init(locations: list, selectedID: list[min(max(selectedIndex, 0), list.count - 1)].id))
+    }
+
+    public enum AddOutcome: Sendable, Equatable {
         case saved
         /// Nothing changed: the point is outside the HRRR grid (`HRRRCoverage`, or the server's 422).
         case outsideCoverage
+        /// Nothing changed: 12 of 12.
+        case full
     }
 
-    /// The Location screen's Save. Fetches the new point first, so the current forecast stays on
+    /// The Locations screen's Add. Fetches the new point first, so the current forecast stays on
     /// screen until the new one is in hand and a point the server refuses changes nothing. Any
-    /// other failure (offline, server down) saves anyway and the next refresh fills it in.
-    public func trySaveCustom(_ location: SavedLocation) async -> SaveCustomOutcome {
+    /// other failure (offline, server down) adds anyway and the next refresh fills it in.
+    public func tryAdd(_ location: SavedLocation) async -> AddOutcome {
+        guard !preferences.isFull else { return .full }
         guard location.isInHRRRCoverage else { return .outsideCoverage }
-        guard let client, !isFixture, !isUpdating else {
-            saveCustom(location)
+        var next = preferences
+        next.add(location)
+        guard let client, !isFixture, !isUpdating, !location.isDefaultPoint else {
+            apply(next)
             return .saved
         }
         isUpdating = true
@@ -202,11 +236,14 @@ public final class ForecastSession {
         case .failed(let error) where error as? WindClientError == .outsideCoverage:
             return .outsideCoverage
         case .updated(let data, let etag):
-            preferences.custom = location
-            preferences.useCustom = true
-            locationChanged(prefetched: (data, etag))
+            // Re-apply on the latest list in case it changed while the fetch was in flight.
+            var latest = preferences
+            guard latest.add(location) else { return .full }
+            apply(latest, prefetched: (data, etag))
         default:
-            saveCustom(location)
+            var latest = preferences
+            guard latest.add(location) else { return .full }
+            apply(latest)
         }
         return .saved
     }
@@ -230,10 +267,14 @@ public final class ForecastSession {
         return activeChanged
     }
 
-    /// `prefetched` is the new location's payload when the caller already has it (`trySaveCustom`).
-    private func locationChanged(prefetched: (data: Data, etag: String?)? = nil) {
+    /// Persists and adopts an edited list. The cache is dropped (and refetched) only when the
+    /// fetched point changed; a rename or reorder keeps it. `prefetched` is the new point's
+    /// payload when the caller already has it (`tryAdd`).
+    private func apply(_ next: LocationSettings.Preferences, prefetched: (data: Data, etag: String?)? = nil) {
+        let activeChanged = next.activeCustom != preferences.activeCustom
+        preferences = next
         LocationSettings.save(preferences, to: defaults)
-        if isFixture {
+        if isFixture || !activeChanged {
             setCached(cached) // rebuilds `forecast` with the new isDefault flag
         } else if let prefetched {
             try? store.clear()

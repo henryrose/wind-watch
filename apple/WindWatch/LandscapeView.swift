@@ -83,9 +83,15 @@ struct LandscapeView: View {
             }
             HStack(spacing: 6) {
                 ArrowView(dirFrom: h.dirFrom, size: 16, color: numberInk)
-                Text("\(Compass.fromText(dirFrom: h.dirFrom)) · \(h.dirFrom)°")
-                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                Text(Compass.fromText(dirFrom: h.dirFrom))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(numberInk)
+                // Round five: degrees only while scrubbing, small and secondary.
+                if index != nil {
+                    Text("\(h.dirFrom)°")
+                        .font(.system(size: 13, weight: .medium).monospacedDigit())
+                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                }
             }
             BeaufortChip(step: Beaufort.step(kn: h.kn), scheme: scheme)
                 .oldStateDesaturation(model.ageTier)

@@ -46,6 +46,14 @@ struct ChartReferenceTests {
         var stops: [(Double, Double)] { numbers(##"<stop offset="([\d.]+)" stop-color="#FFFFFF" stop-opacity="([\d.]+)"/>"##).map { ($0[0], $0[1]) } }
         var arrows: [(x: Double, y: Double, rot: Double)] { numbers(##"<g transform="translate\(([\d.]+),([\d.]+)\) rotate\((\d+)\)">"##).map { ($0[0], $0[1], $0[2]) } }
         var ticks: [Double] { numbers(##"<line x1="([\d.]+)" x2="[\d.]+" y1="[\d.]+" y2="[\d.]+" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>"##).map { $0[0] } }
+        /// Tick labels: `<text x y text-anchor="middle" font-size fill fill-opacity="0.6">label</text>`.
+        var tickLabels: [(x: Double, text: String)] {
+            let re = try! NSRegularExpression(pattern: ##"<text x="([\d.]+)" y="[\d.]+" text-anchor="middle" font-size="\d+" fill="#FFFFFF" fill-opacity="0.6"[^>]*>(\w+)</text>"##)
+            return re.matches(in: text, range: NSRange(text.startIndex..., in: text)).compactMap { m in
+                guard let xr = Range(m.range(at: 1), in: text), let tr = Range(m.range(at: 2), in: text), let x = Double(text[xr]) else { return nil }
+                return (x, String(text[tr]))
+            }
+        }
         /// Day-band names: `<text x y font-size font-weight="700" fill="#FFFFFF" fill-opacity="0.75">`.
         var dayLabels: [(x: Double, name: String)] {
             let re = try! NSRegularExpression(pattern: ##"<text x="([\d.]+)" y="[\d.-]+" font-size="\d+" font-weight="700" fill="#FFFFFF" fill-opacity="0.75"[^>]*>(\w+)</text>"##)
@@ -134,6 +142,15 @@ struct ChartReferenceTests {
         #expect(ticks.count == g.tickPoints.count, sourceLocation: sourceLocation)
         for (t, p) in zip(ticks, g.tickPoints) {
             #expect(close(t, g.centreX(index: p.index), scale: scale), "tick \(p.index)", sourceLocation: sourceLocation)
+        }
+        let mineTickLabels = g.tickPoints.compactMap { p in g.tickLabel(p).map { (x: g.centreX(index: p.index), text: $0) } }
+        let svgTickLabels = svg.tickLabels
+        // Watch references hand-pick their labels; compare the phone and web surfaces only.
+        if !svgTickLabels.isEmpty, !g.style.isWatch {
+            #expect(svgTickLabels.count == mineTickLabels.count, "tick labels \(svgTickLabels.map(\.text)) vs \(mineTickLabels.map(\.text))", sourceLocation: sourceLocation)
+            for (l, m) in zip(svgTickLabels, mineTickLabels) {
+                #expect(l.text == m.text && close(l.x, m.x, scale: scale), "tick label \(l.text) vs \(m.text)", sourceLocation: sourceLocation)
+            }
         }
         let dividers = svg.dayDividers
         let mineDividers = g.dayMarks.filter(\.divider)

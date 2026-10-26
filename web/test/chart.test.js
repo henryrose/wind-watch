@@ -154,25 +154,28 @@ test('ticks every 3 h (hour-of-day), 3 tall; labels at H + 10 in 12-hour text', 
   assert.deepEqual(L.labels.slice(0, 8).map((l) => l.text), ['9am', 'noon', '3pm', '6pm', '9pm', '12am', '3am', '6am']);
 });
 
-test('day band: name at x + 5 (first day x + 4) / top − 22, dotted divider at each midnight but not the first day', () => {
+test('day band: name at x + 5 / top − 22, dotted divider at each midnight; first day suppressed while now is on the plot (round five)', () => {
   const refDays = [...ref.matchAll(/<text x="([\d.]+)" y="18"[^>]*>(\w+)<\/text>/g)].map((m) => [num(m[1]), m[2]]);
   const refDividers = tags('line').map(attrs).filter((a) => a['stroke-dasharray'] === '2 3');
-  assert.deepEqual(refDays.map((d) => d[1]), ['Wed', 'Thu', 'Fri']);
+  assert.deepEqual(refDays.map((d) => d[1]), ['Thu', 'Fri']);
   assert.equal(refDividers.length, 2);
-  assert.deepEqual(L.days.map((d) => d.name), ['Wed', 'Thu', 'Fri']);
-  assert.deepEqual(L.days.map((d) => d.i), [0, 15, 39]);
+  assert.deepEqual(L.days.map((d) => d.name), ['Thu', 'Fri']);
+  assert.deepEqual(L.days.map((d) => d.i), [15, 39]);
   L.days.forEach((d, i) => {
     near(d.labelX, refDays[i][0], `day ${d.name} label x`);
     assert.equal(d.labelY, 18);
   });
-  assert.equal(L.days[0].divider, null);
-  L.days.slice(1).forEach((d, i) => {
+  L.days.forEach((d, i) => {
     near(d.divider.x, num(refDividers[i].x1), `divider ${d.name} x`);
     assert.equal(d.divider.y1, 22);
     assert.equal(d.divider.y2, 278);
   });
-  // Round two: the first day's name sits at x + 4 on the line above "now"; never hidden.
   assert.ok(L.days.every((d) => !d.hidden));
+  // Without a now marker on the plot the first day keeps its name at x + 4.
+  const noNow = chartLayout(forecast, CHART_STYLES.desktop, { nowIdx: null });
+  assert.deepEqual(noNow.days.map((d) => d.name), ['Wed', 'Thu', 'Fri']);
+  assert.equal(noNow.days[0].labelX, 4);
+  assert.equal(noNow.days[0].divider, null);
 });
 
 test('now rule at x(0.4) with its label at x + 4 / top − 8', () => {

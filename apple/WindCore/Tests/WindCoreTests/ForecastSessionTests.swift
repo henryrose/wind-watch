@@ -94,18 +94,29 @@ struct ForecastSessionTests {
     @Test func locationSelectionInFixtureMode() {
         let s = session(nil)
         let custom = SavedLocation(name: "Seattle", lat: 47.6, lon: -122.3, tz: "America/Los_Angeles")
-        defer { s.defaults.removeObject(forKey: LocationSettings.customLocationKey); s.defaults.removeObject(forKey: LocationSettings.useCustomKey) }
-        s.saveCustom(custom)
+        defer {
+            for key in [LocationSettings.locationsKey, LocationSettings.selectedKey, LocationSettings.customLocationKey, LocationSettings.useCustomKey] {
+                s.defaults.removeObject(forKey: key)
+            }
+        }
+        LocationSettings.save(.default, to: s.defaults)
+        s.reloadPreferences()
+        #expect(s.add(custom))
         #expect(s.preferences.effectiveUseCustom)
         #expect(s.locationName == "Seattle")
         #expect(s.forecast?.location.isDefault == false)
         #expect(s.forecast != nil) // fixture keeps the payload
         s.selectDefault()
-        #expect(!s.preferences.useCustom)
+        #expect(!s.preferences.effectiveUseCustom)
         #expect(s.locationName == "Port Townsend Bay")
         #expect(s.forecast?.location.isDefault == true)
-        s.selectCustom()
+        s.select(custom.id)
         #expect(s.preferences.effectiveUseCustom)
+        // Renaming the default row changes the name everywhere, not the fetched point.
+        s.rename(SavedLocation.portTownsendBay.id, to: "Home bay")
+        s.selectDefault()
+        #expect(s.locationName == "Home bay")
+        #expect(s.preferences.activeCustom == nil)
     }
 }
 
@@ -130,12 +141,16 @@ struct ForecastSessionSyncTests {
 
     let custom = SavedLocation(name: "Seattle", lat: 47.6, lon: -122.3, tz: "America/Los_Angeles")
 
+    private func list(selecting selected: SavedLocation?) -> LocationSettings.Preferences {
+        .init(locations: [.portTownsendBay, custom], selectedID: selected?.id)
+    }
+
     @Test func reloadFlipsIsDefaultInFixtureMode() throws {
         let h = try Harness(fixture: true); defer { h.cleanup() }
         #expect(h.session.forecast?.location.isDefault == true)
-        LocationSettings.save(.init(custom: custom, useCustom: true), to: h.session.defaults)
+        LocationSettings.save(list(selecting: custom), to: h.session.defaults)
         #expect(h.session.reloadPreferences() == true)
-        #expect(h.session.preferences == .init(custom: custom, useCustom: true))
+        #expect(h.session.preferences == list(selecting: custom))
         #expect(h.session.forecast != nil)
         #expect(h.session.forecast?.location.isDefault == false)
         #expect(h.session.locationName == "Seattle")
@@ -145,14 +160,14 @@ struct ForecastSessionSyncTests {
     @Test func reloadClearsCacheOnlyWhenActiveLocationChanges() throws {
         let h = try Harness(fixture: false); defer { h.cleanup() }
         #expect(h.session.forecast != nil)
-        // A custom location saved but not selected: preferences change, cache stays.
-        LocationSettings.save(.init(custom: custom, useCustom: false), to: h.session.defaults)
+        // A location added but not selected: preferences change, cache stays.
+        LocationSettings.save(list(selecting: nil), to: h.session.defaults)
         #expect(h.session.reloadPreferences() == false)
-        #expect(h.session.preferences.custom == custom)
+        #expect(h.session.preferences.locations.count == 2)
         #expect(h.session.forecast != nil)
         #expect(h.session.store.load() != nil)
         // Now selected: active location changed → cache dropped.
-        LocationSettings.save(.init(custom: custom, useCustom: true), to: h.session.defaults)
+        LocationSettings.save(list(selecting: custom), to: h.session.defaults)
         #expect(h.session.reloadPreferences() == true)
         #expect(h.session.store.load() == nil)
         #expect(h.session.forecast == nil)
@@ -164,29 +179,51 @@ struct ForecastSessionSyncTests {
         final class Box: @unchecked Sendable { var seen: [LocationSettings.Preferences] = [] }
         let box = Box()
         h.session.onPreferencesChanged = { prefs in box.seen.append(prefs) }
-        h.session.saveCustom(custom)
+        h.session.add(custom)
         h.session.selectDefault()
-        h.session.selectCustom()
-        h.session.selectCustom() // no-op, already selected
-        #expect(box.seen.map(\.useCustom) == [true, false, true])
-        #expect(box.seen.allSatisfy { $0.custom == custom })
-        #expect(LocationSettings.load(from: h.session.defaults) == .init(custom: custom, useCustom: true))
+        h.session.select(custom.id)
+        h.session.select(custom.id) // no-op, already selected
+        #expect(box.seen.map(\.effectiveUseCustom) == [true, false, true])
+        #expect(box.seen.allSatisfy { $0.locations == [.portTownsendBay, custom] })
+        #expect(LocationSettings.load(from: h.session.defaults) == list(selecting: custom))
     }
 
-    @Test func trySaveCustomRefusesAPointOutsideHRRRAndChangesNothing() async throws {
+    @Test func deletingTheSelectedRowFallsBackToRowOneAndTheLastRowStays() throws {
+        let h = try Harness(fixture: true); defer { h.cleanup() }
+        h.session.add(custom)
+        h.session.delete(custom.id)
+        #expect(h.session.preferences.locations == [.portTownsendBay])
+        #expect(h.session.preferences.selected == .portTownsendBay)
+        h.session.delete(SavedLocation.portTownsendBay.id) // the last one
+        #expect(h.session.preferences.locations == [.portTownsendBay])
+        // Port Townsend Bay can go once something else is there; the other row becomes row 1.
+        h.session.add(custom)
+        h.session.delete(SavedLocation.portTownsendBay.id)
+        #expect(h.session.preferences.locations == [custom])
+        #expect(h.session.preferences.selected == custom)
+    }
+
+    @Test func tryAddRefusesAPointOutsideHRRRAndChangesNothing() async throws {
         let h = try Harness(fixture: false); defer { h.cleanup() }
         let london = SavedLocation(name: "London", lat: 51.5, lon: -0.12, tz: "Europe/London")
         let before = h.session.preferences
-        #expect(await h.session.trySaveCustom(london) == .outsideCoverage)
+        #expect(await h.session.tryAdd(london) == .outsideCoverage)
         #expect(h.session.preferences == before)
         #expect(h.session.forecast != nil) // the cache is untouched
         #expect(h.session.store.load() != nil)
     }
 
-    @Test func trySaveCustomSavesInFixtureMode() async throws {
+    @Test func tryAddSavesInFixtureModeAndStopsAtTwelve() async throws {
         let h = try Harness(fixture: true); defer { h.cleanup() }
-        #expect(await h.session.trySaveCustom(custom) == .saved)
-        #expect(h.session.preferences == .init(custom: custom, useCustom: true))
+        #expect(await h.session.tryAdd(custom) == .saved)
+        #expect(h.session.preferences == list(selecting: custom))
+        for i in 0..<10 {
+            #expect(await h.session.tryAdd(SavedLocation(name: "P\(i)", lat: 47 + Double(i) / 10, lon: -122, tz: "America/Los_Angeles")) == .saved)
+        }
+        #expect(h.session.preferences.locations.count == 12)
+        #expect(h.session.preferences.isFull)
+        #expect(await h.session.tryAdd(SavedLocation(name: "One more", lat: 45, lon: -122, tz: "America/Los_Angeles")) == .full)
+        #expect(h.session.preferences.locations.count == 12)
     }
 
     @Test func payloadTimeZoneWinsOverSavedLocationTimeZone() throws {

@@ -55,11 +55,18 @@ public struct ChartStyle: Sendable, Equatable {
     /// Horizontal room outside the plot that labels may spill into (the reference SVG has
     /// `overflow: visible`); drawn, never laid out. Phone cards have 16 pt of padding.
     public var overflow: CGFloat
+    /// Drop the label of a tick in slot 0 (round five, portrait phone: it would sit on the edge).
+    public var dropsFirstTickLabel: Bool
+    /// Day/night shading and sun dots (the rectangular complication strip has neither, §6.3).
+    public var showsDaylight: Bool
+    /// The `now` and horizon-edge rules (and their labels).
+    public var showsMarkers: Bool
 
     public init(plotHeight: CGFloat, topInset: CGFloat, bottomInset: CGFloat, labelBaseline: CGFloat, labelBand: CGFloat,
                 barCornerRadius: CGFloat, minBarWidth: CGFloat = 3, gustLineWidth: CGFloat, fontSize: CGFloat, arrowSize: CGFloat,
                 arrowEvery: Int, tickEvery: Int, labelFormat: TimeLabelFormat, showsGrid: Bool, showsDays: Bool,
-                sunRadius: CGFloat, edgeLabel: EdgeLabelFormat, isWatch: Bool, unit: CGFloat = 1, overflow: CGFloat = 16) {
+                sunRadius: CGFloat, edgeLabel: EdgeLabelFormat, isWatch: Bool, unit: CGFloat = 1, overflow: CGFloat = 16,
+                dropsFirstTickLabel: Bool = false, showsDaylight: Bool = true, showsMarkers: Bool = true) {
         self.plotHeight = plotHeight
         self.topInset = topInset
         self.bottomInset = bottomInset
@@ -80,6 +87,9 @@ public struct ChartStyle: Sendable, Equatable {
         self.isWatch = isWatch
         self.unit = unit
         self.overflow = overflow
+        self.dropsFirstTickLabel = dropsFirstTickLabel
+        self.showsDaylight = showsDaylight
+        self.showsMarkers = showsMarkers
     }
 
     /// Bar width as a fraction of the slot.
@@ -96,7 +106,7 @@ public struct ChartStyle: Sendable, Equatable {
         plotHeight: 206, topInset: 38, bottomInset: 18, labelBaseline: 10, labelBand: 13,
         barCornerRadius: 1.5, gustLineWidth: 1.5, fontSize: 11, arrowSize: 9,
         arrowEvery: 3, tickEvery: 6, labelFormat: .hour12, showsGrid: true, showsDays: true,
-        sunRadius: 3, edgeLabel: .weekday12, isWatch: false)
+        sunRadius: 3, edgeLabel: .weekday12, isWatch: false, dropsFirstTickLabel: true)
 
     /// iPhone landscape (`land`): 834×296 (screen − 40, §6.4d), top 38 / bottom 22, arrows every hour, 3-h labels (§6.4b).
     public static let phoneLandscape = ChartStyle(
@@ -110,7 +120,7 @@ public struct ChartStyle: Sendable, Equatable {
         plotHeight: 152, topInset: 22, bottomInset: 16, labelBaseline: 10, labelBand: 13,
         barCornerRadius: 1.5, gustLineWidth: 1.5, fontSize: 11, arrowSize: 9,
         arrowEvery: 3, tickEvery: 6, labelFormat: .hour12, showsGrid: true, showsDays: false,
-        sunRadius: 3, edgeLabel: .weekday12, isWatch: false)
+        sunRadius: 3, edgeLabel: .weekday12, isWatch: false, dropsFirstTickLabel: true)
 
     /// Watch 12-h strip (`watchstrip`, 396×230 px @2×): 198×115 pt, top 12 / bottom 11, arrows every
     /// hour, 3-h `HH` labels, no day band, `ends 05:00` (§6.1, §7.3).
@@ -127,4 +137,14 @@ public struct ChartStyle: Sendable, Equatable {
         barCornerRadius: 2, gustLineWidth: 1, fontSize: 0, arrowSize: 0,
         arrowEvery: 0, tickEvery: 0, labelFormat: .none, showsGrid: false, showsDays: false,
         sunRadius: 1.5, edgeLabel: .none, isWatch: true, unit: 0.5, overflow: 0)
+
+    /// Rectangular complication strip (HANDOFF §6.3 round five, 336×62 px @2×): full plate width
+    /// × 31 pt, 12 slots (14 pt on 46 mm). Bars, gust line + caps (1 pt) and 0.5 pt ticks every
+    /// 3 h under the baseline only: no shading, sun dot, arrows, gridlines, labels or rules.
+    public static let complicationStrip = ChartStyle(
+        plotHeight: 26, topInset: 2, bottomInset: 3, labelBaseline: 0, labelBand: 0,
+        barCornerRadius: 1.5, gustLineWidth: 1, fontSize: 0, arrowSize: 0,
+        arrowEvery: 0, tickEvery: 3, labelFormat: .none, showsGrid: false, showsDays: false,
+        sunRadius: 0, edgeLabel: .none, isWatch: true, unit: 0.5, overflow: 0,
+        showsDaylight: false, showsMarkers: false)
 }

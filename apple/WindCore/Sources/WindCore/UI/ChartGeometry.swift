@@ -98,6 +98,9 @@ public struct ChartGeometry: Sendable {
 
     /// Tick label text for a point, per the style's format.
     public func tickLabel(_ p: HourPoint) -> String? {
+        // Round five: on the portrait phone the first slot's label would sit on the plot edge
+        // (half a 9 pt slot in), so it is dropped; landscape and web have room and keep it.
+        if style.dropsFirstTickLabel, p.index == model.firstIndex { return nil }
         let hour = model.hourOfDay(slot: p.index - model.firstIndex)
         switch style.labelFormat {
         case .none: return nil
@@ -118,9 +121,11 @@ public struct ChartGeometry: Sendable {
         public var labelX: CGFloat
     }
 
+    /// The first day's name is suppressed when `now` sits in the window (round five: the readout
+    /// already names the day), as `chart_reference.py` skips `i == start` when `now` is given.
     public var dayMarks: [DayMark] {
         guard style.showsDays else { return [] }
-        return model.dayLabels.map {
+        return model.dayLabels.filter { !($0.slot == 0 && model.showsNow) }.map {
             let x = x(slot: Double($0.slot))
             let divider = $0.slot > 0
             return DayMark(x: x, name: $0.name, divider: divider, labelX: x + (divider ? 5 : 4) * style.unit)

@@ -7,14 +7,18 @@ public enum ChartWindow: Sendable, Equatable {
     case all
     /// Exactly 12 slots from `floor(nowIndex)` (watch strip); the tail stays empty past the horizon.
     case next12
-    /// Exactly 6 slots from `floor(nowIndex)` (complication mini strip); y domain rounds to 5.
+    /// Exactly 6 slots from `floor(nowIndex)` (the first-package mini strip); y domain rounds to 5.
     case next6
+    /// Exactly 12 slots from `floor(nowIndex)` for the rectangular complication (§6.3 round five).
+    /// Y domain = max(20, max gust from the payload's first hour to the window end, rounded up to
+    /// 5): it only grows as the window slides through one run and resets with a new payload.
+    case complication12
 
     /// Fixed slot count, or nil for "all hours".
     public var fixedSlots: Int? {
         switch self {
         case .all: nil
-        case .next12: 12
+        case .next12, .complication12: 12
         case .next6: 6
         }
     }
@@ -118,7 +122,10 @@ public struct ChartModel: Sendable {
         let range = windowStart...windowStart.addingTimeInterval(TimeInterval(slots) * 3600)
         self.xRange = range
         let plotted = indices.map { forecast.hours[$0] }
-        if window == .next6 {
+        if window == .complication12 {
+            let runMax = forecast.hours.prefix(lastExclusive).map(\.gust).max() ?? 0
+            self.yMax = max(20, Int((Double(runMax) / 5).rounded(.up)) * 5)
+        } else if window == .next6 {
             let maxGust = plotted.map(\.gust).max() ?? 0
             self.yMax = max(5, Int((Double(maxGust) / 5).rounded(.up)) * 5)
         } else {

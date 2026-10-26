@@ -43,6 +43,13 @@ struct WindEntry: TimelineEntry, Sendable {
         return "last run \(hour) \(TimeFormat.weekdayShort(forecast.runDate, tz: timeZone))"
     }
 
+    /// `15Z Tue`: the past-horizon rectangular's right-hand run label (round five).
+    var runShortText: String {
+        guard let forecast else { return "" }
+        let hour = forecast.run.replacingOccurrences(of: "HRRR ", with: "")
+        return "\(hour) \(TimeFormat.weekdayShort(forecast.runDate, tz: timeZone))"
+    }
+
     static func make(forecast: Forecast, at date: Date, lastCheckOK: Bool = true, isDefault: Bool = true) -> WindEntry {
         WindEntry(
             date: date,

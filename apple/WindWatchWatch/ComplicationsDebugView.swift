@@ -24,11 +24,14 @@ struct ComplicationsDebugView: View {
         .ignoresSafeArea()
     }
 
+    private let is42 = ProcessInfo.processInfo.environment["WW_RECT"] == "42"
+
     private var rectangular: some View {
         VStack(spacing: 4) {
             ForEach(rows, id: \.self) { state in
+                // `WW_RECT=42`: the 41/42 mm plate (≈166×65 pt), where `from W` drops to the bare arrow.
                 RectangularComplicationView(entry: .fixture(state), tinted: false, showsPlate: true)
-                    .frame(width: 184, height: 72)
+                    .frame(width: is42 ? 166 : 184, height: is42 ? 65 : 72)
             }
         }
         .padding(.top, 22)

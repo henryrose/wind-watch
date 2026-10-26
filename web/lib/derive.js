@@ -446,7 +446,10 @@ export function chartLayout(forecast, style, { nowIdx = null } = {}) {
     const cx = X(i) + slot / 2;
     if (onCadence(hod, style.tickEvery)) ticks.push({ i, x: cx, y1: plotBottom, y2: plotBottom + 3 });
     if (onCadence(hod, style.labelEvery)) labels.push({ i, x: cx, y: H + 10, text: tickLabel(hod) });
-    if (style.dayBand && (i === 0 || hod === 0)) {
+    // Round five: the first day's name is suppressed while `now` is on the plot (the readout
+    // already names the day), as chart_reference.py skips i == start when now is given.
+    const nowOnPlot = nowIdx != null && nowIdx >= 0 && nowIdx <= n;
+    if (style.dayBand && (hod === 0 ? true : i === 0 && !nowOnPlot)) {
       days.push({
         i,
         x: X(i),

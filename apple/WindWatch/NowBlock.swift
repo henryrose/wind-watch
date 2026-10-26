@@ -1,13 +1,16 @@
 import SwiftUI
 import WindCore
 
-/// Readout row (HANDOFF §6.4d, `Phone-Main.dc.html` / `Phone-Main-Scrub.dc.html`): a fixed 96 pt
-/// `card` plate (radius 12, padding 10/12) with the same structure in both states so nothing
-/// above the chart moves while a finger is down. Top row: a 13 pt label line (`Now · Wed 9:25am`
-/// with a blue 2 pt bar, or `Thu 12am · midnight` with a white one) and, right, the peak-gust
-/// text (`now 3 kn` while scrubbing). Bottom row: the 56 pt hero + `kn`, `G 4` over arrow +
-/// `from W · 290°`, the Beaufort chip + `Beaufort`. Scrubbing adds a 1.5 pt white
-/// inset ring. Every text is single-line (`lineLimit(1)`, `minimumScaleFactor(0.85)`).
+/// Readout row (HANDOFF §6.4d round five, `Phone-Main.dc.html` / `Phone-Main-Scrub.dc.html`): a
+/// fixed 96 pt `card` plate (radius 12, padding 10/12) with the same three columns in both states
+/// so nothing above the chart moves while a finger is down.
+/// - Left (124 pt): the 13 pt label line (`Now · Wed 9:25am` with a blue 2 pt bar, or
+///   `Thu 12am · midnight` with a white one) over the 56 pt number + `kn`.
+/// - Middle: `G 4` over arrow + `from W`; while scrubbing `283°` follows, Medium 13 secondary.
+/// - Right: `peak G25 · 12am` at rest or `now 3 kn` while scrubbing (Medium 12 secondary) over
+///   the Beaufort chip, number only.
+/// Scrubbing adds a 1.5 pt white inset ring. Every text is single-line (`lineLimit(1)`,
+/// `minimumScaleFactor(0.85)`).
 struct NowBlock: View {
     var scrub: Int?
 
@@ -24,62 +27,53 @@ struct NowBlock: View {
 
     var body: some View {
         let shown = scrubbed?.hour ?? model.hero
-        VStack(alignment: .leading, spacing: 4) {
-            // Top row: the label line left, the peak-gust text (or `now 3 kn`) right. The
-            // artboard stacks the right text over the chip in a third column, which does not fit
-            // 354 pt beside the 138 pt label column (the render clips it); one shared row keeps
-            // every string on one line without changing the plate height.
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
                 labelLine
-                Spacer(minLength: 4)
-                Text(rightText)
-                    .font(.system(size: 12, weight: .medium).monospacedDigit())
-                    .foregroundStyle(Tokens.inkSecondary(scheme))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-                    .truncationMode(.tail)
-            }
-            .frame(height: 16)
-            HStack(alignment: .bottom, spacing: 12) {
                 heroNumber(shown?.kn)
-                    .frame(width: 110, alignment: .leading)
-                if let shown {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(alignment: .lastTextBaseline, spacing: 4) {
-                            Text("G")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(Tokens.inkSecondary(scheme))
-                            Text("\(shown.gust)")
-                                .font(.system(size: 24, weight: .bold, design: .rounded).monospacedDigit())
-                                .foregroundStyle(numberInk)
-                        }
-                        .frame(height: 26)
-                        HStack(spacing: 6) {
-                            ArrowView(dirFrom: shown.dirFrom, size: 16, color: numberInk)
-                            Text("\(Compass.fromText(dirFrom: shown.dirFrom)) · \(shown.dirFrom)°")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(numberInk)
-                                .minimumScaleFactor(0.85)
-                        }
-                        .frame(height: 20)
-                    }
-                    .lineLimit(1)
-                    .padding(.bottom, 2)
-                    Spacer(minLength: 4)
-                    HStack(spacing: 6) {
-                        BeaufortChip(step: Beaufort.step(kn: shown.kn), scheme: scheme)
-                            .oldStateDesaturation(model.ageTier)
-                        Text("Beaufort")
-                            .font(.system(size: 12, weight: .medium))
+            }
+            .frame(width: 124, alignment: .leading)
+            if let shown {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .lastTextBaseline, spacing: 4) {
+                        Text("G")
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Tokens.inkSecondary(scheme))
-                            .lineLimit(1)
-                            .fixedSize()
+                        Text("\(shown.gust)")
+                            .font(.system(size: 24, weight: .bold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(numberInk)
+                    }
+                    .frame(height: 26)
+                    HStack(spacing: 6) {
+                        ArrowView(dirFrom: shown.dirFrom, size: 16, color: numberInk)
+                        Text(Compass.fromText(dirFrom: shown.dirFrom))
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(numberInk)
+                        if scrubbed != nil {
+                            Text("\(shown.dirFrom)°")
+                                .font(.system(size: 13, weight: .medium).monospacedDigit())
+                                .foregroundStyle(Tokens.inkSecondary(scheme))
+                        }
                     }
                     .frame(height: 20)
-                    .padding(.bottom, 2)
-                } else {
-                    Spacer(minLength: 0)
                 }
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .padding(.top, 18)
+                Spacer(minLength: 4)
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(rightText)
+                        .font(.system(size: 12, weight: .medium).monospacedDigit())
+                        .foregroundStyle(Tokens.inkSecondary(scheme))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                        .frame(height: 16)
+                    BeaufortChip(step: Beaufort.step(kn: shown.kn), scheme: scheme)
+                        .oldStateDesaturation(model.ageTier)
+                }
+                .padding(.top, 18)
+            } else {
+                Spacer(minLength: 0)
             }
         }
         .padding(.horizontal, 12)
@@ -138,14 +132,14 @@ struct NowBlock: View {
             }
         }
         .lineLimit(1)
-        .fixedSize()
+        .minimumScaleFactor(0.85)
         .frame(height: 52)
     }
 
-    /// Right column top line: the peak-gust text at rest, `now 3 kn` while scrubbing.
+    /// Right column line: `peak G25 · 12am` at rest, `now 3 kn` while scrubbing.
     private var rightText: String {
         if scrubbed != nil, let hero = model.hero { return "now \(hero.kn) kn" }
-        if let forecast = model.forecast { return Derivations.peakGustChipText(forecast: forecast, now: model.now) }
+        if let forecast = model.forecast { return Derivations.peakReadoutText(forecast: forecast, now: model.now) }
         return ""
     }
 
@@ -155,7 +149,7 @@ struct NowBlock: View {
         }
         if let s = scrubbed {
             let date = forecast.date(ofHour: s.index)
-            return "\(TimeFormat.weekdayLong(date, tz: forecast.timeZone)) \(TimeFormat.hhmm(date, tz: forecast.timeZone)), \(s.hour.kn) knots gusting \(s.hour.gust) \(Compass.spokenFromText(dirFrom: s.hour.dirFrom)), Beaufort \(Beaufort.step(kn: s.hour.kn)), now \(hero.kn) knots"
+            return "\(TimeFormat.weekdayLong(date, tz: forecast.timeZone)) \(TimeFormat.hhmm(date, tz: forecast.timeZone)), \(s.hour.kn) knots gusting \(s.hour.gust) \(Compass.spokenFromText(dirFrom: s.hour.dirFrom)), \(s.hour.dirFrom) degrees, Beaufort \(Beaufort.step(kn: s.hour.kn)), now \(hero.kn) knots"
         }
         return Derivations.heroAccessibilityLabel(hour: hero, forecast: forecast) + ", " + Derivations.peakGustChipText(forecast: forecast, now: model.now)
     }

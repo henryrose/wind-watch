@@ -53,9 +53,11 @@ public struct WindChart: View {
         let textFont = Font.system(size: style.fontSize, weight: .semibold)
 
         // Day/night shading: one horizontal gradient over the plot.
-        ctx.fill(Path(plotRect), with: .linearGradient(
+        if style.showsDaylight {
+            ctx.fill(Path(plotRect), with: .linearGradient(
             Gradient(stops: model.shadeStops),
             startPoint: CGPoint(x: 0, y: g.plotTop), endPoint: CGPoint(x: g.width, y: g.plotTop)))
+        }
 
         // Gridlines every 10 kn below the top, labels right-aligned inside the plot at 45 %.
         if style.showsGrid {
@@ -71,7 +73,7 @@ public struct WindChart: View {
         }
 
         // Sun dots on the plot's top edge.
-        for pt in g.sunPoints {
+        for pt in (style.showsDaylight ? g.sunPoints : []) {
             let r = style.sunRadius
             ctx.fill(Path(ellipseIn: CGRect(x: pt.x - r, y: pt.y - r, width: 2 * r, height: 2 * r)), with: .color(theme.sun))
         }
@@ -139,7 +141,7 @@ public struct WindChart: View {
         }
 
         // Day band: name at the left of each day; dotted divider at midnight (never the first day).
-        // The first day's name sits at `X + 4` on the line above `now` (round two), so both show.
+        // The first day's name is dropped while `now` is in the window (round five).
         let nowX = g.nowX
         for mark in g.dayMarks {
             if mark.divider {
@@ -153,7 +155,7 @@ public struct WindChart: View {
         }
 
         // Now marker: 1.5 pt rule from `top − 6`, label 4 pt right of it.
-        if let nowX {
+        if style.showsMarkers, let nowX {
             var rule = Path()
             rule.move(to: CGPoint(x: nowX, y: g.plotTop - 6 * u))
             rule.addLine(to: CGPoint(x: nowX, y: g.plotBottom))
@@ -162,7 +164,7 @@ public struct WindChart: View {
         }
 
         // Horizon edge: 1 pt dash 3/3 at 70 %, label right-aligned 4 pt left of it.
-        if let edgeX = g.edgeX {
+        if style.showsMarkers, let edgeX = g.edgeX {
             var rule = Path()
             rule.move(to: CGPoint(x: edgeX, y: g.plotTop - 6 * u))
             rule.addLine(to: CGPoint(x: edgeX, y: g.plotBottom))

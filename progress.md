@@ -5,7 +5,7 @@ verifies, commits, and edits this file. Plan: `docs/IMPLEMENTATION_PLAN.md`.
 
 Status legend: `todo` · `in-progress` · `done` · `blocked` · `other-machine`
 
-Last updated: 2026-10-23 (App Store submission readiness evaluated, tasks H1–H9; Worker, signing and TestFlight done on the deploy Mac; device matrix still open)
+Last updated: 2026-10-25 (design rounds 4–5 implemented, build 1.0 (8); App Store readiness H1–H9 and review reply R1–R8 above)
 
 
 ## Tasks
@@ -99,6 +99,21 @@ Information → Notes. Draft text for items 2–6: `docs/appstore/review-reply.m
 | R6 | Regulated industry / third-party material | Claude | drafted | review-reply.md §6: not applicable; CC BY 4.0 attribution |
 | R7 | Henry reviews the draft, edits anything wrong, pastes §1–6 into the Resolution Center reply with the video attached, and into App Review Information → Notes; save | Henry | todo | the reply alone is not enough; Apple asked for both |
 | R8 | Resubmit (no new build needed unless the reply prompts one) | Henry | todo | |
+
+## Design package rounds 4–5 (docs/design/CHANGES.md, 2026-10-25)
+
+Pulled `893d30f` from GitHub. The server and the payload are untouched: every change is in the
+clients, so builds ≤ 7 in the field keep working against the same `/v1/wind` and `?lat&lon`.
+
+| ID | Change (CHANGES.md) | Status | Verification | Notes |
+|---|---|---|---|---|
+| R4a | Rectangular complication: one numbers row (`15 · G25 · ▸ from W · as of 23:30`, no `kn`, trust text Medium 11 never smaller), full-width 12-hour strip below (§6.3, §7.1) | done | `ComplicationStripTests` (12 slots, 14 pt slot at 168 pt, no labels/grid/arrows); DEBUG page at 46 mm and `WW_RECT=42` reviewed against `Comp-Rectangular.png` | `ViewThatFits` order: drop `from W` → drop `G` → 20 pt number. Old reads `Wed 09:00` (no "as of"). Past horizon: dash + `No forecast` + `15Z Wed`, dashed box `Open app to refresh`. New `ComplicationStrip` + `ChartWindow.complication12` + `ChartStyle.complicationStrip`; the 6-hour `MiniStrip` is kept for its reference tests but no longer shipped. Smart Stack still held |
+| R4b | Locations: up to 12 equal rows, Port Townsend Bay seeded as row 1 but deletable/renamable/reorderable, last row can't be deleted, selected row drives every surface (§8.3) | done | `SavedLocationTests` (fresh install, round trip, build-7 migration, list rules, context incl. legacy keys), `ForecastSessionSyncTests` (fallback to row 1, last row stays, stops at 12); screenshots of 5 and 12 rows | Stored as `locations` + `selectedLocationID` in the App Group; the old `customLocation`/`useCustom` keys are migrated on load and still written (defaults and WatchConnectivity context) so a build-7 watch app follows a build-8 phone. The Port Townsend Bay point (whatever its name) still fetches the baked `/v1/wind`; every other row `?lat&lon`. Rename via the row's context menu; new points get a name field + Add |
+| R4c | Watch Settings: the same list, Crown-scrolled; `first in list` / `set on iPhone` | done | watch screenshot with three rows | a wrist tap selects locally; the phone's next context wins (unchanged rule) |
+| R5a | Locations: permanent Edit button, swipe still works, full list opens in Edit mode with a `List full (12)` banner, map long-press shows `List full — delete a location first` | done | `loc12` screenshot | standard `List` edit mode puts the minus on the left (the render draws it right) |
+| R5b | Scrub readout: degrees back, small and secondary, only while scrubbing; at rest `peak G25 · 12am` over a number-only Beaufort chip; 124 pt number column | done | main + scrub screenshots vs `Phone-Main*.png` | landscape readout follows the same degrees rule. `Derivations.peakReadoutText` adds the day when the peak is ≥ 18 h away |
+| R5c | Chart: first day label suppressed while `now` is on the plot; first tick label dropped at the plot edge (portrait phone) | done | `ChartReferenceTests` now also compare tick labels (phone/web) with the refreshed `phonebig`/`phonesel`/`land` SVGs; web `chart.test.js` vs `webhover.svg` | landscape and web keep `9am` in slot 0, as the reference does |
+| R5d | Build 8: version 1.0 (8), haptic actor warning fixed | done | `./build.sh all`: 141 Swift tests, both builds zero warnings; server 89, web 38 | |
 
 ## Needs the other machine (from plan §7)
 

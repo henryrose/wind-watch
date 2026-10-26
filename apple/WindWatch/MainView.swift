@@ -137,8 +137,9 @@ struct ScrubState {
     var index: Int?
     var pinned = false
 
-    /// Applies a chart callback; a light haptic marks each hour change.
-    mutating func apply(_ new: Int?) {
+    /// Applies a chart callback; a light haptic marks each hour change. Gesture callbacks run on
+    /// the main actor, which the haptic generator requires.
+    @MainActor mutating func apply(_ new: Int?) {
         if pinned { return }
         if new != index, new != nil {
             #if canImport(UIKit) && !os(watchOS)

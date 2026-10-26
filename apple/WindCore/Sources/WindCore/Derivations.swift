@@ -146,6 +146,17 @@ public enum Derivations {
         return "\(forecast.peakGust.kn) kn gusts \(phrase)"
     }
 
+    /// `peak G25 · 12am` (round five readout, HANDOFF §6.4d). The day is added (`peak G25 · Thu 3pm`)
+    /// when the peak is 18 h or more away, where an hour alone would be ambiguous.
+    public static func peakReadoutText(forecast: Forecast, now: Date, tz: TimeZone? = nil) -> String {
+        let zone = tz ?? forecast.timeZone
+        let at = forecast.peakGust.at
+        let when = at.timeIntervalSince(now) < 18 * 3600
+            ? TimeFormat.hour12(hour: TimeFormat.hour(at, tz: zone))
+            : TimeFormat.weekdayHour12(at, tz: zone)
+        return "peak G\(forecast.peakGust.kn) · \(when)"
+    }
+
     /// Hero VoiceOver label: `15 knots, gusting 25, from the west, as of 23:30`.
     public static func heroAccessibilityLabel(hour: Forecast.Hour, forecast: Forecast, tz: TimeZone? = nil) -> String {
         let asOf = TimeFormat.hhmm(forecast.fetched, tz: tz ?? forecast.timeZone)

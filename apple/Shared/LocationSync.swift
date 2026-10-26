@@ -3,13 +3,14 @@ import WatchConnectivity
 import WidgetKit
 import WindCore
 
-/// Phone → watch sync of the location preference over `WCSession` application context (DESIGN §7).
+/// Phone → watch sync of the Locations list over `WCSession` application context (DESIGN §7,
+/// HANDOFF §8.3).
 ///
-/// The iPhone is the editor: every local change (`saveCustom`, `selectDefault`, `selectCustom`)
-/// is pushed as `LocationSettings.applicationContext`, and the latest context is re-sent on
-/// activation so a newly paired watch catches up. The watch applies whatever arrives — both
-/// `custom` and `useCustom` — so the phone's `useCustom` wins over a toggle made on the wrist;
-/// the watch Settings toggle still works standalone between contexts. Compiled into the two apps
+/// The iPhone is the editor: every local edit (select, add, delete, rename, move) is pushed as
+/// `LocationSettings.applicationContext` (the list, the selection, and the legacy pair for watch
+/// apps on builds ≤ 7), and the latest context is re-sent on activation so a newly paired watch
+/// catches up. The watch applies whatever arrives, so the phone's selection wins over a tap made
+/// on the wrist; a wrist selection still works standalone between contexts. Compiled into the two apps
 /// only; the widget extension reads the shared defaults instead.
 @MainActor
 final class LocationSync: NSObject, WCSessionDelegate {

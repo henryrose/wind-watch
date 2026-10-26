@@ -12,12 +12,24 @@ struct WindWatchApp: App {
         let session = ForecastSession(bundleInfo: Bundle.main.infoDictionary ?? [:])
         let sync = LocationSync(session: session)
         #if DEBUG
-        // `WW_SAVE_CUSTOM="Name,lat,lon"`: save and select a custom location at launch (sync tests).
-        if let spec = ProcessInfo.processInfo.environment["WW_SAVE_CUSTOM"] {
+        // `WW_SAVE_CUSTOM="Name,lat,lon"`: add and select a location at launch (sync tests).
+        // `WW_LOCATIONS="Name,lat,lon;Name,lat,lon;…"` replaces the whole list and
+        // `WW_SELECTED=<row>` picks the selected row (screenshots; Port Townsend Bay is
+        // recognised by its coordinates and keeps its fixed id).
+        let env = ProcessInfo.processInfo.environment
+        func parse(_ spec: String) -> SavedLocation? {
             let parts = spec.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-            if parts.count == 3, let lat = Double(parts[1]), let lon = Double(parts[2]) {
-                session.saveCustom(SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier))
-            }
+            guard parts.count == 3, let lat = Double(parts[1]), let lon = Double(parts[2]) else { return nil }
+            var location = SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier)
+            if location.isDefaultPoint { location.id = SavedLocation.portTownsendBay.id }
+            return location
+        }
+        if let spec = env["WW_LOCATIONS"] {
+            let list = spec.split(separator: ";").compactMap { parse(String($0)) }
+            session.replaceLocations(list, selectedIndex: Int(env["WW_SELECTED"] ?? "") ?? 0)
+        }
+        if let spec = env["WW_SAVE_CUSTOM"], let location = parse(spec) {
+            session.add(location)
         }
         #endif
         _model = State(initialValue: session)
