@@ -3,11 +3,14 @@ import SwiftUI
 import WindCore
 
 /// DEBUG-only page (`WW_PAGE=complications`, `WW_FAMILY=rectangular|circular|corner|inline`,
-/// optional `WW_ROWS=fresh,stale,old,horizon`) rendering each complication family at its exact
-/// size for screenshots. Real watch-face rendering cannot be scripted in the simulator.
+/// optional `WW_ROWS=fresh,stale,old,horizon`, or `WW_STATE=<one state>`, and `WW_HOUR=<index>` to
+/// put fresh/stale/old at that fixture hour, e.g. 15 for `Comp-Rectangular`) rendering each
+/// complication family at its exact size for screenshots. Real watch-face rendering cannot be
+/// scripted in the simulator.
 struct ComplicationsDebugView: View {
-    private let family = ProcessInfo.processInfo.environment["WW_FAMILY"] ?? "rectangular"
-    private let rows: [String] = (ProcessInfo.processInfo.environment["WW_ROWS"] ?? "fresh,stale,old,horizon")
+    private static let env = ProcessInfo.processInfo.environment
+    private let family = env["WW_FAMILY"] ?? "rectangular"
+    private let rows: [String] = (env["WW_ROWS"] ?? env["WW_STATE"] ?? "fresh,stale,old,horizon")
         .split(separator: ",").map(String.init)
 
     var body: some View {
@@ -24,14 +27,29 @@ struct ComplicationsDebugView: View {
         .ignoresSafeArea()
     }
 
+    /// 184×72 on 46 mm (208 pt wide), ≈166×65 on 41/42 mm (HANDOFF §7.1).
     private var rectangular: some View {
-        VStack(spacing: 4) {
-            ForEach(rows, id: \.self) { state in
-                RectangularComplicationView(entry: .fixture(state), tinted: false, showsPlate: true)
-                    .frame(width: 184, height: 72)
+        GeometryReader { geo in
+            let small = geo.size.width < 200
+            VStack(spacing: 4) {
+                ForEach(rows, id: \.self) { state in
+                    RectangularComplicationView(entry: Self.entry(state), tinted: false, showsPlate: true)
+                        .frame(width: small ? 166 : 184, height: small ? 65 : 72)
+                }
             }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 22)
         }
-        .padding(.top, 22)
+    }
+
+    /// `WindEntry.fixture`, or with `WW_HOUR` the state at that hour: `fetched` moved to 30 min /
+    /// 2 h / 7 h before it so the trust tier matches.
+    private static func entry(_ state: String) -> WindEntry {
+        guard let hour = env["WW_HOUR"].flatMap(Int.init), ["fresh", "stale", "old"].contains(state) else { return .fixture(state) }
+        var f = PreviewData.forecast
+        let now = f.date(ofHour: hour).addingTimeInterval(30 * 60)
+        f.fetched = now.addingTimeInterval(-[ "fresh": 1800, "stale": 7200, "old": 25200 ][state, default: 1800])
+        return .make(forecast: f, at: now)
     }
 
     private var circular: some View {

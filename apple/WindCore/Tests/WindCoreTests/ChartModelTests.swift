@@ -58,28 +58,28 @@ struct ChartModelTests {
         #expect(m.ageTier == .old)
     }
 
-    @Test func next6RoundsToFiveAndEmptiesPastHorizon() throws {
+    @Test func complicationWindowFloorsAtTwentyRoundsToFiveAndEmptiesPastHorizon() throws {
         let f = try Fixture.forecast()
-        let w = ChartModel(forecast: f, now: f.start.addingTimeInterval(13.9 * 3600), window: .next6, scheme: .dark)
-        #expect(w.firstIndex == 13)
-        #expect(w.points.map(\.index) == [13, 14, 15, 16, 17, 18])
-        #expect(w.yMax == 25)
-        #expect(w.xRange == f.date(ofHour: 13)...f.date(ofHour: 19))
-        #expect(w.sunMarkers.isEmpty)
+        let w = ChartModel(forecast: f, now: f.start.addingTimeInterval(13.9 * 3600), window: .complication, scheme: .dark)
+        #expect(w.firstIndex == 13 && w.slotCount == 12)
+        #expect(w.points.map(\.index) == Array(13...24))
+        #expect(w.yMax == 25) // max gust 25
+        #expect(w.xRange == f.date(ofHour: 13)...f.date(ofHour: 25))
         #expect(w.ageTier == .old)
-        let early = ChartModel(forecast: f, now: f.start, window: .next6, scheme: .dark)
-        #expect(early.points.map(\.gust) == [4, 5, 3, 3, 4, 2])
-        #expect(early.yMax == 5)
-        let w2 = ChartModel(forecast: f, now: f.date(ofHour: 9), window: .next6, scheme: .dark)
-        #expect(w2.points.map(\.gust) == [9, 13, 15, 18, 19, 24])
-        #expect(w2.yMax == 25)
-        #expect(w2.sunMarkers == [f.sun[0].sunset]) // 18:12 inside 18:00…24:00
-        let tail = ChartModel(forecast: f, now: f.date(ofHour: 42), window: .next6, scheme: .dark)
-        #expect(tail.points.map(\.index) == [42, 43, 44])
-        #expect(tail.horizonEdgeSlot == 3)
-        let gone = ChartModel(forecast: f, now: f.horizon.addingTimeInterval(1), window: .next6, scheme: .dark)
+        let early = ChartModel(forecast: f, now: f.start, window: .complication, scheme: .dark)
+        #expect(early.points.map(\.gust).max() == 15)
+        #expect(early.yMax == 20) // floor, not 15 rounded to 15
+        #expect(ChartModel(forecast: f, now: f.start, window: .complication, scheme: .dark, yMaxFloor: 30).yMax == 30)
+        #expect(ChartModel(forecast: f, now: f.date(ofHour: 13), window: .complication, scheme: .dark, yMaxFloor: 10).yMax == 25)
+        let w2 = ChartModel(forecast: f, now: f.date(ofHour: 2), window: .complication, scheme: .dark)
+        #expect(w2.points.map(\.gust).max() == 19)
+        #expect(w2.yMax == 20)
+        let tail = ChartModel(forecast: f, now: f.date(ofHour: 40), window: .complication, scheme: .dark)
+        #expect(tail.points.map(\.index) == [40, 41, 42, 43, 44]) // the strip ends early, 12 slots kept
+        #expect(tail.slotCount == 12 && tail.horizonEdgeSlot == 5)
+        let gone = ChartModel(forecast: f, now: f.horizon.addingTimeInterval(1), window: .complication, scheme: .dark)
         #expect(gone.points.isEmpty)
-        #expect(gone.yMax == 5)
+        #expect(gone.yMax == 20)
     }
 
     @Test func oldTier() throws {
@@ -147,9 +147,18 @@ struct ChartGeometryTests {
         #expect(gs.tickPoints.map { gs.tickLabel($0) } == ["00", "03"])
         #expect(gs.edgeLabel == "ends 05:00")
         #expect(gs.edgeX == 6 * gs.slot)
-        let mini = ChartGeometry(model: ChartModel(forecast: f, now: f.date(ofHour: 15), window: .next6, scheme: .dark), style: .mini, width: 75)
-        #expect(mini.tickPoints.isEmpty && mini.arrowPoints.isEmpty && mini.gridValues.isEmpty && mini.edgeLabel == nil)
-        #expect(mini.height == 31)
+        // Rectangular strip: 3-h ticks without labels; no arrows, grid, sun markers, now or edge rules.
+        let comp = ChartGeometry(model: ChartModel(forecast: f, now: f.date(ofHour: 9), window: .complication, scheme: .dark),
+                                 style: .complication(height: 29), width: 168)
+        #expect(comp.model.sunEvents.count == 1) // sunset 18:12 is in the window but never drawn
+        #expect(comp.sunMarks.isEmpty && comp.sunPoints.isEmpty)
+        #expect(comp.tickPoints.map(\.index) == [9, 12, 15, 18] && comp.tickPoints.allSatisfy { comp.tickLabel($0) == nil })
+        #expect(comp.arrowPoints.isEmpty && comp.gridValues.isEmpty && comp.dayMarks.isEmpty)
+        #expect(comp.nowX == nil && comp.edgeX == nil && comp.edgeLabel == nil)
+        #expect(comp.height == 29 && comp.plotTop == 3 && comp.plotHeight == 24 && comp.slot == 14)
+        let compTail = ChartGeometry(model: ChartModel(forecast: f, now: f.date(ofHour: 40), window: .complication, scheme: .dark),
+                                     style: .complication(height: 29), width: 168)
+        #expect(compTail.edgeX == nil && compTail.barRect(compTail.model.points[4]).maxX <= 5 * 14)
     }
 
     @Test func selectionAndHitTesting() throws {
@@ -166,8 +175,8 @@ struct ChartGeometryTests {
         #expect(outline.minX == bar.minX - 1.5 && outline.width == bar.width + 3)
         #expect(outline.minY == bar.minY - 1.5 && outline.height == bar.height + 1.5)
         #expect(g.selectionRuleX(index: 15) == g.centreX(index: 15))
-        let empty = ChartModel(forecast: f, now: f.horizon.addingTimeInterval(3600), window: .next6, scheme: .dark)
-        #expect(ChartGeometry(model: empty, style: .mini, width: 75).index(atX: 10) == nil)
+        let empty = ChartModel(forecast: f, now: f.horizon.addingTimeInterval(3600), window: .complication, scheme: .dark)
+        #expect(ChartGeometry(model: empty, style: .complication(height: 29), width: 168).index(atX: 10) == nil)
     }
 
     @Test func zeroKnotStub() throws {

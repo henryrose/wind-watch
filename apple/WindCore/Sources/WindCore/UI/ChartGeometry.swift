@@ -72,13 +72,15 @@ public struct ChartGeometry: Sendable {
 
     /// Sun dots on the plot's top edge (`y = top − 1`).
     public var sunPoints: [CGPoint] {
-        model.sunMarkers.map { CGPoint(x: x(slot: model.slot(of: $0)), y: plotTop - 1 * unit) }
+        guard style.showsSun else { return [] }
+        return model.sunMarkers.map { CGPoint(x: x(slot: model.slot(of: $0)), y: plotTop - 1 * unit) }
     }
 
     /// Sun markers with their kind: sunrise a filled dot of `sunRadius`, sunset a ring
     /// `0.75 · unit` smaller with a `1.5 · unit` stroke (§5, `chart_reference.py` 'rise-set').
     public var sunMarks: [(point: CGPoint, isRise: Bool)] {
-        model.sunEvents.map { (CGPoint(x: x(slot: model.slot(of: $0.date)), y: plotTop - 1 * unit), $0.isRise) }
+        guard style.showsSun else { return [] }
+        return model.sunEvents.map { (CGPoint(x: x(slot: model.slot(of: $0.date)), y: plotTop - 1 * unit), $0.isRise) }
     }
 
     /// Radius of the sunset ring.
@@ -87,12 +89,12 @@ public struct ChartGeometry: Sendable {
     /// Now-marker x when `now` lies inside the window.
     public var nowX: CGFloat? {
         let s = model.nowSlot
-        guard s >= 0, s <= Double(model.slotCount) else { return nil }
+        guard style.showsRules, s >= 0, s <= Double(model.slotCount) else { return nil }
         return x(slot: s)
     }
 
     /// Horizon-edge x: `X(start + len(hours))`, or the end of the last NBM block in 7 d.
-    public var edgeX: CGFloat? { model.horizonEdgeSlot.map { x(slot: Double($0)) } }
+    public var edgeX: CGFloat? { style.showsRules ? model.horizonEdgeSlot.map { x(slot: Double($0)) } : nil }
 
     /// The HRRR→NBM seam x (7 d), when NBM is plotted.
     public var seamX: CGFloat? { model.seamSlot.map { x(slot: Double($0)) } }

@@ -1,0 +1,40 @@
+<!-- Comp-Rectangular.dc.html (handoff 2026-10-26): rectangular complication strip, reference hours 15-26 -->
+<svg width="336" height="58" viewBox="0 0 336 58" aria-hidden="true" style="display:block;overflow:visible">
+<defs><linearGradient id="dnr46" x1="0" x2="1" y1="0" y2="0">
+<stop offset="0.0000" stop-color="#FFFFFF" stop-opacity="0.000"/>
+<stop offset="0.5944" stop-color="#FFFFFF" stop-opacity="0.000"/>
+<stop offset="0.6389" stop-color="#FFFFFF" stop-opacity="0.000"/>
+<stop offset="1.0000" stop-color="#FFFFFF" stop-opacity="0.000"/>
+</linearGradient></defs>
+<rect x="0" y="6" width="336.0" height="48.0" fill="url(#dnr46)"/>
+<circle cx="214.7" cy="5" r="0" fill="#FFB340"/>
+<rect x="3.9" y="25.2" width="20.16" height="28.8" rx="1.5" fill="#8DD44A"/>
+<rect x="31.9" y="27.1" width="20.16" height="26.9" rx="1.5" fill="#8DD44A"/>
+<rect x="59.9" y="27.1" width="20.16" height="26.9" rx="1.5" fill="#8DD44A"/>
+<rect x="87.9" y="31.0" width="20.16" height="23.0" rx="1.5" fill="#8DD44A"/>
+<rect x="115.9" y="31.0" width="20.16" height="23.0" rx="1.5" fill="#8DD44A"/>
+<rect x="143.9" y="32.9" width="20.16" height="21.1" rx="1.5" fill="#8DD44A"/>
+<rect x="171.9" y="34.8" width="20.16" height="19.2" rx="1.5" fill="#3FC2A0"/>
+<rect x="199.9" y="36.7" width="20.16" height="17.3" rx="1.5" fill="#3FC2A0"/>
+<rect x="227.9" y="38.6" width="20.16" height="15.4" rx="1.5" fill="#3FC2A0"/>
+<rect x="255.9" y="40.6" width="20.16" height="13.4" rx="1.5" fill="#3FC2A0"/>
+<rect x="283.9" y="40.6" width="20.16" height="13.4" rx="1.5" fill="#3FC2A0"/>
+<rect x="311.9" y="42.5" width="20.16" height="11.5" rx="1.5" fill="#4FA3D8"/>
+<polyline points="14.0,6.0 42.0,7.9 70.0,7.9 98.0,11.8 126.0,13.7 154.0,19.4 182.0,25.2 210.0,27.1 238.0,31.0 266.0,31.0 294.0,31.0 322.0,32.9" fill="none" stroke="#FFFFFF" stroke-opacity="0.75" stroke-width="2" stroke-linejoin="round"/>
+<line x1="2.9" x2="25.1" y1="6.0" y2="6.0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="30.9" x2="53.1" y1="7.9" y2="7.9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="58.9" x2="81.1" y1="7.9" y2="7.9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="86.9" x2="109.1" y1="11.8" y2="11.8" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="114.9" x2="137.1" y1="13.7" y2="13.7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="142.9" x2="165.1" y1="19.4" y2="19.4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="170.9" x2="193.1" y1="25.2" y2="25.2" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="198.9" x2="221.1" y1="27.1" y2="27.1" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="226.9" x2="249.1" y1="31.0" y2="31.0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="254.9" x2="277.1" y1="31.0" y2="31.0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="282.9" x2="305.1" y1="31.0" y2="31.0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="310.9" x2="333.1" y1="32.9" y2="32.9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<line x1="14.0" x2="14.0" y1="54.0" y2="57.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<line x1="98.0" x2="98.0" y1="54.0" y2="57.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<line x1="182.0" x2="182.0" y1="54.0" y2="57.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+<line x1="266.0" x2="266.0" y1="54.0" y2="57.0" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1"/>
+</svg>

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The wind chart (HANDOFF §6): one drawing for the watch strip, the phone (portrait, landscape,
-/// clamped) and the complication mini strip, driven by `ChartGeometry`, a port of
+/// clamped) and the complication strip, driven by `ChartGeometry`, a port of
 /// `chart_reference.py::svg()`. Twilight shading, Beaufort bars, gust line with caps, sun dots,
 /// gridlines, now and horizon rules, day band, direction arrows, hour ticks, and the hour
 /// selection (scrub) highlight.
@@ -53,9 +53,11 @@ public struct WindChart: View {
         let textFont = Font.system(size: style.fontSize, weight: .semibold)
 
         // Day/night shading: one horizontal gradient over the plot.
-        ctx.fill(Path(plotRect), with: .linearGradient(
-            Gradient(stops: model.shadeStops),
-            startPoint: CGPoint(x: 0, y: g.plotTop), endPoint: CGPoint(x: g.width, y: g.plotTop)))
+        if style.showsShading {
+            ctx.fill(Path(plotRect), with: .linearGradient(
+                Gradient(stops: model.shadeStops),
+                startPoint: CGPoint(x: 0, y: g.plotTop), endPoint: CGPoint(x: g.width, y: g.plotTop)))
+        }
 
         // Gridlines every 10 kn below the top, labels right-aligned inside the plot at 45 %.
         if style.showsGrid {

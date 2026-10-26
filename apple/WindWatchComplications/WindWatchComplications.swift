@@ -76,8 +76,13 @@ struct WindProvider: TimelineProvider {
         }
         let isDefault = prefs.selectedIsServerDefault
         let forecast = Forecast(payload: cached.payload, isDefault: isDefault)
-        let entries = TimelineBuilder.entries(forecast: forecast, now: now, lastCheckOK: cached.meta.lastCheckOK)
-            .map { WindEntry.make($0, forecast: forecast, isDefault: isDefault) }
+        let timeline = TimelineBuilder.entries(forecast: forecast, now: now, lastCheckOK: cached.meta.lastCheckOK)
+        // The strip scale only grows within a run, across reloads too (HANDOFF §6.3).
+        let domains = TimelineBuilder.stripDomains(forecast: forecast, entries: timeline, carried: defaults.flatMap(StripScale.load(from:)))
+        if let defaults, let first = timeline.first, let yMax = domains.first ?? nil {
+            StripScale(forecast: forecast, yMax: yMax, asOf: first.date).save(to: defaults)
+        }
+        let entries = zip(timeline, domains).map { WindEntry.make($0, forecast: forecast, isDefault: isDefault, stripYMax: $1) }
         return Timeline(entries: entries, policy: policy)
     }
 }

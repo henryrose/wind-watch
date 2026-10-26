@@ -198,7 +198,7 @@ struct ModelSeamSkyTests {
         #expect(m.points.filter(\.isNBM).allSatisfy { $0.index >= f.hours.count })
         #expect(m.points.filter { !$0.isNBM }.allSatisfy { $0.index + $0.span <= f.hours.count })
         // 48 h and the watch never see NBM.
-        for w in [ChartWindow.all, .next12, .next6] {
+        for w in [ChartWindow.all, .next12, .complication] {
             #expect(ChartModel(forecast: f, now: f.start, window: w, scheme: .dark).points.allSatisfy { !$0.isNBM })
         }
         // An `extended` that would overlap HRRR is dropped on decode.

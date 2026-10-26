@@ -11,6 +11,9 @@ struct WindEntry: TimelineEntry, Sendable {
     let hourIndex: Int?
     let trust: TrustState
     let isDefault: Bool
+    /// The rectangular strip's grow-only y domain for this entry (`TimelineBuilder.stripDomains`);
+    /// nil uses the window's own.
+    var stripYMax: Int? = nil
 
     /// The hour to render, nil when numbers must not be shown.
     var hour: Forecast.Hour? {
@@ -27,20 +30,20 @@ struct WindEntry: TimelineEntry, Sendable {
 
     var timeZone: TimeZone { forecast?.timeZone ?? .current }
 
-    /// `as of 23:30` (stale) / `as of Tue 13:05` (old) — the rectangular trust text.
+    /// `as of 23:30` (fresh, stale) / `Tue 13:05` (old) — the rectangular trust text (HANDOFF §7.1).
     var asOfText: String {
         guard let forecast else { return "" }
         switch tier {
-        case .old: return "as of " + TimeFormat.weekdayHHMM(forecast.fetched, tz: timeZone)
+        case .old: return TimeFormat.weekdayHHMM(forecast.fetched, tz: timeZone)
         default: return "as of " + TimeFormat.hhmm(forecast.fetched, tz: timeZone)
         }
     }
 
-    /// `last run 15Z Tue` for the past-horizon rectangular.
+    /// `15Z Tue`: the last run, right of `No forecast` on the past-horizon rectangular.
     var lastRunText: String {
         guard let forecast else { return "" }
         let hour = forecast.run.replacingOccurrences(of: "HRRR ", with: "")
-        return "last run \(hour) \(TimeFormat.weekdayShort(forecast.runDate, tz: timeZone))"
+        return "\(hour) \(TimeFormat.weekdayShort(forecast.runDate, tz: timeZone))"
     }
 
     static func make(forecast: Forecast, at date: Date, lastCheckOK: Bool = true, isDefault: Bool = true) -> WindEntry {
@@ -52,8 +55,9 @@ struct WindEntry: TimelineEntry, Sendable {
             isDefault: isDefault)
     }
 
-    static func make(_ entry: WindTimelineEntry, forecast: Forecast, isDefault: Bool) -> WindEntry {
-        WindEntry(date: entry.date, forecast: forecast, hourIndex: entry.hourIndex, trust: entry.trust, isDefault: isDefault)
+    static func make(_ entry: WindTimelineEntry, forecast: Forecast, isDefault: Bool, stripYMax: Int? = nil) -> WindEntry {
+        WindEntry(date: entry.date, forecast: forecast, hourIndex: entry.hourIndex, trust: entry.trust, isDefault: isDefault,
+                  stripYMax: stripYMax)
     }
 
     static func firstRun(at date: Date) -> WindEntry {

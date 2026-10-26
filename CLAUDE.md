@@ -62,7 +62,7 @@ cd apple && ./build.sh gen      # regenerate WindWatch.xcodeproj from project.ym
 # WW_SEARCH="text" / WW_PIN="lat,lon" (real search / long-press naming path, needs network),
 # WW_WELCOME=1 (first-launch chooser), WW_RANGE=48h|7d (chart range), WW_UNIT=f|c (temperature unit),
 # WW_NBM=none (fixture without NBM `extended`) on iPhone; WW_LOCATIONS=1…12 (sample location list, Marrowstone Pt selected; fixture only)
-# on both; WW_PAGE=strip|now|settings|complications on watch, strip is the default). Wait ~7 s before a screenshot (first frame compiles a gradient).
+# on both; WW_PAGE=strip|now|settings|complications on watch, strip is the default; WW_HOUR=<index> puts the complication gallery at that fixture hour). Wait ~7 s before a screenshot (first frame compiles a gradient).
 # Always address simulators by UDID when two are booted (`xcrun simctl list devices`).
 
 # Web (static page, no build step)

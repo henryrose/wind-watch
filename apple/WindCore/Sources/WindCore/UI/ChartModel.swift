@@ -7,8 +7,9 @@ public enum ChartWindow: Sendable, Equatable {
     case all
     /// Exactly 12 slots from `floor(nowIndex)` (watch strip); the tail stays empty past the horizon.
     case next12
-    /// Exactly 6 slots from `floor(nowIndex)` (complication mini strip); y domain rounds to 5.
-    case next6
+    /// The rectangular complication strip (§6.3): 12 slots from `floor(nowIndex)` like `next12`,
+    /// y domain `max(20, max gust rounded up to 5)`.
+    case complication
     /// The 7-day range (§12a): HRRR to its horizon, then NBM 3-hour blocks to their end (at most
     /// 168 h from `start`). Without NBM it stops at the HRRR edge.
     case week
@@ -17,8 +18,7 @@ public enum ChartWindow: Sendable, Equatable {
     public var fixedSlots: Int? {
         switch self {
         case .all, .week: nil
-        case .next12: 12
-        case .next6: 6
+        case .next12, .complication: 12
         }
     }
 }
@@ -135,7 +135,8 @@ public struct ChartModel: Sendable {
     public let slotCount: Int
     /// Window start … window start + `slotCount` hours.
     public let xRange: ClosedRange<Date>
-    /// `0 … yMax` (HANDOFF §6.1), over the plotted hours; the mini strip rounds to 5 (§6.3).
+    /// `0 … yMax` (HANDOFF §6.1), over the plotted hours; the complication strip rounds to 5 and
+    /// never drops below the domain it already showed for the run (§6.3).
     public let yMax: Int
     public let twilightStops: [TwilightStop]
     /// Sunrise / sunset instants inside `xRange`.
@@ -166,7 +167,10 @@ public struct ChartModel: Sendable {
 
     /// - Parameter plotWidth: the plot's width in points, for the 7-day slot rule (§12a): under 4 pt
     ///   per hour the whole chart is 3-hourly. Ignored by the other windows.
-    public init(forecast: Forecast, now: Date, window: ChartWindow, scheme: ColorScheme, plotWidth: CGFloat? = nil) {
+    /// - Parameter yMaxFloor: a domain the chart must not shrink below (the complication strip's
+    ///   grow-only scale, `TimelineBuilder.stripDomains`).
+    public init(forecast: Forecast, now: Date, window: ChartWindow, scheme: ColorScheme, plotWidth: CGFloat? = nil,
+                yMaxFloor: Int? = nil) {
         self.window = window
         self.scheme = scheme
         self.timeZone = forecast.timeZone
@@ -221,11 +225,8 @@ public struct ChartModel: Sendable {
         let range = windowStart...windowStart.addingTimeInterval(TimeInterval(slots) * 3600)
         self.xRange = range
         let maxGust = points.map(\.gust).max() ?? 0
-        if window == .next6 {
-            self.yMax = max(5, Int((Double(maxGust) / 5).rounded(.up)) * 5)
-        } else {
-            self.yMax = Derivations.yDomainMax(maxGust: maxGust)
-        }
+        let domain = window == .complication ? Derivations.stripYMax(maxGust: maxGust) : Derivations.yDomainMax(maxGust: maxGust)
+        self.yMax = max(domain, yMaxFloor ?? 0)
 
         // The edge: the HRRR horizon, or the last NBM block's end in 7 d.
         let edgeDate = blocks.last?.end ?? forecast.horizon.addingTimeInterval(3600)

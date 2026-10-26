@@ -60,6 +60,12 @@ public struct ChartStyle: Sendable, Equatable {
     public var dayLabelsAtBottom = false
     /// Drop the tick label of the first slot (§6.4d: the edge-to-edge portrait plot would clip it).
     public var dropsFirstTickLabel = false
+    /// Day/night shading over the plot.
+    public var showsShading = true
+    /// Sunrise / sunset markers on the plot's top edge.
+    public var showsSun = true
+    /// The `now` and horizon-edge rules (and their labels).
+    public var showsRules = true
 
     public init(plotHeight: CGFloat, topInset: CGFloat, bottomInset: CGFloat, labelBaseline: CGFloat, labelBand: CGFloat,
                 barCornerRadius: CGFloat, minBarWidth: CGFloat = 3, gustLineWidth: CGFloat, fontSize: CGFloat, arrowSize: CGFloat,
@@ -163,11 +169,19 @@ public struct ChartStyle: Sendable, Equatable {
         arrowEvery: 1, tickEvery: 3, labelFormat: .hour24, showsGrid: true, showsDays: false,
         sunRadius: 2.5, edgeLabel: .time24, isWatch: true, unit: 0.5, overflow: 5)
 
-    /// Complication mini strip (`mini`, 150×62 px @2×): 75×31 pt, top 5 / bottom 1; bars, gust line,
-    /// caps and sun dot only (§6.3).
-    public static let mini = ChartStyle(
-        plotHeight: 25, topInset: 5, bottomInset: 1, labelBaseline: 0, labelBand: 0,
-        barCornerRadius: 2, gustLineWidth: 1, fontSize: 0, arrowSize: 0,
-        arrowEvery: 0, tickEvery: 0, labelFormat: .none, showsGrid: false, showsDays: false,
-        sunRadius: 1.5, edgeLabel: .none, isWatch: true, unit: 0.5, overflow: 0)
+    /// Rectangular complication strip (`Comp-Rectangular`, 336×58 px @2× at 46 mm, 300×50 at 42 mm):
+    /// top 3 / bottom 2 around a plot that takes the rest of `height`; bars (radius 0.75), gust line
+    /// and caps 1 pt, 0.5 pt ticks every 3 h under the baseline. No shading, sun markers, rules,
+    /// arrows, labels or gridlines (§6.3).
+    public static func complication(height: CGFloat) -> ChartStyle {
+        var s = ChartStyle(
+            plotHeight: max(height - 5, 1), topInset: 3, bottomInset: 2, labelBaseline: 0, labelBand: 0,
+            barCornerRadius: 0.75, gustLineWidth: 1, fontSize: 0, arrowSize: 0,
+            arrowEvery: 0, tickEvery: 3, labelFormat: .none, showsGrid: false, showsDays: false,
+            sunRadius: 0, edgeLabel: .none, isWatch: true, unit: 0.5, overflow: 0)
+        s.showsShading = false
+        s.showsSun = false
+        s.showsRules = false
+        return s
+    }
 }

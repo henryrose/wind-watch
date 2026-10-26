@@ -30,6 +30,11 @@ public enum Derivations {
         return max(20, rounded)
     }
 
+    /// Complication strip Y upper bound (§6.3): `max(20, maxGust rounded up to 5)`.
+    public static func stripYMax(maxGust: Int) -> Int {
+        max(20, Int((Double(maxGust) / 5).rounded(.up)) * 5)
+    }
+
     /// `HRRR ends 05:00`; `short` drops the model name (`ends 05:00`) when the edge is near the now marker.
     public static func horizonLabel(forecast: Forecast, tz: TimeZone? = nil, short: Bool = false) -> String {
         let time = TimeFormat.hhmm(forecast.horizon, tz: tz ?? forecast.timeZone)
