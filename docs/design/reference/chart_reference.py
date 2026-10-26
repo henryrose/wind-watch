@@ -101,6 +101,7 @@ def svg(start,n,W,H,ymax=30,top=14,bot=14,left=0,arrows='all',ticks=3,now=None,l
                 o.append(f'<text x="{X(i)+slot/2:.1f}" y="{H+10}" text-anchor="middle" font-size="{font}" fill="#FFFFFF" fill-opacity="0.6" font-family="-apple-system,system-ui,sans-serif">{txt}</text>')
     if days:
         for i,name in days:
+            if i==start and now is not None: continue
             if start<=i<=start+n:
                 x=X(i)
                 if i>start:
@@ -119,7 +120,7 @@ def svg(start,n,W,H,ymax=30,top=14,bot=14,left=0,arrows='all',ticks=3,now=None,l
     return '\n'.join(o)
 if __name__=='__main__':
     which=sys.argv[1]
-    L12=[(0,'9am'),(6,'3pm'),(12,'9pm'),(18,'3am'),(24,'9am'),(30,'3pm'),(36,'9pm'),(42,'3am')]
+    L12=[(6,'3pm'),(12,'9pm'),(18,'3am'),(24,'9am'),(30,'3pm'),(36,'9pm'),(42,'3am')]
     L12b=[(0,'9am'),(3,'noon'),(6,'3pm'),(9,'6pm'),(12,'9pm'),(15,'12am'),(18,'3am'),(21,'6am'),(24,'9am'),(27,'noon'),(30,'3pm'),(33,'6pm'),(36,'9pm'),(39,'12am'),(42,'3am')]
     DAYS=[(0,'Wed'),(15,'Thu'),(39,'Fri')]
     L6=[(0,'09'),(6,'15'),(12,'21'),(15,'Thu'),(18,'03'),(24,'09'),(30,'15'),(36,'21'),(39,'Fri'),(42,'03')]

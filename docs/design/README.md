@@ -1,6 +1,6 @@
 # Wind Watch design package — read this first
 
-This folder is the design source of truth for Wind Watch. Use it in this order.
+This folder is the design source of truth for Wind Watch. **If you built from an earlier package, read `CHANGES.md` first.** Otherwise use it in this order.
 
 1. `DESIGN-HANDOFF.md` — the contract. Tokens, type, chart geometry, trust states, per-screen layouts, acceptance checklist. If code and this doc disagree, the doc wins.
 2. `reference/renders/*.png` — pixel renders of every designed screen (2× scale). Compare your SwiftUI previews and the web page against these side by side. Watch screens are drawn at 2× pixels for 46 mm (416×496 px = 208×248 pt).
@@ -15,11 +15,11 @@ This folder is the design source of truth for Wind Watch. Use it in this order.
 |---|---|---|
 | System sheet (tokens, type, glyphs, trust line) | `Main.dc.html` | `Main.png` |
 | Chart spec | `ChartSpec.dc.html` | `ChartSpec.png` |
-| accessoryRectangular ×4 states + Smart Stack | `Comp-Rectangular.dc.html` | `Comp-Rectangular.png` |
+| accessoryRectangular (12-hour strip) ×4 states + Smart Stack | `Comp-Rectangular.dc.html` | `Comp-Rectangular.png` |
 | accessoryCircular ×4 + tinted | `Comp-Circular.dc.html` | `Comp-Circular.png` |
 | accessoryInline ×4 | `Comp-Inline.dc.html` | `Comp-Inline.png` |
 | accessoryCorner | `Comp-Corner.dc.html` | `Comp-Corner.png` |
-| Watch Now (fresh) | `Watch-Now.dc.html` | `Watch-Now.png` |
+| Watch Now detail (page 2) | `Watch-Now.dc.html` | `Watch-Now.png` |
 | Watch Now: stale, offline, first run, 42 mm | `Watch-Now-States.dc.html` | `Watch-Now-States.png` |
 | Watch 12-h strip (DEFAULT launch screen) / short horizon | `Watch-Strip*.dc.html` | `Watch-Strip*.png` |
 | Watch settings | `Watch-Settings.dc.html` | `Watch-Settings.png` |
@@ -28,7 +28,8 @@ This folder is the design source of truth for Wind Watch. Use it in this order.
 | iPhone landscape (chart maximised) | `Phone-Landscape.dc.html` | `Phone-Landscape.png` |
 | iPhone trust-line states | `Phone-Trust-States.dc.html` | `Phone-Trust-States.png` |
 | iPhone table at AX type size | `Phone-Table-LargeType.dc.html` | `Phone-Table-LargeType.png` |
-| iPhone location / about | `Phone-Location.dc.html`, `Phone-About.dc.html` | same names |
+| iPhone locations (5 of 12) / list full (12 of 12) | `Phone-Location.dc.html`, `Phone-Location-Full.dc.html` | same names |
+| iPhone about | `Phone-About.dc.html` | `Phone-About.png` |
 | Web desktop (hover state) / phone width | `Web-Desktop.dc.html`, `Web-Phone.dc.html` | same names |
 | **Brand — final icon (size tiers, modes, layers)** | `Brand-Icon-Final.dc.html` | `Brand-Icon-Final.png` |
 | Brand — wordmark, lockups, rules | `Brand-Wordmark.dc.html` | `Brand-Wordmark.png` |

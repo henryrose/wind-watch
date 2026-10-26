@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>iPhone location settings</title>
+<title>iPhone location list</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -13,48 +13,32 @@ body{margin:0;background:#0B0E12}
 a{color:#9BB7D4}a:hover{color:#FFFFFF}
 </style>
 </helmet>
-<div style="width: 402px; height: 874px; box-sizing: border-box; padding: 62px 16px 0 16px; background: #0B0E12; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+<div style="width: 402px; height: 874px; box-sizing: border-box; padding: 62px 16px 0 16px; background: #0B0E12; color: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
   <div style="display: flex; align-items: center; gap: 8px">
     <a href="Phone-Main.dc.html" aria-label="Back" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><path d="M10,2 L2,10 L10,18" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-    <div style="font-size: 28px; line-height: 34px; font-weight: 700">Location</div>
+    <div style="font-size: 28px; line-height: 34px; font-weight: 700; flex: 1 1 auto">Locations</div>
+    <div style="font-size: 13px; font-weight: 600; color: #9AA4B1; font-variant-numeric: tabular-nums">5 of 12</div>
+    <button type="button" style="min-width: 44px; height: 44px; margin-right: -10px; border: 0; background: transparent; color: #4FA3D8; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer">Edit</button>
   </div>
 
-  <!-- default card: one tap -->
-  <button type="button" aria-pressed="true" style="width: 100%; box-sizing: border-box; border: 0; border-radius: 14px; background: #171C23; color: #FFFFFF; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font: inherit; text-align: left; cursor: pointer; min-height: 72px">
-    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; line-height: 22px; font-weight: 600">Port Townsend Bay</span><span style="font-size: 13px; line-height: 18px; color: #9AA4B1">Default · 48.117, −122.760 · HRRR point</span></div>
-    <svg width="26" height="26" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="#4FA3D8"/><path d="M8.5,15.5 L13,20 L21.5,11" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </button>
-
-  <div style="font-size: 13px; line-height: 18px; color: #9AA4B1; padding: 0 4px">One custom location. Pick the default above at any time with one tap; it never moves.</div>
-
-  <!-- custom card -->
-  <div style="border-radius: 14px; background: #171C23; padding: 16px; display: flex; flex-direction: column; gap: 12px">
-    <div style="display: flex; align-items: center; justify-content: space-between">
-      <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px; line-height: 22px; font-weight: 600">Marrowstone Pt</span><span style="font-size: 13px; line-height: 18px; color: #9AA4B1">48.100, −122.683</span></div>
-      <button type="button" aria-pressed="false" aria-label="Use Marrowstone Pt" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="26" height="26" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#9AA4B1" stroke-width="2.5"/></svg></button>
-    </div>
-    <label for="loc-search" style="display: flex; align-items: center; gap: 8px; background: #0B0E12; border-radius: 10px; padding: 0 12px; min-height: 44px">
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="#9AA4B1" stroke-width="1.8"/><line x1="11" x2="15" y1="11" y2="15" stroke="#9AA4B1" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <input id="loc-search" type="search" placeholder="Search a place or paste lat, lon" style="flex: 1 1 auto; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 17px; outline: none; min-width: 0">
-    </label>
-    <div style="position: relative; height: 300px; border-radius: 10px; background: #0E141B; overflow: hidden">
-      <svg width="370" height="300" viewBox="0 0 370 300" aria-hidden="true" style="display: block">
+  <div style="border-radius: 14px; background: #171C23; display: flex; flex-direction: column; flex: 0 0 auto">
+<div style="display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid #222831;"><button type="button" aria-pressed="false" aria-label="Use Port Townsend Bay" style="flex: 1 1 auto; min-width: 0; min-height: 52px; border: 0; background: transparent; color: #FFFFFF; padding: 0; display: flex; align-items: center; gap: 12px; font: inherit; text-align: left; cursor: pointer"><svg width="24" height="24" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#5C6B7A" stroke-width="2.5"/></svg><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Port Townsend Bay</span><span style="font-size: 12px; line-height: 16px; color: #9AA4B1">48.117, −122.760 · added on first launch</span></span></button></div><div style="display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid #222831;"><button type="button" aria-pressed="true" aria-label="Use Marrowstone Pt" style="flex: 1 1 auto; min-width: 0; min-height: 52px; border: 0; background: transparent; color: #FFFFFF; padding: 0; display: flex; align-items: center; gap: 12px; font: inherit; text-align: left; cursor: pointer"><svg width="24" height="24" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="#4FA3D8"/><path d="M8.5,15.5 L13,20 L21.5,11" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Marrowstone Pt</span><span style="font-size: 12px; line-height: 16px; color: #9AA4B1">48.100, −122.683</span></span></button></div><div style="display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid #222831;"><button type="button" aria-pressed="false" aria-label="Use Point Wilson" style="flex: 1 1 auto; min-width: 0; min-height: 52px; border: 0; background: transparent; color: #FFFFFF; padding: 0; display: flex; align-items: center; gap: 12px; font: inherit; text-align: left; cursor: pointer"><svg width="24" height="24" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#5C6B7A" stroke-width="2.5"/></svg><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Point Wilson</span><span style="font-size: 12px; line-height: 16px; color: #9AA4B1">48.144, −122.755</span></span></button></div><div style="display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid #222831;"><button type="button" aria-pressed="false" aria-label="Use Mystery Bay" style="flex: 1 1 auto; min-width: 0; min-height: 52px; border: 0; background: transparent; color: #FFFFFF; padding: 0; display: flex; align-items: center; gap: 12px; font: inherit; text-align: left; cursor: pointer"><svg width="24" height="24" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#5C6B7A" stroke-width="2.5"/></svg><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Mystery Bay</span><span style="font-size: 12px; line-height: 16px; color: #9AA4B1">48.059, −122.693</span></span></button></div><div style="display: flex; align-items: center; gap: 8px; padding: 0 14px; "><button type="button" aria-pressed="false" aria-label="Use Kilisut Harbor" style="flex: 1 1 auto; min-width: 0; min-height: 52px; border: 0; background: transparent; color: #FFFFFF; padding: 0; display: flex; align-items: center; gap: 12px; font: inherit; text-align: left; cursor: pointer"><svg width="24" height="24" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#5C6B7A" stroke-width="2.5"/></svg><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-size: 16px; line-height: 20px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Kilisut Harbor</span><span style="font-size: 12px; line-height: 16px; color: #9AA4B1">48.071, −122.705</span></span></button></div>
+  </div>
+  <label for="loc-search" style="display: flex; align-items: center; gap: 8px; background: #171C23; border-radius: 10px; padding: 0 12px; min-height: 44px; flex: 0 0 auto">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="#9AA4B1" stroke-width="1.8"/><line x1="11" x2="15" y1="11" y2="15" stroke="#9AA4B1" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <input id="loc-search" type="search" placeholder="Search a place or paste lat, lon" style="flex: 1 1 auto; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 16px; outline: none; min-width: 0">
+  </label>
+  <div style="position: relative; height: 250px; border-radius: 14px; overflow: hidden; flex: 0 0 auto">
+    <svg width="370" height="300" viewBox="0 0 370 300" aria-hidden="true" style="display: block">
         <rect width="370" height="300" fill="#0E141B"/>
         <path d="M0,220 C60,200 90,150 140,140 C200,128 230,90 250,40 L370,20 L370,300 L0,300 Z" fill="#162029"/>
         <path d="M0,90 C40,80 70,50 110,30 L150,0 L0,0 Z" fill="#162029"/>
         <path d="M0,220 C60,200 90,150 140,140 C200,128 230,90 250,40 L370,20" fill="none" stroke="#2A3845" stroke-width="1"/>
-        <path d="M0,90 C40,80 70,50 110,30 L150,0" fill="none" stroke="#2A3845" stroke-width="1"/>
-        <text x="60" y="140" font-size="11" fill="#5C6B7A" font-family="system-ui">Port Townsend Bay</text>
-        <text x="270" y="200" font-size="11" fill="#5C6B7A" font-family="system-ui">Marrowstone I.</text>
-        <g transform="translate(246,96)"><path d="M0,0 C-9,-12 -9,-24 0,-28 C9,-24 9,-12 0,0 Z" fill="#FFB340"/><circle cx="0" cy="-19" r="4" fill="#0E141B"/></g>
-        <circle cx="120" cy="150" r="5" fill="#4FA3D8" stroke="#0E141B" stroke-width="2"/>
+        <text x="16" y="196" font-size="11" fill="#5C6B7A" font-family="system-ui">Port Townsend Bay</text><g transform="translate(122,152)"><path d="M0,0 C-7,-9 -7,-19 0,-22 C7,-19 7,-9 0,0 Z" fill="#FFFFFF" fill-opacity="0.85"/><circle cx="0" cy="-14.5" r="3" fill="#0E141B"/></g><g transform="translate(150,40)"><path d="M0,0 C-7,-9 -7,-19 0,-22 C7,-19 7,-9 0,0 Z" fill="#FFFFFF" fill-opacity="0.85"/><circle cx="0" cy="-14.5" r="3" fill="#0E141B"/></g><g transform="translate(262,170)"><path d="M0,0 C-7,-9 -7,-19 0,-22 C7,-19 7,-9 0,0 Z" fill="#FFFFFF" fill-opacity="0.85"/><circle cx="0" cy="-14.5" r="3" fill="#0E141B"/></g><g transform="translate(232,150)"><path d="M0,0 C-7,-9 -7,-19 0,-22 C7,-19 7,-9 0,0 Z" fill="#FFFFFF" fill-opacity="0.85"/><circle cx="0" cy="-14.5" r="3" fill="#0E141B"/></g><g transform="translate(246,96)"><path d="M0,0 C-9,-12 -9,-24 0,-28 C9,-24 9,-12 0,0 Z" fill="#4FA3D8"/><circle cx="0" cy="-19" r="4" fill="#0E141B"/></g>
       </svg>
-      <div style="position: absolute; left: 12px; bottom: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(11,14,18,0.85); font-size: 12px; font-weight: 600; color: #C7CED8">Long-press to pin</div>
-    </div>
-    <div style="display: flex; gap: 10px; align-items: center; font-size: 13px; color: #9AA4B1"><span style="width: 10px; height: 10px; border-radius: 5px; background: #4FA3D8"></span>default<span style="width: 10px; height: 10px; border-radius: 5px; background: #FFB340; margin-left: 8px"></span>custom pin</div>
+    <div style="position: absolute; left: 12px; bottom: 12px; padding: 6px 10px; border-radius: 999px; background: rgba(11,14,18,0.85); font-size: 12px; font-weight: 600; color: #C7CED8">Long-press the map to add a location</div>
   </div>
-
-  <div style="font-size: 13px; line-height: 18px; color: #9AA4B1; padding: 0 4px">The custom point is snapped to the nearest HRRR grid cell (3 km) when saved; the name is yours.</div>
+  <div style="font-size: 12px; line-height: 17px; color: #9AA4B1; padding: 0 4px">Tap a row to switch. Swipe left, or tap Edit, to delete or reorder — any location, including Port Townsend Bay. The selected location drives every surface; order is just order. The last remaining location can't be deleted.</div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":402,"height":874}}'>
