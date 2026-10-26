@@ -154,14 +154,19 @@ test('ticks every 3 h (hour-of-day), 3 tall; labels at H + 10 in 12-hour text', 
   assert.deepEqual(L.labels.slice(0, 8).map((l) => l.text), ['9am', 'noon', '3pm', '6pm', '9pm', '12am', '3am', '6am']);
 });
 
-test('day band: name at x + 5 (first day x + 4) / top − 22, dotted divider at each midnight but not the first day', () => {
+test('day band: name at x + 5 / top − 22, dotted divider at each midnight; first day suppressed when now is at the plot start (item 3)', () => {
+  // HANDOFF 26 Oct item 3 / spec §6.4: "the first day label is suppressed when
+  // the now marker sits at the plot start". webhover.svg (now = 0.4) has no
+  // "Wed"; the layout keeps the entry but marks it hidden.
   const refDays = [...ref.matchAll(/<text x="([\d.]+)" y="18"[^>]*>(\w+)<\/text>/g)].map((m) => [num(m[1]), m[2]]);
   const refDividers = tags('line').map(attrs).filter((a) => a['stroke-dasharray'] === '2 3');
-  assert.deepEqual(refDays.map((d) => d[1]), ['Wed', 'Thu', 'Fri']);
+  assert.deepEqual(refDays.map((d) => d[1]), ['Thu', 'Fri']);
   assert.equal(refDividers.length, 2);
   assert.deepEqual(L.days.map((d) => d.name), ['Wed', 'Thu', 'Fri']);
   assert.deepEqual(L.days.map((d) => d.i), [0, 15, 39]);
-  L.days.forEach((d, i) => {
+  assert.deepEqual(L.days.map((d) => d.hidden), [true, false, false]);
+  const shown = L.days.filter((d) => !d.hidden);
+  shown.forEach((d, i) => {
     near(d.labelX, refDays[i][0], `day ${d.name} label x`);
     assert.equal(d.labelY, 18);
   });
@@ -171,8 +176,12 @@ test('day band: name at x + 5 (first day x + 4) / top − 22, dotted divider at 
     assert.equal(d.divider.y1, 22);
     assert.equal(d.divider.y2, 278);
   });
-  // Round two: the first day's name sits at x + 4 on the line above "now"; never hidden.
-  assert.ok(L.days.every((d) => !d.hidden));
+  // Without a now marker at the start the first day's name is drawn at x + 4.
+  for (const nowIdx of [null, 5, -1]) {
+    const first = chartLayout(forecast, CHART_STYLES.desktop, { nowIdx }).days[0];
+    assert.equal(first.hidden, false, `nowIdx ${nowIdx}`);
+    assert.equal(first.labelX, 4);
+  }
 });
 
 test('now rule at x(0.4) with its label at x + 4 / top − 8', () => {
@@ -236,8 +245,10 @@ test('phone style: 358×200, top 22 / bottom 16, arrows every 3 h, labels every 
   assert.equal(P.arrows.length, 15);
   assert.deepEqual(P.arrows.map((a) => a.i).slice(0, 4), [0, 3, 6, 9]);
   assert.equal(P.arrows[0].y, 192);
-  assert.deepEqual(P.labels.map((l) => l.text), ['9am', '3pm', '9pm', '3am', '9am', '3pm', '9pm', '3am']);
-  assert.deepEqual(P.labels.map((l) => l.y), Array(8).fill(210));
+  // Item 3: the first tick label ("9am" centred at x 4.0) would be clipped by
+  // the plot edge, so it is dropped; the reference fragment predates the rule.
+  assert.deepEqual(P.labels.map((l) => l.text), ['3pm', '9pm', '3am', '9am', '3pm', '9pm', '3am']);
+  assert.deepEqual(P.labels.map((l) => l.y), Array(7).fill(210));
   assert.equal(P.days.length, 0);
   // bars and labels line up with the reference phone fragment (24-h text there is pre-review)
   const refBars = [...refP.matchAll(/<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)" rx="1.5"/g)];
@@ -249,7 +260,7 @@ test('phone style: 358×200, top 22 / bottom 16, arrows every 3 h, labels every 
   });
   const refLabelX = [...refP.matchAll(/<text x="([\d.]+)" y="210"/g)].map((m) => num(m[1]));
   assert.deepEqual(refLabelX.length, 8);
-  P.labels.forEach((l, i) => near(l.x, refLabelX[i], `phone label ${i} x`));
+  P.labels.forEach((l, i) => near(l.x, refLabelX[i + 1], `phone label ${i} x`));
   near(P.now.x, 3.2, 'phone now x'); // reference label at 7.2 = x + 4
   near(P.edge.x, 358, 'phone edge x');
 });

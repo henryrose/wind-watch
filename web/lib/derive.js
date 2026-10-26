@@ -6,6 +6,8 @@
 // formatting always goes through Intl with the payload's tz, never the machine
 // zone.
 
+import { sunDays } from './sun.js';
+
 export const HOUR_MS = 3_600_000;
 export const MINUTE_MS = 60_000;
 
@@ -102,18 +104,39 @@ export function toForecast(payload, { isDefault = true } = {}) {
     }
   }
   const start = new Date(payload.start * 1000);
+  // §4.2a: temp / cloud / precip are optional; a missing or short array is
+  // treated as absent (no sky band, no temperature text), never an error.
+  const opt = (a) => (Array.isArray(a) && a.length >= n ? a : null);
+  const temp = opt(payload.temp);
+  const cloud = opt(payload.cloud);
+  const precip = opt(payload.precip);
   const hours = [];
   for (let i = 0; i < n; i++) {
-    hours.push({ kn: payload.kn[i], gust: payload.gust[i], dirFrom: payload.dir[i] });
+    hours.push({
+      kn: payload.kn[i],
+      gust: payload.gust[i],
+      dirFrom: payload.dir[i],
+      temp: temp ? temp[i] : null,
+      cloud: cloud ? cloud[i] : null,
+      precip: precip ? precip[i] : null,
+    });
   }
+  const location = {
+    name: payload.loc.name,
+    lat: payload.loc.lat,
+    lon: payload.loc.lon,
+    tz: payload.loc.tz,
+    isDefault,
+  };
+  const extended = toExtended(payload.extended, start);
+  const paySun = (payload.sun || []).map((d) => ({
+    dawn: new Date(d.dawn * 1000),
+    rise: new Date(d.rise * 1000),
+    set: new Date(d.set * 1000),
+    dusk: new Date(d.dusk * 1000),
+  }));
   return {
-    location: {
-      name: payload.loc.name,
-      lat: payload.loc.lat,
-      lon: payload.loc.lon,
-      tz: payload.loc.tz,
-      isDefault,
-    },
+    location,
     model: payload.model,
     run: runLabel(payload.run.latest),
     runAt: new Date(payload.run.latest * 1000),
@@ -121,15 +144,83 @@ export function toForecast(payload, { isDefault = true } = {}) {
     start,
     horizon: new Date(start.getTime() + (n - 1) * HOUR_MS),
     hours,
-    sun: (payload.sun || []).map((d) => ({
-      dawn: new Date(d.dawn * 1000),
-      rise: new Date(d.rise * 1000),
-      set: new Date(d.set * 1000),
-      dusk: new Date(d.dusk * 1000),
-    })),
+    extended,
+    sun: extended ? fillSunDays(paySun, location, start, extended.end) : paySun,
     summary: payload.summary || '',
     peakGust: { kn: payload.peak.gust, at: new Date(payload.peak.at * 1000) },
   };
+}
+
+// "NBM 13Z" from the NBM init time.
+export function nbmRunLabel(runUnix) {
+  const h = new Date(runUnix * 1000).getUTCHours();
+  return `NBM ${String(h).padStart(2, '0')}Z`;
+}
+
+// §4.2a `extended` → { model, run, runAt, fetched, step, from, fromIdx, end,
+// blocks: [{ t, w, start, kn, gust, dirFrom, temp, cloud, precip }] } where t
+// is hours since `start`. null when absent or malformed (the page then treats
+// NBM as unavailable). The server enforces `from`; the client never filters.
+export function toExtended(ext, start) {
+  if (!ext || typeof ext !== 'object') return null;
+  const nb = ext.blocks;
+  const step = Number.isFinite(ext.step) && ext.step > 0 ? ext.step : 3;
+  if (!Number.isInteger(nb) || nb < 1 || !Number.isFinite(ext.from)) return null;
+  for (const key of ['kn', 'gust', 'dir']) {
+    if (!Array.isArray(ext[key]) || ext[key].length < nb) return null;
+  }
+  const opt = (a) => (Array.isArray(a) && a.length >= nb ? a : null);
+  const temp = opt(ext.temp);
+  const cloud = opt(ext.cloud);
+  const precip = opt(ext.precip);
+  const from = new Date(ext.from * 1000);
+  const fromIdx = (from.getTime() - start.getTime()) / HOUR_MS;
+  const blocks = [];
+  for (let b = 0; b < nb; b++) {
+    blocks.push({
+      t: fromIdx + b * step,
+      w: step,
+      start: new Date(from.getTime() + b * step * HOUR_MS),
+      kn: ext.kn[b],
+      gust: ext.gust[b],
+      dirFrom: ext.dir[b],
+      temp: temp ? temp[b] : null,
+      cloud: cloud ? cloud[b] : null,
+      precip: precip ? precip[b] : null,
+    });
+  }
+  return {
+    model: 'NBM',
+    run: Number.isFinite(ext.run) ? nbmRunLabel(ext.run) : 'NBM',
+    runAt: Number.isFinite(ext.run) ? new Date(ext.run * 1000) : null,
+    fetched: new Date((Number.isFinite(ext.fetched) ? ext.fetched : ext.from) * 1000),
+    step,
+    from,
+    fromIdx,
+    end: new Date(from.getTime() + nb * step * HOUR_MS),
+    blocks,
+  };
+}
+
+// The payload's `sun` covers the HRRR days only; the 7-day chart needs a
+// marker every day, so missing days are computed here with the same NOAA
+// algorithm the Worker uses (lib/sun.js). Payload days always win.
+function fillSunDays(paySun, loc, start, end) {
+  if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lon) || !loc.tz) return paySun;
+  let computed;
+  try {
+    const hours = Math.ceil((end.getTime() - start.getTime()) / HOUR_MS);
+    computed = sunDays({ lat: loc.lat, lon: loc.lon, tz: loc.tz, start: start.getTime() / 1000, hours });
+  } catch {
+    return paySun;
+  }
+  const out = [...paySun];
+  for (const d of computed) {
+    const rise = d.rise * 1000;
+    if (out.some((p) => Math.abs(p.rise.getTime() - rise) < 12 * HOUR_MS)) continue;
+    out.push({ dawn: new Date(d.dawn * 1000), rise: new Date(rise), set: new Date(d.set * 1000), dusk: new Date(d.dusk * 1000) });
+  }
+  return out.sort((a, b) => a.rise.getTime() - b.rise.getTime());
 }
 
 // --- Now / hero / trust ---------------------------------------------------
@@ -181,7 +272,9 @@ export function trustState({ forecast, now, lastCheckOK = true, updating = false
 // Trust-line content for the header. { text, amber, glyph }
 //   glyph ∈ null | 'wifi-slash' | 'ring'
 // `compact` (under 600 px) drops the word "forecast" from the ends phrase.
-export function trustLine(forecast, state, tz, { compact = false } = {}) {
+// In 7 d with NBM (`range`, `now` given) the line names both runs and adds
+// `segments` so the page can amber the NBM run label on its own.
+export function trustLine(forecast, state, tz, { compact = false, range = '48h', now = null } = {}) {
   if (state.kind === 'firstrun') {
     return { text: 'No data yet. Needs cellular or Wi-Fi once.', amber: false, glyph: null };
   }
@@ -204,12 +297,29 @@ export function trustLine(forecast, state, tz, { compact = false } = {}) {
       };
     case 'updating':
       return { text: `updating · as of ${asOf(old)}`, amber: state.tier !== 'fresh', glyph: 'ring' };
-    default:
-      return {
-        text: `as of ${asOf(old)} ${tzAbbrev(forecast.fetched, tz)} · ${forecast.run} · ${ends}`,
-        amber: state.tier !== 'fresh',
-        glyph: null,
-      };
+    default: {
+      const amber = state.tier !== 'fresh';
+      const head = `as of ${asOf(old)} ${tzAbbrev(forecast.fetched, tz)} · ${forecast.run}`;
+      if (range === '7d' && forecast.extended && now) {
+        // §12a: both runs named; NBM staleness ambers only its run label.
+        const ext = forecast.extended;
+        const tierN = nbmTier(forecast, now);
+        const nbmLabel = tierN === 'old' && ext.runAt ? `${ext.run} ${shortDay(ext.runAt, tz)}` : ext.run;
+        const tail = ` · ${compact ? '' : 'forecast '}ends ${shortDay(ext.end, tz)} ${hour12At(ext.end, tz)}`;
+        return {
+          text: `${head} + ${nbmLabel}${tail}`,
+          amber,
+          glyph: null,
+          segments: [
+            { text: `${head} + `, amber },
+            { text: nbmLabel, amber: amber || tierN !== 'fresh' },
+            { text: tail, amber },
+          ],
+          nbmStale: tierN !== 'fresh',
+        };
+      }
+      return { text: `${head} · ${ends}`, amber, glyph: null };
+    }
   }
 }
 
@@ -234,9 +344,9 @@ export function dayFraction(t, sun) {
 // Gradient stops as fractions of the plotted range [start, horizon + 1 h]:
 // one at 0, one at each dawn/rise/set/dusk strictly inside the range, one at
 // 1. Values between stops interpolate linearly, which is exactly the ramp.
-export function twilightStops(forecast) {
+export function twilightStops(forecast, endDate = rangeEnd(forecast)) {
   const start = forecast.start.getTime();
-  const end = rangeEnd(forecast).getTime();
+  const end = endDate.getTime();
   const span = end - start;
   const stops = [{ offset: 0, value: dayFraction(start, forecast.sun) }];
   const events = [];
@@ -251,10 +361,11 @@ export function twilightStops(forecast) {
   return stops;
 }
 
-// Sun dots at sunrise and sunset only, as fractions of the plotted range.
-export function sunMarkers(forecast) {
+// Sun markers at sunrise (filled) and sunset (ring) only, never dawn/dusk,
+// as fractions of the plotted range.
+export function sunMarkers(forecast, endDate = rangeEnd(forecast)) {
   const start = forecast.start.getTime();
-  const end = rangeEnd(forecast).getTime();
+  const end = endDate.getTime();
   const out = [];
   for (const d of forecast.sun) {
     for (const kind of ['rise', 'set']) {
@@ -294,14 +405,34 @@ export function horizonLabel(forecast) {
 
 // Hourly-table disclosure caption (HANDOFF §6.4d): "45 hours · Wed 9am → Fri 5am",
 // counted from the now hour; the phone layout shows only "45 hours".
-export function tableCaption(forecast, nowIdx, { compact = false } = {}) {
+export function tableCaption(forecast, nowIdx, { compact = false, range = '48h' } = {}) {
   const tz = forecast.location.tz;
+  if (range === '7d' && forecast.extended) {
+    const end = forecast.extended.end;
+    const to = `${shortDay(end, tz)} ${hour12At(end, tz)}`;
+    if (compact) return `to ${to} · NBM 3-hourly`;
+    return `hourly to ${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}, then 3-hourly to ${to} · NBM rows tagged`;
+  }
   const first = Math.min(Math.max(0, Math.floor(nowIdx)), forecast.hours.length);
   const n = forecast.hours.length - first;
   const hours = n === 1 ? '1 hour' : `${n} hours`;
   if (compact || n <= 0) return hours;
   const t = hourAt(forecast, first);
   return `${hours} · ${shortDay(t, tz)} ${hour12At(t, tz)} → ${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}`;
+}
+
+// Hourly-table rows (§12a): HRRR hours, then in 7 d a header row
+// "NBM from Fri 6am · 3-hourly" and one row per NBM block.
+//   { kind: 'hour', i, slot } | { kind: 'nbm-header', text } | { kind: 'block', slot }
+export function tableRows(forecast, range = '48h') {
+  const rows = forecast.hours.map((h, i) => ({ kind: 'hour', i, slot: { t: i, w: 1, model: 'HRRR', start: hourAt(forecast, i), ...h } }));
+  if (range === '7d' && forecast.extended) {
+    const ext = forecast.extended;
+    const tz = forecast.location.tz;
+    rows.push({ kind: 'nbm-header', text: `NBM from ${shortDay(ext.from, tz)} ${hour12At(ext.from, tz)} · ${ext.step}-hourly` });
+    for (const b of ext.blocks) rows.push({ kind: 'block', slot: { ...b, model: 'NBM' } });
+  }
+  return rows;
 }
 
 // Chart card title: "Wed 9am → Fri 5am".
@@ -365,15 +496,21 @@ export function peakChipText(forecast, now) {
 }
 
 // HANDOFF §11: "45-hour wind chart: … ends Friday 05:00"
-export function chartAriaLabel(forecast) {
+export function chartAriaLabel(forecast, range = '48h') {
   const tz = forecast.location.tz;
+  const span = rangeSpan(forecast, range);
+  const items = span.nbm ? [...forecast.hours, ...forecast.extended.blocks] : forecast.hours;
   let minKn = Infinity;
   let maxKn = -Infinity;
   let maxGust = 0;
-  for (const h of forecast.hours) {
+  for (const h of items) {
     if (h.kn < minKn) minKn = h.kn;
     if (h.kn > maxKn) maxKn = h.kn;
     if (h.gust > maxGust) maxGust = h.gust;
+  }
+  if (span.nbm) {
+    const seam = hourAt(forecast, forecast.hours.length - 1);
+    return `7-day wind chart: sustained ${minKn} to ${maxKn} knots, gusts to ${maxGust} knots; HRRR hourly to ${longDay(seam, tz)} ${formatHHMM(seam, tz)}, then NBM 3-hourly, ends ${longDay(span.end, tz)} ${formatHHMM(span.end, tz)}`;
   }
   return `${forecast.hours.length}-hour wind chart: sustained ${minKn} to ${maxKn} knots, gusts to ${maxGust} knots, ends ${longDay(forecast.horizon, tz)} ${formatHHMM(forecast.horizon, tz)}`;
 }
@@ -383,11 +520,227 @@ export function heroAriaLabel(h, asOf, tz) {
   return `${h.kn} knots, gusting ${h.gust}, from the ${compassWord(h.dirFrom)}, as of ${formatHHMM(asOf, tz)}`;
 }
 
-// --- Chart layout (port of docs/design/reference/chart_reference.py::svg) --
+// --- Ranges: 48 h (HRRR only) and 7 d (HRRR, then NBM) — spec §12a --------
+
+export const RANGES = ['48h', '7d'];
+export const DEFAULT_RANGE = '48h';
+export const SLOT_MIN_PX_PER_HOUR = 4; // under this the whole chart goes 3-hourly
+
+export function parseRange(v) {
+  return RANGES.includes(v) ? v : null;
+}
+
+// Plotted span for a range: { range, total (hours), end (Date), nbm (bool) }.
+// 48 h, or 7 d without NBM, stops at the HRRR edge; never padded.
+export function rangeSpan(forecast, range) {
+  const n = forecast.hours.length;
+  if (range === '7d' && forecast.extended) {
+    const ext = forecast.extended;
+    return { range, total: ext.fromIdx + ext.blocks.length * ext.step, end: ext.end, nbm: true };
+  }
+  return { range: range === '7d' ? '7d' : '48h', total: n, end: rangeEnd(forecast), nbm: false };
+}
+
+// Slot rule (§12a): under 4 px per hour the whole 7-day chart aggregates to
+// 3-hour slots; otherwise HRRR stays hourly to the seam.
+export function slotMode(widthPx, totalHours) {
+  return widthPx / totalHours < SLOT_MIN_PX_PER_HOUR ? '3-hourly' : 'hourly';
+}
+
+function vectorMeanDir(dirs) {
+  let x = 0;
+  let y = 0;
+  for (const d of dirs) {
+    x += Math.cos((d * Math.PI) / 180);
+    y += Math.sin((d * Math.PI) / 180);
+  }
+  return norm360(Math.round((Math.atan2(y, x) * 180) / Math.PI));
+}
+
+const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+
+// HRRR hours in 3-hour blocks from index 0 (last may be short): max
+// sustained, max gust, vector-mean direction, mean temp/cloud, max precip.
+export function hrrrBlocks(forecast, step = 3) {
+  const out = [];
+  const hs = forecast.hours;
+  for (let s = 0; s < hs.length; s += step) {
+    const g = hs.slice(s, s + step);
+    const has = (k) => g.every((h) => h[k] != null);
+    out.push({
+      t: s,
+      w: g.length,
+      model: 'HRRR',
+      start: hourAt(forecast, s),
+      kn: Math.max(...g.map((h) => h.kn)),
+      gust: Math.max(...g.map((h) => h.gust)),
+      dirFrom: vectorMeanDir(g.map((h) => h.dirFrom)),
+      temp: has('temp') ? mean(g.map((h) => h.temp)) : null,
+      cloud: has('cloud') ? mean(g.map((h) => h.cloud)) : null,
+      precip: has('precip') ? Math.max(...g.map((h) => h.precip)) : null,
+    });
+  }
+  return out;
+}
+
+// The bars of one chart, in order: { t, w, model, start, kn, gust, dirFrom,
+// temp, cloud, precip } with t/w in hours since start. 48 h = HRRR hourly.
+// 7 d = HRRR hourly (or 3-hourly under the slot rule) to the seam, then the
+// NBM blocks.
+export function chartSlots(forecast, range, { threeHourly = false } = {}) {
+  const hourly = () => forecast.hours.map((h, i) => ({ t: i, w: 1, model: 'HRRR', start: hourAt(forecast, i), ...h }));
+  if (range !== '7d') return hourly();
+  const hrrr = threeHourly ? hrrrBlocks(forecast) : hourly();
+  const nbm = forecast.extended ? forecast.extended.blocks.map((b) => ({ ...b, model: 'NBM' })) : [];
+  return [...hrrr, ...nbm];
+}
+
+// --- Sky band and readout text (spec §12b, sky_reference.py) ----------------
+
+// cloud % → 'clear' (< 25) | 'partly' (25–70) | 'overcast' (≥ 70)
+export function skyTone(cloud) {
+  if (cloud == null || !Number.isFinite(cloud)) return null;
+  if (cloud < 25) return 'clear';
+  if (cloud < 70) return 'partly';
+  return 'overcast';
+}
+
+const SKY_WORDS = { clear: 'Clear', partly: 'Partly cloudy', overcast: 'Overcast' };
+export function skyWord(cloud) {
+  const t = skyTone(cloud);
+  return t ? SKY_WORDS[t] : null;
+}
+
+// mm/h → rain ticks 0 / 1 (< 0.5) / 2 (0.5–1.5) / 3 (≥ 1.5)
+export function rainTicks(mm) {
+  if (mm == null || !(mm > 0)) return 0;
+  if (mm < 0.5) return 1;
+  if (mm < 1.5) return 2;
+  return 3;
+}
+
+export function rainWord(mm) {
+  return [null, 'light rain', 'rain', 'heavy rain'][rainTicks(mm)];
+}
+
+export const TEMP_UNITS = ['F', 'C'];
+export const DEFAULT_TEMP_UNIT = 'F';
+export function parseTempUnit(v) {
+  const u = typeof v === 'string' ? v.toUpperCase() : '';
+  return TEMP_UNITS.includes(u) ? u : null;
+}
+
+// °C (payload) → integer in the chosen unit; avoids "-0".
+export function tempValue(celsius, unit = 'F') {
+  if (celsius == null || !Number.isFinite(celsius)) return null;
+  const v = Math.round(unit === 'C' ? celsius : (celsius * 9) / 5 + 32);
+  return v === 0 ? 0 : v;
+}
+
+export function formatTemp(celsius, unit = 'F') {
+  const v = tempValue(celsius, unit);
+  return v == null ? null : `${v}°${unit}`;
+}
+
+// Readout / tooltip tail: ['Overcast', 'rain', '48°F'] — any missing field is
+// simply left out.
+export function conditionsParts(slot, unit = 'F') {
+  return [skyWord(slot.cloud), rainWord(slot.precip), formatTemp(slot.temp, unit)].filter(Boolean);
+}
+
+// One sky cell per 3 h: HRRR hours grouped from index 0 (cloud mean, precip
+// max, last cell may be short), then (7 d) the NBM blocks as they are.
+// Empty when the payload has no cloud cover.
+export function skyCells(forecast, range) {
+  if (forecast.hours[0].cloud == null) return [];
+  const cells = hrrrBlocks(forecast).map((b) => ({ t: b.t, w: b.w, model: 'HRRR', cloud: b.cloud, precip: b.precip }));
+  if (range === '7d' && forecast.extended && forecast.extended.blocks[0].cloud != null) {
+    for (const b of forecast.extended.blocks) cells.push({ t: b.t, w: b.w, model: 'NBM', cloud: b.cloud, precip: b.precip });
+  }
+  return cells.map((c) => ({ ...c, tone: skyTone(c.cloud), ticks: rainTicks(c.precip) }));
+}
+
+// --- Slot labels (§12a text) ----------------------------------------------
+
+// "12–3pm", "9am–12pm", "9pm–12am", "12–3am".
+export function spanText(h0, h1) {
+  const a = hour12(h0);
+  const b = hour12(h1);
+  if (a.slice(-2) === b.slice(-2)) return `${a.slice(0, -2)}–${b}`;
+  return `${a}–${b}`;
+}
+
+// Tooltip / readout label for a slot: HRRR hour → "Thu 12am · midnight";
+// a block → "Sat 12–3pm" (the model tag is added by the caller: ' · NBM').
+export function slotLabel(slot, tz) {
+  if (slot.w === 1) return scrubLabel(slot.start, tz);
+  const h0 = localHour(slot.start, tz);
+  return `${shortDay(slot.start, tz)} ${spanText(h0, h0 + slot.w)}`;
+}
+
+// Table hour cell for a block (24-hour like the hourly rows): "Fri 06–09".
+export function slotTableLabel(slot, tz, { compact = false } = {}) {
+  const h0 = localHour(slot.start, tz);
+  const pad = (h) => String(((h % 24) + 24) % 24).padStart(2, '0');
+  const span = `${pad(h0)}–${pad(h0 + slot.w)}`;
+  return compact ? span : `${shortDay(slot.start, tz)} ${span}`;
+}
+
+// "ends Tue 9am" for the 7-day edge: the end of the last NBM block.
+export function endLabel(forecast, range) {
+  const span = rangeSpan(forecast, range);
+  if (!span.nbm) return horizonLabel(forecast);
+  const tz = forecast.location.tz;
+  return `ends ${shortDay(span.end, tz)} ${hour12At(span.end, tz)}`;
+}
+
+// Chart card title: "Wed 9am → Fri 5am" (48 h) / "Wed 9am → Tue 9am" (7 d).
+export function rangeTitle(forecast, range) {
+  if (!rangeSpan(forecast, range).nbm) return chartTitle(forecast);
+  const tz = forecast.location.tz;
+  const end = forecast.extended.end;
+  return `${shortDay(forecast.start, tz)} ${hour12At(forecast.start, tz)} → ${shortDay(end, tz)} ${hour12At(end, tz)}`;
+}
+
+// Chart-head hint beside the title in 7 d.
+export function rangeHint(forecast, range, { mode = 'hourly' } = {}) {
+  const tz = forecast.location.tz;
+  const edge = `${shortDay(forecast.horizon, tz)} ${hour12At(forecast.horizon, tz)}`;
+  if (range !== '7d') return 'hover or touch a bar for that hour';
+  if (!forecast.extended) return `HRRR to ${edge} · NBM unavailable`;
+  return `HRRR ${mode === 'hourly' ? 'hourly ' : ''}to ${edge} · NBM 3-hourly beyond · hover for a block`;
+}
+
+// Peak chip across the 7-day range (§12a): "peak G32 · Sat 1pm · NBM".
+// Scans HRRR from the now hour, then every NBM block; the first maximum wins.
+// A block's time is its middle hour. null when nothing is left to scan.
+export function rangePeak(forecast, nowIdx) {
+  const tz = forecast.location.tz;
+  let best = null;
+  const first = Math.max(0, Math.floor(nowIdx));
+  for (let i = first; i < forecast.hours.length; i++) {
+    const g = forecast.hours[i].gust;
+    if (!best || g > best.gust) best = { gust: g, at: hourAt(forecast, i), model: 'HRRR' };
+  }
+  for (const b of forecast.extended ? forecast.extended.blocks : []) {
+    if (!best || b.gust > best.gust) best = { gust: b.gust, at: new Date(b.start.getTime() + Math.floor(b.w / 2) * HOUR_MS), model: 'NBM' };
+  }
+  if (!best) return null;
+  return { ...best, text: `peak G${best.gust} · ${shortDay(best.at, tz)} ${hour12At(best.at, tz)}${best.model === 'NBM' ? ' · NBM' : ''}` };
+}
+
+// NBM staleness on its own clock (extended.fetched), same 90 min / 6 h tiers.
+export function nbmTier(forecast, now) {
+  if (!forecast.extended) return null;
+  return ageTier(now.getTime() - forecast.extended.fetched.getTime());
+}
+
+// --- Chart layout (port of docs/design/reference/chart_reference.py::svg,
+//     and of handoff-2026-10-26/reference/mixed_reference.py for 7 d) ------
 //
-// Everything is derived from slot = W / n in viewBox units; the page scales
-// the SVG to 100 % width. Styles are the two web breakpoints (HANDOFF §6.5,
-// §6.4a): desktop ≥ 900 px, phone below.
+// Everything is derived from the per-hour width (W / plotted hours) in
+// viewBox units; the page scales the SVG to 100 % width. Styles are the two
+// web breakpoints (HANDOFF §6.5, §6.4a): desktop ≥ 900 px, phone below.
 
 export const CHART_STYLES = {
   desktop: { W: 1120, H: 300, top: 40, bot: 22, arrowEvery: 1, tickEvery: 3, labelEvery: 3, font: 12, arrowSize: 10, dayBand: true },
@@ -398,90 +751,174 @@ export const CHART_STYLES = {
 export const SHADE_DAY_ALPHA = 0.07;
 export const SHADE_NIGHT_ALPHA = 0.08;
 
+// Sky band: 14 high, plus a 2 gap, above everything else in the SVG.
+export const SKY_BAND_H = 14;
+export const SKY_BAND_GAP = 2;
+
+// Rough text width for edge-clipping decisions (system UI digits/letters).
+const textHalfWidth = (text, font) => text.length * font * 0.3;
+
 // Layout model for one chart. nowIdx is fractional hours since start (null
 // hides the now marker). Returns only numbers and labels; the page turns it
-// into SVG and the tests compare it with reference/charts/webhover.svg.
-export function chartLayout(forecast, style, { nowIdx = null } = {}) {
+// into SVG and the tests compare it with the reference SVGs.
+export function chartLayout(forecast, style, { nowIdx = null, range = '48h' } = {}) {
   const { W, H, top, bot, font, arrowSize } = style;
   const tz = forecast.location.tz;
-  const hours = forecast.hours;
-  const n = hours.length;
+  const span = rangeSpan(forecast, range);
+  const seven = span.range === '7d';
+  const total = span.total;
+  const mode = seven ? slotMode(W, total) : 'hourly';
+  const slots = chartSlots(forecast, span.range, { threeHourly: mode === '3-hourly' });
+  const n = slots.length;
+  const hrrrN = forecast.hours.length;
   const plotH = H - top - bot;
   const plotBottom = top + plotH;
-  const slot = W / n;
-  const bw = Math.max(3, Math.round(slot * 0.72 * 100) / 100);
-  const capW = bw + 2;
-  const yMax = yDomainMax(hours);
-  const X = (i) => i * slot;
+  const slot = W / total; // width of one hour
+  const yMax = yDomainMax(slots);
+  const X = (t) => t * slot;
   const Y = (v) => top + plotH - (v / yMax) * plotH;
+  const barW = (w) => Math.max(3, Math.round(w * slot * 0.72 * 100) / 100);
+  const bw = barW(1);
+  const capW = bw + 2;
 
   const grid = [];
   for (let v = 10; v < yMax; v += 10) grid.push({ v, y: Y(v), labelX: W - 2, labelY: Y(v) - 3 });
 
-  const sun = sunMarkers(forecast).map((s) => ({ kind: s.kind, x: s.offset * W, y: top - 1, at: s.at }));
+  // Sunrise filled, sunset ring (§5); nothing at dawn/dusk.
+  const sun = sunMarkers(forecast, span.end).map((s) => ({ kind: s.kind, x: s.offset * W, y: top - 1, at: s.at }));
 
   // Bars sit on the baseline; 0 kn is a 1 px stub.
-  const bars = hours.map((h, i) => {
-    const y = h.kn > 0 ? Y(h.kn) : plotBottom - 1;
-    const step = beaufortStep(h.kn);
-    return { i, x: X(i) + (slot - bw) / 2, y, w: bw, h: plotBottom - y, step, token: beaufortToken(step) };
+  const bars = slots.map((s, i) => {
+    const w = barW(s.w);
+    const y = s.kn > 0 ? Y(s.kn) : plotBottom - 1;
+    const step = beaufortStep(s.kn);
+    return { i, t: s.t, model: s.model, x: X(s.t) + (s.w * slot - w) / 2, y, w, h: plotBottom - y, step, token: beaufortToken(step) };
   });
 
-  const gust = hours.map((h, i) => ({ i, x: X(i) + slot / 2, y: Y(h.gust) }));
+  const gust = slots.map((s, i) => ({ i, model: s.model, x: X(s.t) + (s.w * slot) / 2, y: Y(s.gust), capW: barW(s.w) + 2 }));
 
+  // Arrows: 48 h per style; 7 d every 3 h (hourly) or 6 h (3-hourly), on
+  // slot starts that fall on the cadence.
   const arrows = [];
-  for (let i = 0; i < n; i += style.arrowEvery) {
-    arrows.push({ i, x: X(i) + slot / 2, y: plotBottom + bot / 2, rot: arrowRotation(hours[i].dirFrom) });
-  }
+  const every = seven ? (mode === '3-hourly' ? 6 : 3) : style.arrowEvery;
+  slots.forEach((s, i) => {
+    if (s.t % every !== 0) return;
+    arrows.push({ i, model: s.model, x: X(s.t) + (s.w * slot) / 2, y: plotBottom + bot / 2, rot: arrowRotation(s.dirFrom) });
+  });
 
-  // Ticks and labels are hour-of-day based: 3-h cadence at hours divisible
-  // by 3, 6-h cadence at 03/09/15/21 (both anchored on 9am).
-  const onCadence = (hod, every) => hod % every === 3 % every;
+  // 48 h: ticks and 12-hour labels on hour-of-day cadence (3 h at hours
+  // divisible by 3, 6 h at 03/09/15/21, both anchored on 9am); a label that
+  // would be clipped by the plot edge is dropped (item 3). Day band above the
+  // plot: name at each midnight; the first day's name only when `now` is not
+  // at the plot start (the readout already names the day).
+  // 7 d: no hour labels; day names centred per day on the bottom axis and a
+  // dotted divider at every midnight.
+  const onCadence = (hod, every_) => hod % every_ === 3 % every_;
   const ticks = [];
   const labels = [];
   const days = [];
-  for (let i = 0; i < n; i++) {
-    const t = hourAt(forecast, i);
-    const hod = localHour(t, tz);
-    const cx = X(i) + slot / 2;
-    if (onCadence(hod, style.tickEvery)) ticks.push({ i, x: cx, y1: plotBottom, y2: plotBottom + 3 });
-    if (onCadence(hod, style.labelEvery)) labels.push({ i, x: cx, y: H + 10, text: tickLabel(hod) });
-    if (style.dayBand && (i === 0 || hod === 0)) {
+  const nowAtStart = nowIdx != null && nowIdx >= 0 && nowIdx < 1;
+  if (!seven) {
+    for (let i = 0; i < hrrrN; i++) {
+      const t = hourAt(forecast, i);
+      const hod = localHour(t, tz);
+      const cx = X(i) + slot / 2;
+      if (onCadence(hod, style.tickEvery)) ticks.push({ i, x: cx, y1: plotBottom, y2: plotBottom + 3 });
+      if (onCadence(hod, style.labelEvery)) {
+        const text = tickLabel(hod);
+        const half = textHalfWidth(text, font);
+        if (cx - half >= 0 && cx + half <= W) labels.push({ i, x: cx, y: H + 10, text });
+      }
+      if (style.dayBand && (i === 0 || hod === 0)) {
+        days.push({
+          i,
+          x: X(i),
+          name: shortDay(t, tz),
+          labelX: X(i) + (i > 0 ? 5 : 4),
+          labelY: top - 22,
+          anchor: 'start',
+          divider: i > 0 ? { x: X(i), y1: top - 18, y2: plotBottom } : null,
+          hidden: i === 0 && nowAtStart,
+        });
+      }
+    }
+  } else {
+    // Midnights inside the range, found hour by hour (DST-safe).
+    const bounds = [0];
+    for (let h = 1; h < total; h++) if (localHour(hourAt(forecast, h), tz) === 0) bounds.push(h);
+    bounds.push(total);
+    for (let k = 0; k < bounds.length - 1; k++) {
+      const h0 = bounds[k];
+      const h1 = bounds[k + 1];
+      const x0 = X(h0);
+      const cx = X((h0 + h1) / 2);
+      const name = shortDay(hourAt(forecast, h0), tz);
+      const fits = (h1 - h0) * slot >= textHalfWidth(name, font) * 2 + 6;
       days.push({
-        i,
-        x: X(i),
-        name: shortDay(t, tz),
-        labelX: X(i) + (i > 0 ? 5 : 4),
-        labelY: top - 22,
-        divider: i > 0 ? { x: X(i), y1: top - 18, y2: plotBottom } : null,
-        hidden: false,
+        i: h0,
+        x: x0,
+        name,
+        labelX: cx,
+        labelY: H + 10,
+        anchor: 'middle',
+        bottom: true,
+        divider: h0 > 0 ? { x: x0, y1: top - 18, y2: plotBottom } : null,
+        hidden: !fits,
       });
     }
   }
 
   let now = null;
-  if (nowIdx != null && nowIdx >= 0 && nowIdx <= n) {
+  if (nowIdx != null && nowIdx >= 0 && nowIdx <= total) {
     const x = X(nowIdx);
     now = { x, y1: top - 6, y2: plotBottom, labelX: x + 4, labelY: top - 8, text: 'now' };
   }
 
-  const ex = X(n);
-  const edge = { x: ex, y1: top - 6, y2: plotBottom, labelX: ex - 4, labelY: top - 8, text: horizonLabel(forecast) };
+  const ex = X(total);
+  let edgeText = horizonLabel(forecast);
+  if (seven) edgeText = span.nbm ? endLabel(forecast, '7d') : `${horizonLabel(forecast)} · NBM unavailable`;
+  const edge = { x: ex, y1: top - 6, y2: plotBottom, labelX: ex - 4, labelY: top - 8, text: edgeText };
+
+  // The model seam (= the HRRR edge) and the NBM region, 7 d with NBM only.
+  let seam = null;
+  if (span.nbm) {
+    const sx = X(forecast.extended.fromIdx);
+    seam = {
+      x: sx,
+      y1: top - 6,
+      y2: plotBottom,
+      labelY: top - 8,
+      left: { x: sx - 4, text: 'HRRR' },
+      right: { x: sx + 4, text: 'NBM · 3-hourly' },
+      region: { x: sx, y: top, w: ex - sx, h: plotH },
+    };
+  }
+
+  // Sky band cells (sky_reference.py::band_svg), y relative to the band.
+  const sky = skyCells(forecast, span.range).map((c) => {
+    const x = X(c.t);
+    const w = c.w * slot;
+    const tickXs = [];
+    for (let j = 0; j < c.ticks; j++) tickXs.push(x + (w * (j + 1)) / (c.ticks + 1));
+    return { t: c.t, model: c.model, tone: c.tone, x: x + 0.5, y: 2, w: Math.max(0, w - 1), h: SKY_BAND_H - 4, ticks: tickXs.map((tx) => ({ x: tx, y1: SKY_BAND_H - 6, y2: SKY_BAND_H - 1 })) };
+  });
+  const skyH = sky.length ? SKY_BAND_H + SKY_BAND_GAP : 0;
 
   return {
     W, H, top, bot, plotH, plotBottom, n, slot, bw, capW, yMax, font, arrowSize,
-    stops: twilightStops(forecast),
-    grid, sun, bars, gust, arrows, ticks, labels, days, now, edge,
+    range: span.range, mode, total, end: span.end, slots,
+    stops: twilightStops(forecast, span.end),
+    grid, sun, bars, gust, arrows, ticks, labels, days, now, edge, seam, sky, skyH,
   };
 }
 
-// Hover / scrub highlight for hour i (HANDOFF §6.4c): a 1.5 px outline on the
+// Hover / scrub highlight for slot i (HANDOFF §6.4c): a 1.5 px outline on the
 // bar (radius 2.5, outset 1.5) and a full-height rule through the slot centre
 // from top − 6 to the bottom of the arrow row.
 export function selectionGeometry(layout, i) {
   const b = layout.bars[i];
   if (!b) return null;
-  const cx = i * layout.slot + layout.slot / 2;
+  const cx = b.x + b.w / 2;
   return {
     i,
     cx,
@@ -490,10 +927,14 @@ export function selectionGeometry(layout, i) {
   };
 }
 
-// hour = floor(x / slot) for an x in viewBox units; null outside the plot.
+// Slot index under x (viewBox units); null outside the plot. For hourly
+// slots this is floor(x / slot).
 export function hourAtX(layout, x) {
-  const i = Math.floor(x / layout.slot);
-  return i >= 0 && i < layout.n ? i : null;
+  if (!(x >= 0) || x >= layout.total * layout.slot) return null;
+  const h = x / layout.slot;
+  const ss = layout.slots;
+  for (let i = 0; i < ss.length; i++) if (h >= ss[i].t && h < ss[i].t + ss[i].w) return i;
+  return null;
 }
 
 // --- Time formatting (Intl with the payload tz) ---------------------------

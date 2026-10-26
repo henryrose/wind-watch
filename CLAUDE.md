@@ -62,7 +62,10 @@ cd apple && ./build.sh gen      # regenerate WindWatch.xcodeproj from project.ym
 
 # Web (static page, no build step)
 cd web && node --test
-python3 -m http.server 8080     # from the repo root, then open http://localhost:8080/web/?state=fresh
+python3 -m http.server 8080     # from the repo root, then open http://localhost:8080/web/?fixture=1&state=fresh
+# Web query params (web/README.md): fixture=1 (reference payload whatever config.js says), state=…, now=<ISO>,
+# scheme=dark|light, hover=<slot index>, table=1|0, range=48h|7d, unit=f|c, nbm=stale|old|off, sky=off.
+# Headless Chrome won't go below ~500 px wide: screenshot narrow widths through an <iframe width=375>.
 ```
 
 ## Layout

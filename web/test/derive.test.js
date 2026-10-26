@@ -51,7 +51,8 @@ test('view model shape (IMPLEMENTATION_PLAN §0)', () => {
   assert.equal(shortDay(forecast.start, TZ), 'Wed');
   assert.equal(formatHHMM(forecast.horizon, TZ), '05:00');
   assert.equal(shortDay(forecast.horizon, TZ), 'Fri');
-  assert.deepEqual(forecast.hours[0], { kn: 3, gust: 4, dirFrom: 290 });
+  // §4.2a adds temp (°C) / cloud (%) / precip (mm/h) per hour; null when absent.
+  assert.deepEqual(forecast.hours[0], { kn: 3, gust: 4, dirFrom: 290, temp: 10, cloud: 10, precip: 0 });
   assert.equal(forecast.peakGust.kn, 25);
   assert.equal(formatHHMM(forecast.peakGust.at, TZ), '00:00');
   for (const h of forecast.hours) {
