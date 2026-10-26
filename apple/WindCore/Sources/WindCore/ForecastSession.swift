@@ -12,6 +12,8 @@ import SwiftUI
 ///   the clock (stale = fetched + 2 h, old = + 7 h, horizon = horizon + 2 h) or the cache meta.
 /// - `WW_NOW=<ISO 8601>`: pins the clock.
 /// - `WW_TYPE_SIZE=xl|xxl|xxxl|ax1…ax5`: forces a Dynamic Type size.
+/// - `WW_LOCATIONS=<1…12>` (fixture only): the design's sample location list, Marrowstone Pt
+///   selected, held in memory until the first edit.
 @MainActor
 @Observable
 public final class ForecastSession {
@@ -23,7 +25,7 @@ public final class ForecastSession {
     public private(set) var typeSizeOverride: DynamicTypeSize?
     /// iPhone first launch: show the Welcome location chooser (`Welcome`).
     public private(set) var needsWelcome = false
-    /// Called after a local preference edit (`saveCustom`, `selectDefault`, `selectCustom`); the
+    /// Called after a local edit of the location list (add, rename, select, delete, move); the
     /// iPhone app uses it to push the context to the watch. WindCore stays free of WatchConnectivity.
     @ObservationIgnored public var onPreferencesChanged: (@MainActor (LocationSettings.Preferences) -> Void)?
 
@@ -57,6 +59,9 @@ public final class ForecastSession {
         pinnedNow = environment["WW_NOW"].flatMap { ISO8601DateFormatter().date(from: $0) }
         now = pinnedNow ?? .now
         preferences = LocationSettings.load(from: defaults)
+        if isFixture, let n = environment["WW_LOCATIONS"].flatMap(Int.init) {
+            preferences = LocationSettings.fixture(count: n)
+        }
         typeSizeOverride = Self.typeSize(environment["WW_TYPE_SIZE"])
 
         if isFixture {
@@ -87,13 +92,13 @@ public final class ForecastSession {
             needsWelcome = true
         } else if !isFixture {
             needsWelcome = Welcome.shouldShow(done: Welcome.isDone(in: defaults),
-                                              hasCustom: preferences.custom != nil, hasCache: cached != nil)
+                                              hasCustom: preferences.hasNonDefault, hasCache: cached != nil)
             // Someone upgrading with data already on device has effectively chosen; never ask later.
             if !needsWelcome { Welcome.markDone(in: defaults) }
         }
     }
 
-    /// Ends the Welcome chooser; the choice itself is made with `selectDefault` / `trySaveCustom`.
+    /// Ends the Welcome chooser; the choice itself is made with `selectDefault` / `tryAddLocation`.
     public func completeWelcome() {
         needsWelcome = false
         if !isFixture { Welcome.markDone(in: defaults) }
@@ -126,10 +131,9 @@ public final class ForecastSession {
         return forecast.hero(at: now)
     }
 
-    public var locationName: String {
-        if preferences.effectiveUseCustom, let custom = preferences.custom { return custom.name }
-        return forecast?.location.name ?? SavedLocation.portTownsendBay.name
-    }
+    /// The selected location's name, verbatim from the device list (the server sends an empty
+    /// name for custom points, and a rename of the default must win over the payload's).
+    public var locationName: String { preferences.selected.name }
 
     public var canReachNetwork: Bool { client != nil && !isFixture }
 
@@ -162,37 +166,72 @@ public final class ForecastSession {
 
     // MARK: - Location
 
+    /// Selects the server-default row (Welcome's one-tap choice); no-op when it was deleted.
     public func selectDefault() {
-        guard preferences.useCustom else { return }
-        preferences.useCustom = false
-        locationChanged()
+        guard let id = preferences.locations.first(where: \.isServerDefault)?.id else { return }
+        select(id)
     }
 
-    public func selectCustom() {
-        guard preferences.custom != nil, !preferences.useCustom else { return }
-        preferences.useCustom = true
-        locationChanged()
+    /// Tap a row: switch every surface to it.
+    public func select(_ id: UUID) {
+        var next = preferences
+        guard next.select(id) else { return }
+        commit(next)
     }
 
-    public func saveCustom(_ location: SavedLocation) {
-        preferences.custom = location
-        preferences.useCustom = true
-        locationChanged()
+    /// Adds and selects a location with no network check (fixture mode, debug switches).
+    @discardableResult
+    public func addLocation(_ location: SavedLocation) -> Bool {
+        var next = preferences
+        guard next.add(location) else { return false }
+        commit(next)
+        return true
     }
 
-    public enum SaveCustomOutcome: Sendable, Equatable {
+    /// Renames in place; the pin, the cell and the cached forecast are untouched.
+    @discardableResult
+    public func renameLocation(_ id: UUID, to name: String) -> Bool {
+        var next = preferences
+        guard next.rename(id, to: name) else { return false }
+        commit(next)
+        return true
+    }
+
+    /// False for the last remaining location.
+    @discardableResult
+    public func deleteLocation(_ id: UUID) -> Bool {
+        var next = preferences
+        guard next.delete(id) else { return false }
+        commit(next)
+        return true
+    }
+
+    public func moveLocations(fromOffsets source: IndexSet, toOffset destination: Int) {
+        var next = preferences
+        next.move(fromOffsets: source, toOffset: destination)
+        guard next != preferences else { return }
+        commit(next)
+    }
+
+    public enum AddOutcome: Sendable, Equatable {
         case saved
         /// Nothing changed: the point is outside the HRRR grid (`HRRRCoverage`, or the server's 422).
         case outsideCoverage
+        /// Nothing changed: the list already holds `Preferences.maxCount` locations.
+        case full
     }
 
-    /// The Location screen's Save. Fetches the new point first, so the current forecast stays on
-    /// screen until the new one is in hand and a point the server refuses changes nothing. Any
-    /// other failure (offline, server down) saves anyway and the next refresh fills it in.
-    public func trySaveCustom(_ location: SavedLocation) async -> SaveCustomOutcome {
+    /// The naming sheet's Save for a new pin: adds it and selects it. Fetches the new point first,
+    /// so the current forecast stays on screen until the new one is in hand and a point the server
+    /// refuses changes nothing. Any other failure (offline, server down) saves anyway and the next
+    /// refresh fills it in.
+    public func tryAddLocation(_ location: SavedLocation) async -> AddOutcome {
+        guard !preferences.isFull else { return .full }
         guard location.isInHRRRCoverage else { return .outsideCoverage }
-        guard let client, !isFixture, !isUpdating else {
-            saveCustom(location)
+        var next = preferences
+        guard next.add(location) else { return .full }
+        guard let client, !isFixture, !isUpdating, !location.isServerDefault else {
+            commit(next)
             return .saved
         }
         isUpdating = true
@@ -202,19 +241,17 @@ public final class ForecastSession {
         case .failed(let error) where error as? WindClientError == .outsideCoverage:
             return .outsideCoverage
         case .updated(let data, let etag):
-            preferences.custom = location
-            preferences.useCustom = true
-            locationChanged(prefetched: (data, etag))
+            commit(next, prefetched: (data, etag))
         default:
-            saveCustom(location)
+            commit(next)
         }
         return .saved
     }
 
-    /// Re-reads the preference from the group defaults after an external write (the watch's
-    /// `WCSession` handler, D5). Returns true when the *active* location changed; only then is the
-    /// cache dropped (a different location is a different payload). Fixture mode keeps its data and
-    /// just rebuilds `forecast` with the new `isDefault` flag.
+    /// Re-reads the list from the group defaults after an external write (the watch's `WCSession`
+    /// handler, D5). Returns true when the *fetched* location changed; only then is the cache
+    /// dropped (a different point is a different payload). Fixture mode keeps its data and just
+    /// rebuilds `forecast` with the new `isDefault` flag.
     @discardableResult
     public func reloadPreferences() -> Bool {
         let fresh = LocationSettings.load(from: defaults)
@@ -230,11 +267,14 @@ public final class ForecastSession {
         return activeChanged
     }
 
-    /// `prefetched` is the new location's payload when the caller already has it (`trySaveCustom`).
-    private func locationChanged(prefetched: (data: Data, etag: String?)? = nil) {
+    /// Stores `next`, tells the watch, and swaps the forecast only when the fetched point changed.
+    /// `prefetched` is the new location's payload when the caller already has it (`tryAddLocation`).
+    private func commit(_ next: LocationSettings.Preferences, prefetched: (data: Data, etag: String?)? = nil) {
+        let activeChanged = next.activeCustom != preferences.activeCustom
+        preferences = next
         LocationSettings.save(preferences, to: defaults)
-        if isFixture {
-            setCached(cached) // rebuilds `forecast` with the new isDefault flag
+        if isFixture || !activeChanged {
+            setCached(cached) // same payload; rebuilds `forecast` with the new isDefault flag
         } else if let prefetched {
             try? store.clear()
             try? store.save(payloadData: prefetched.data, etag: prefetched.etag, at: .now)
@@ -252,7 +292,7 @@ public final class ForecastSession {
 
     private func setCached(_ value: Cached?) {
         cached = value
-        forecast = value.map { Forecast(payload: $0.payload, isDefault: !preferences.effectiveUseCustom) }
+        forecast = value.map { Forecast(payload: $0.payload, isDefault: preferences.selectedIsServerDefault) }
     }
 
     private func applyFixture(state: String?) {
@@ -316,8 +356,9 @@ public enum FixtureFlag {
     }
 }
 
-/// The iPhone's one-time location chooser. Shown only on a true first launch: no flag, no custom
-/// location, nothing cached. Stored in the App Group defaults beside the location preference.
+/// The iPhone's one-time location chooser. Shown only on a true first launch: no flag, nothing in
+/// the list beyond the seeded default, nothing cached. Stored in the App Group defaults beside the
+/// location list.
 public enum Welcome {
     public static let key = "ww.welcomeDone"
 

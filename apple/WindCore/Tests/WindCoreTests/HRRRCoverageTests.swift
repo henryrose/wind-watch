@@ -34,3 +34,28 @@ struct HRRRCoverageTests {
         #expect(HRRRCoverage.contains(lat: lat, lon: lon) == covered)
     }
 }
+
+@Suite("HRRR cell")
+struct HRRRCellTests {
+    @Test func cellCentreRoundTripsThroughTheGrid() throws {
+        let cell = try #require(HRRRCoverage.cell(lat: 48.1, lon: -122.683))
+        let pos = try #require(HRRRCoverage.gridPosition(lat: cell.lat, lon: cell.lon))
+        #expect(abs(pos.x - pos.x.rounded()) < 1e-6 && abs(pos.y - pos.y.rounded()) < 1e-6)
+        #expect(cell.corners.count == 4)
+        // A 3 km cell: each side ≈ 3 km, the centre within ~2.2 km of the 2 dp point.
+        let side = HRRRCoverage.distanceKm(cell.corners[0].lat, cell.corners[0].lon, cell.corners[1].lat, cell.corners[1].lon)
+        #expect(abs(side - 3) < 0.1)
+        #expect(HRRRCoverage.distanceKm(48.10, -122.68, cell.lat, cell.lon) < 2.2)
+        #expect(HRRRCoverage.cell(lat: 51.5, lon: -0.12) == nil)
+    }
+
+    @Test func forecastPointText() throws {
+        let cell = try #require(HRRRCoverage.cell(lat: 48.1, lon: -122.683))
+        #expect(HRRRCoverage.forecastPointText(lat: cell.lat, lon: cell.lon) == "HRRR cell at pin")
+        let text = try #require(HRRRCoverage.forecastPointText(lat: 48.1, lon: -122.683))
+        #expect(text.range(of: #"^HRRR cell (at pin|\d+\.\d km (N|NE|E|SE|S|SW|W|NW))$"#, options: .regularExpression) != nil)
+        #expect(HRRRCoverage.forecastPointText(lat: 51.5, lon: -0.12) == nil)
+        #expect(Int(HRRRCoverage.initialBearing(48, -122, 48.1, -122)) == 0)
+        #expect(Int(HRRRCoverage.initialBearing(48, -122, 48, -121.9).rounded()) == 90)
+    }
+}

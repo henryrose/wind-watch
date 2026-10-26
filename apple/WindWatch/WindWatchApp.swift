@@ -12,11 +12,11 @@ struct WindWatchApp: App {
         let session = ForecastSession(bundleInfo: Bundle.main.infoDictionary ?? [:])
         let sync = LocationSync(session: session)
         #if DEBUG
-        // `WW_SAVE_CUSTOM="Name,lat,lon"`: save and select a custom location at launch (sync tests).
+        // `WW_SAVE_CUSTOM="Name,lat,lon"`: add and select a location at launch (sync tests).
         if let spec = ProcessInfo.processInfo.environment["WW_SAVE_CUSTOM"] {
             let parts = spec.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
             if parts.count == 3, let lat = Double(parts[1]), let lon = Double(parts[2]) {
-                session.saveCustom(SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier))
+                session.addLocation(SavedLocation(name: parts[0], lat: lat, lon: lon, tz: TimeZone.current.identifier))
             }
         }
         #endif

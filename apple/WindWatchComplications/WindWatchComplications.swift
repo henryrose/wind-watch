@@ -37,9 +37,9 @@ struct WindProvider: TimelineProvider {
         let store = AppGroupStore(groupID: Self.groupID)
         let prefs = UserDefaults(suiteName: Self.groupID).map(LocationSettings.load(from:)) ?? .default
         if let cached = store.load() {
-            let forecast = Forecast(payload: cached.payload, isDefault: !prefs.effectiveUseCustom)
+            let forecast = Forecast(payload: cached.payload, isDefault: prefs.selectedIsServerDefault)
             let now = Date.now
-            completion(WindEntry.make(forecast: forecast, at: now, lastCheckOK: cached.meta.lastCheckOK, isDefault: !prefs.effectiveUseCustom))
+            completion(WindEntry.make(forecast: forecast, at: now, lastCheckOK: cached.meta.lastCheckOK, isDefault: prefs.selectedIsServerDefault))
         } else {
             completion(placeholder(in: context))
         }
@@ -74,7 +74,7 @@ struct WindProvider: TimelineProvider {
         guard let cached else {
             return Timeline(entries: [WindEntry.firstRun(at: now)], policy: policy)
         }
-        let isDefault = !prefs.effectiveUseCustom
+        let isDefault = prefs.selectedIsServerDefault
         let forecast = Forecast(payload: cached.payload, isDefault: isDefault)
         let entries = TimelineBuilder.entries(forecast: forecast, now: now, lastCheckOK: cached.meta.lastCheckOK)
             .map { WindEntry.make($0, forecast: forecast, isDefault: isDefault) }
@@ -104,7 +104,7 @@ struct WindComplication: Widget {
             WindComplicationEntryView(entry: entry)
         }
         .configurationDisplayName("Wind")
-        .description("Sustained, gusts and direction for Port Townsend Bay")
+        .description("Sustained, gusts and direction for your selected location")
         .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryInline, .accessoryCorner])
     }
 }

@@ -307,11 +307,11 @@ The only blending I'd consider later is replacing `hours` beyond the HRRR horizo
 
 ## 7. Alternate location
 
-**Model:** `Location { name, lat, lon, tz }`. `Location.default` is compiled in. At most one custom location in v1, stored in `UserDefaults(suiteName: appGroup)` on each device as `customLocation` plus a `useCustom: Bool`.
+**Model (26 Oct 2026, HANDOFF §8.3):** a list of up to 12 `SavedLocation { id, name, suggestedNames, lat, lon, tz, createdAt }` plus a selected id, stored as one JSON blob under `locations` in `UserDefaults(suiteName: appGroup)` on each device. Port Townsend Bay is seeded as row 1 (fixed id) but is an ordinary row: renamable, reorderable, deletable; the last remaining row cannot be deleted. The selected row drives every surface. The row at the server default's coordinates is fetched from `/v1/wind` with no query whatever it is called; every other row uses `?lat&lon`. Names are the user's, never re-geocoded; the server's empty `loc.name` for custom points is never shown. Installs from before the list migrate once on first read: the old `customLocation` + `useCustom` keys become `[Port Townsend Bay, custom]` with the previous selection, and the old keys are removed.
 
-**Set on the iPhone only.** Settings screen: search by name (`MKLocalSearch`) or long-press a map; store the placemark's coordinate and time zone (`MKPlacemark.timeZone`, falling back to the Worker's `tz` from `timezone=auto`). Then `WCSession.default.updateApplicationContext(["customLocation": ..., "useCustom": ...])`. Application context is delivered when the watch is next reachable and persists on the watch, so the watch keeps working standalone after that.
+**Set on the iPhone only.** Locations screen: search (`MKLocalSearch`), paste `lat, lon`, or long-press the map; the point is refused outside the HRRR grid, named once by the reverse geocoder (4 s timeout), and saved from the naming sheet. Every edit sends the whole list with `WCSession.default.updateApplicationContext(["locations": <JSON>])`. Application context is delivered when the watch is next reachable and persists on the watch, so the watch keeps working standalone after that. A watch receiving a pre-list context migrates it the same way.
 
-**On the watch:** a single toggle in settings, "Port Townsend Bay / <custom name>", so you can switch from the wrist without the phone. No editing on the watch.
+**On the watch:** Settings shows the same list in the same order, Crown-scrolled; a tap selects. No editing on the watch; the next context from the iPhone wins.
 
 **Worker:** `?lat&lon` → round to 2 decimals (cache key), fetch with `cell_selection=nearest&timezone=auto`, transform with the same function, store in the Cache API for 10 minutes, same response shape with `loc.cell = "nearest"` and `loc.name` empty (the device shows its own stored name). No KV, no cron for custom locations.
 
