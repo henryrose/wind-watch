@@ -229,9 +229,9 @@ Hour index 0 = Wed 21 Oct 09:00 PDT, 45 points, horizon index 44 (Fri 05:00).
 
 Chart starts in day (1.0) and ends in night (0.0). Fri dawn (index ~46.1) is past the horizon and is not drawn.
 
-### 6.3 Complication mini strip (rectangular, Smart Stack)
+### 6.3 Complication strip (rectangular, Smart Stack)
 
-Next 6 hours from `floor(nowIndex)`. Plot 150×62 px (rect) / 360×62 (Smart Stack). Y domain = window max gust rounded up to 5 (relative height only; colour carries absolute magnitude). Bars 0.72 slot, gust line 2 px, caps bar + 2; **no arrows, no ticks, no gridlines**; sun dot kept; past-horizon slots empty. In Old state: `saturation 0.35, opacity 0.7`.
+**Next 12 hours** from the current hour, full plate width. Rectangular: 168×31 pt (336×62 px @2×), slot 14 pt, bar 0.72 slot. Smart Stack: 184×37 pt with 3-hourly labels `12am · 3am · 6am · 9am` (8 pt). **Y domain = max(20 kn, window max gust rounded up to 5), and it only grows within a forecast run** — never shrinks between timeline entries, so bars don't swell as a peak scrolls out of the window; it resets on a new HRRR run. Gust line + caps 1 pt (2 px), caps bar + 1. 0.5 pt ticks every 3 h under the baseline. **Rectangular strip has no night shading and no sun dot** (invisible at 7 % on the plate); the Smart Stack keeps both. **No arrows, no gridlines, no axis labels on the rectangular.** Past-horizon slots stay empty; Old state: `saturation 0.35, opacity 0.7`.
 
 ### 6.4 Hour selection (scrub) — iPhone and web
 
@@ -239,6 +239,7 @@ The chart is the centrepiece of the iPhone main screen: full-bleed card, plot 25
 
 Interaction: touch or drag anywhere on the plot.
 
+- The first day label is suppressed when the `now` marker sits at the plot start (the readout already names the day); the first tick label is likewise dropped at the plot edge.
 - Selected hour = `round(proxy.value(atX:))` (Swift Charts `chartOverlay` + `DragGesture(minimumDistance: 0)`); web: `pointermove` over the SVG, `floor((x − plotLeft) / slot)`.
 - Selected bar: 1.5 pt white outline (radius 2.5), full plot-height white rule 1.5 pt through the slot centre (from `plotTop − 6` to the arrow row). All other bars `opacity 0.45`; gust line, caps, arrows, shading untouched.
 - The now-readout row swaps to the selected hour: a `Thu 00:00` label with a 2 pt white bar glyph, hero `15 kn`, `G 25`, arrow + `from W · 283°`, Beaufort chip `4`, and `now 3 kn` kept small (Medium 12 secondary) on the right as the anchor. Row gets `card` fill, radius 12, 1.5 pt white inset stroke.
@@ -264,7 +265,7 @@ One `pointermove` listener on the SVG; `hour = floor((x − plotLeft) / slot)`. 
 
 ### 6.4d Second-round refinements (supersede anything above that conflicts)
 
-- **Readout row has a fixed height.** iPhone portrait: 96 pt, `card` fill, radius 12, horizontal margin 12. Both states render the same structure — a 13 pt label line (`Now · Wed 9:25am` with a blue 2 pt bar, or `Thu 12am · midnight` with a white bar), the number, `G`, arrow + `from W · 290°`, right column (peak chip text or `now 3 kn`) over the Beaufort chip. Scrubbing only adds a 1.5 pt white inset ring. Nothing above the chart may change height while a finger is down; use `.frame(height: 96)` and never let text reflow (single-line, `.lineLimit(1)`, `.minimumScaleFactor(0.85)`). Landscape: 48 pt, same rule.
+- **Readout row has a fixed height.** iPhone portrait: 96 pt, `card` fill, radius 12, horizontal margin 12. Both states render the same structure — a 13 pt label line (`Now · Wed 9:25am` with a blue 2 pt bar, or `Thu 12am · midnight` with a white bar), the number (56 pt) in a 124 pt column, `G 4` over arrow + `from W` (+ `283°` Medium 13 secondary while scrubbing), right column = `peak G25 · 12am` (now) or `now 3 kn` (scrubbing), Medium 12 secondary, over the Beaufort chip (number only, no word). Degrees appear only in the scrub state and in the table. Scrubbing only adds a 1.5 pt white inset ring. Nothing above the chart may change height while a finger is down; use `.frame(height: 96)` and never let text reflow (single-line, `.lineLimit(1)`, `.minimumScaleFactor(0.85)`). Landscape: 48 pt, same rule.
 - **Chart is edge to edge.** Portrait plot width = screen width (402 on the reference device): no horizontal padding on the chart card; the y-axis labels and the `now`/edge labels are drawn inside the plot. `.ignoresSafeArea(.container, edges: .horizontal)` on the chart only; the title row above it keeps the 16 pt inset. Landscape: plot width = screen width − 40 (20 pt each side) — 834 on the reference device — so the first and last hour are not under the Dynamic Island; everything else ignores the side safe areas.
 - **Hourly table is collapsible, collapsed by default.** iPhone: a 52 pt disclosure row under the summary (`Hourly table` Semibold 17 · `45 hours · Wed 9am → Fri 5am` 13 secondary · chevron), `card` fill, radius 12; tapping expands the table in place with the standard spring; state persists in `@AppStorage("hourlyTableExpanded")`. At AX sizes the row is 60 pt. Web: a `<details>` with a styled `<summary>` of the same content; closed by default, state remembered in `localStorage`; `prefers-reduced-motion` disables the height animation.
 - **Watch: the 12-hour strip is the launch screen.** Page order is strip → Now detail → (Crown/long-press) Settings. The strip's header carries the compact hero so the one job still lands on wrist raise: `3 kn · G 4 · ▸ from W` (Rounded Heavy 32 / Bold 17 / Semibold 13) with a secondary line `Port Townsend Bay · next 12 h · gusts to 15`. The Now detail page keeps the big number, summary and full trust line. Page dots: strip is dot 1.
@@ -281,12 +282,14 @@ Design at 46 mm (208×248 pt), verify at 42 mm (187×223 pt). Dark only. Liquid 
 
 ### 7.1 Complications (WidgetKit accessory families)
 
-**accessoryRectangular** — the primary target. 184×72 pt. Plate `complication.plate`, radius 13.
+**accessoryRectangular** — the primary target. 184×72 pt. Plate `complication.plate`, radius 13, padding 6/8/5/8.
 
-- Left column (88 pt): row 1 = sustained (Rounded Heavy 30) + `G25` (Rounded Bold 15, 90 % ink) baseline-aligned, 5 pt gap. Row 2 (bottom-aligned) = arrow 11 pt + `from W` (Semibold 12) + `kn` (Medium 12 secondary).
-- Right column: mini strip 75×31 pt top-right; trust line bottom-right, Medium 10 secondary (`as of 23:30`), Semibold amber when stale/old.
-- Past horizon: `—` in `ink.disabled` + `No forecast` (Bold 14 secondary); bottom row `Open app to refresh` / `last run 15Z Tue`. Strip hidden. The dash keeps the layout from reflowing.
-- No location name. Never.
+- Row 1 (25 pt, one line, no wrap): sustained Rounded Heavy 23 · `G25` Rounded Bold 11 at 90 % ink · arrow 9 pt + `from W` Semibold 9 · flexible space · **trust text Medium 11 pt, never smaller** (`as of 23:30`; Semibold amber `as of 13:05` when stale; `Tue 13:05` amber when old). No `kn` (same as the circular).
+- **When row 1 doesn't fit** (`ViewThatFits`, in order): drop `from W` and keep the bare arrow → drop the `G` prefix → shrink the number to 20 pt. The trust text is never removed or shrunk. On 41/42 mm (plate ≈ 166×65 pt) the first fallback is the normal state — see the 42 mm cards on the canvas.
+- Row 2: the 12-hour strip, full plate width (§6.3), 3 pt below row 1.
+- Old: numbers and arrow `ink.old`, strip desaturated.
+- Past horizon: row 1 = `—` in `ink.disabled` + `No forecast` Bold 12 secondary + `15Z Tue` right; row 2 becomes a 1 pt dashed rounded box with `Open app to refresh` Semibold 10 centred.
+- No location name. Never. (The Smart Stack widget adds location + run label in a footer.)
 
 **accessoryCircular** — 52×52 pt.
 
@@ -346,9 +349,11 @@ Peak-gust chip text: `"\(peak.kn) kn gusts \(relativeTimePhrase)"` where phrase 
 
 Stale → amber Semibold; Old → amber + day name, numbers `ink.old`, pill desaturated; Offline → `wifi.slash` + `Couldn't reach server · showing data from 13:05`; Custom location → name only.
 
-### 8.3 Location settings
+### 8.3 Locations
 
-Back chevron + `Location` Bold 28. Default card (`card`, radius 14, 72 pt min): `Port Townsend Bay` Semibold 17, sub `Default · 48.117, −122.760 · HRRR point`, filled check right. **Selecting the default is always exactly one tap and the card never moves.** Caption 13 secondary. Custom card: name + coords, selection ring button 44 pt; search field (44 pt, `ground` fill, radius 10, `Search a place or paste lat, lon`); map 300 pt tall, radius 10, with `Long-press to pin` pill bottom-left; legend dots (blue default, amber custom). Caption: snapped to nearest HRRR cell on save.
+Back chevron + `Locations` Bold 28, counter right (`5 of 12`, 13 Semibold secondary; `12 of 12 · full` in `ink.body`). One list of **up to 12 locations, all equal**: Port Townsend Bay is seeded on first launch as row 1 but is an ordinary row — renamable, reorderable, deletable. Rows (52 pt; 44 pt in Edit mode): selection ring/check · name Semibold 16 · coords 12 secondary. Tap a row to switch; swipe left to delete; **Edit** (nav bar, always present, standard `EditButton`) shows the minus buttons and drag handles for delete and reorder. **The selected location drives every surface** (hero, chart, complications, web); list order carries no meaning beyond order. A fresh install seeds Port Townsend Bay as the only row and selects it. **The last remaining location cannot be deleted** (no swipe action, no minus button) so the watch never has nothing to show. Under the list: search field (44 pt, `Search a place or paste lat, lon`) and a 250 pt map with every location pinned (selected = blue, others white) and a `Long-press the map to add a location` pill; new pins snap to the nearest 3 km HRRR cell and prompt for a name.
+
+**When the list is full (12 of 12):** opening Locations lands in Edit mode (nav button reads `Done`), with a banner `List full (12). Delete one to add a new pin.` above the list. Minus buttons use the standard two-tap pattern (minus → row-level `Delete` confirm pill with a 10 % red tint). The map stays live for viewing; a long-press shows a centred toast `List full — delete a location first` instead of adding. Watch settings shows the same list in the same order, Crown-scrolled.
 
 ### 8.4 About
 
@@ -417,7 +422,8 @@ Icon Composer layers (iOS 26 / watchOS 26): ground `#0B0E12` → wake (one layer
 - [ ] Offline with cache shows the reason and the cached time; never a blank.
 - [ ] Circular: `8` and `15` render without moving the arrow or gust; ring survives tint; stale ring is dashed.
 - [ ] Rectangular never shows the location name; Smart Stack does.
-- [ ] Default location is selectable in one tap and its card never changes position.
+- [ ] Up to 12 locations; Edit button always present; any can be deleted except the last one; at 12 the screen opens in Edit mode and map long-press shows the toast.
+- [ ] Rectangular complication: trust text ≥ 11 pt at 41/42 mm with `from W` dropped first; strip y-domain floors at 20 kn and never shrinks within a run.
 - [ ] Phone table reflows to two lines at AX sizes; chart clamps at 152 pt.
 - [ ] Web page reads correctly in both colour schemes and at 375 px width with a horizontally scrolling table.
 - [ ] VoiceOver label for a chart: `"45-hour wind chart: … ends Friday 05:00"`; for hero: `"15 knots, gusting 25, from the west, as of 23:30"`.
