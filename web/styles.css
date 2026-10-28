@@ -156,7 +156,6 @@ body {
   white-space: nowrap;
 }
 .wordmark-watch { font-weight: 500; color: var(--ink-secondary); }
-.brand-tagline { font-size: 12px; color: var(--ink-disabled); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brand-right { display: inline-flex; align-items: center; gap: 16px; min-width: 0; }
 
 /* --- Header + hero cluster (HANDOFF §9, §8.1) ----------------------------- */
@@ -529,6 +528,9 @@ td.temp { color: var(--ink-body); font-weight: 600; }
 .footer a { color: var(--link); text-decoration: none; }
 .footer a:hover { color: var(--ink-primary); }
 .footer .trying { display: inline-flex; align-items: center; gap: 8px; }
+.credit { margin: 0; text-align: center; font-size: 13px; color: var(--ink-secondary); }
+.credit a { color: var(--link); text-decoration: none; }
+.credit a:hover { color: var(--ink-primary); }
 
 /* --- App awareness (docs/design/web-app-awareness/HANDOFF.md) ------------- */
 /* Header link (§1.2): beside the tagline on desktop, replaces it < 600 px. */
@@ -639,8 +641,6 @@ td.temp { color: var(--ink-body); font-weight: 600; }
   .brand { gap: 9px; }
   .brand-tile { width: 24px; height: 24px; }
   .wordmark { font-size: 22px; }
-  .brand-place { display: none; }  /* Brand-InSitu phone: "HRRR wind" only */
-  .brand-tagline { display: none; }  /* app link replaces the tagline (§1.2) */
   .app-card { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 12px; padding: 16px; }
   .app-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .app-icon-48 { display: none; }
