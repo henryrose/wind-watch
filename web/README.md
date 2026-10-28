@@ -102,6 +102,7 @@ Work in both modes (in live mode they are debugging aids only):
 | `table` | `1` `0` | Opens / closes the hourly table (not saved). |
 | `nbm` | `stale` `old` `off` | Reshapes the payload: NBM fetched 2 h / 7 h before HRRR, or `extended: null` (7 d then stops at the HRRR edge with `NBM unavailable`). |
 | `sky` | `off` | Drops `temp`/`cloud`/`precip` (no sky band, no temperature), as the server served before §4.2a. |
+| `strip` | `1` | Shows the iOS non-Safari app strip on any browser (normally gated by user agent and the 30-day dismissal). |
 
 Examples:
 
@@ -129,6 +130,20 @@ http://localhost:8080/web/?state=horizon
   payload has `temp`.
 - **Sun markers**: sunrise filled r 3, sunset ring r 2.25 stroke 1.5. **Item 3**: the first day label is hidden when
   `now` is in the first hour; a tick label that would be clipped by the plot edge is dropped.
+
+## App awareness (`docs/design/web-app-awareness/HANDOFF.md`, 28 Oct)
+
+- **Smart App Banner**: `<meta name="apple-itunes-app" content="app-id=6825620891, app-argument=<page URL>">`. Safari on iOS draws it; nothing else to build.
+- **Header link** `iPhone & Watch app →` beside the tagline; under 600 px it replaces the tagline.
+- **Footer card** between the hourly table and the footer, never dismissed. The complication drawing
+  (`lib/awareness.js` `compMiniHtml`) uses the payload's next 12 hours and desaturates with the chart in
+  Old / horizon. Desktop: icon 48, `windwatch.wilder-roses.com/ios`, drawing 172×64, QR. Phone: icon 40, full-width
+  drawing (height 76), `Get it on the App Store` pill, no QR.
+- **Strip** under the brand row on iOS browsers that are not Safari (Chrome, Firefox, in-app browsers) only.
+  ✕ stores `localStorage.appStripDismissed` (ms timestamp) and hides it for 30 days.
+- **QR** is static inline SVG encoding `https://windwatch.wilder-roses.com/ios` (level M, 2-module quiet zone),
+  generated once with `segno`. `_redirects` makes `/ios` a 302 to the App Store page on Cloudflare Pages.
+- **Events** (GA4): `app_link_header`, `app_card_footer`, `app_strip_dismiss`.
 
 ## Tests
 

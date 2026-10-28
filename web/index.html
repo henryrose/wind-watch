@@ -12,6 +12,9 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
+  <!-- Safari's Smart App Banner (web-app-awareness §1.1); app-argument = this page's URL -->
+  <meta name="apple-itunes-app" id="itunes-meta" content="app-id=6825620891, app-argument=https://windwatch.wilder-roses.com/">
+  <script>document.getElementById('itunes-meta').content = 'app-id=6825620891, app-argument=' + location.href;</script>
   <title>Wind Watch — Port Townsend Bay</title>
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
@@ -24,7 +27,19 @@
     <!-- Brand lockup row (HANDOFF §10a); icon from docs/design/reference/brand_icon.py, small tier -->
     <div class="brand-row">
       <div class="brand" role="img" aria-label="Wind Watch"><svg class="brand-tile" width="28" height="28" viewBox="0 0 180 180" aria-hidden="true"><defs><clipPath id="wk-tile"><rect width="180" height="180" rx="40"/></clipPath></defs><g clip-path="url(#wk-tile)"><rect width="180" height="180" fill="#0B0E12"/></g><g transform="translate(116.8,102.2) rotate(103)"><line x1="-16" x2="-16" y1="62" y2="86" stroke="#4FA3D8" stroke-width="18" stroke-linecap="round"/><line x1="16" x2="16" y1="62" y2="92" stroke="#8DD44A" stroke-width="18" stroke-linecap="round"/><path d="M0,-50 L37.5,50 L0,20.0 L-37.5,50 Z" fill="#FFFFFF"/></g></svg><span class="wordmark" aria-hidden="true">Wind<span class="wordmark-watch"> Watch</span></span></div>
-      <span class="brand-tagline">HRRR wind<span class="brand-place"> · Port Townsend Bay, WA</span></span>
+      <span class="brand-right">
+        <span class="brand-tagline">HRRR wind<span class="brand-place"> · Port Townsend Bay, WA</span></span>
+        <a class="app-link" id="app-link" href="https://apps.apple.com/us/app/wind-watch-sailing/id6825620891" data-event="app_link_header">iPhone &amp; Watch app →</a>
+      </span>
+    </div>
+    <!-- Our own strip, iOS non-Safari only (§1.4); shown by app.js -->
+    <div class="app-strip hidden" id="app-strip" role="region" aria-label="Also on iPhone and Apple Watch">
+      <div class="app-strip-inner">
+        <svg class="app-strip-icon" width="28" height="28" viewBox="0 0 180 180" aria-hidden="true"><rect width="180" height="180" rx="40" fill="#0B0E12"/><g transform="translate(116.8,102.2) rotate(103)"><line x1="-16" x2="-16" y1="62" y2="86" stroke="#4FA3D8" stroke-width="18" stroke-linecap="round"/><line x1="16" x2="16" y1="62" y2="92" stroke="#8DD44A" stroke-width="18" stroke-linecap="round"/><path d="M0,-50 L37.5,50 L0,20.0 L-37.5,50 Z" fill="#FFFFFF"/></g></svg>
+        <span class="app-strip-text">Also on iPhone and Apple Watch <span class="app-strip-sub">— Get the detailed forecast on your wrist.</span></span>
+        <a class="app-strip-get" href="https://apps.apple.com/us/app/wind-watch-sailing/id6825620891">Get it</a>
+        <button type="button" class="app-strip-close" id="app-strip-close" aria-label="Dismiss for 30 days"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3 L11 11 M11 3 L3 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      </div>
     </div>
     <header class="header">
       <div class="header-left">
@@ -61,6 +76,32 @@
       </summary>
       <section class="table-wrap" id="table-wrap" aria-label="Hourly table"></section>
     </details>
+
+    <!-- Persistent app card (§1.3): part of the page, never dismissed -->
+    <section class="app-card" id="app-card" aria-label="Wind Watch for iPhone and Apple Watch">
+      <div class="app-card-head">
+        <svg class="app-icon app-icon-48" width="48" height="48" viewBox="0 0 180 180" role="img" aria-label="Wind Watch app icon"><rect width="180" height="180" rx="40" fill="#0B0E12"/><g transform="translate(115.2,101.8) rotate(103)"><line x1="-22" x2="-22" y1="58" y2="80" stroke="#4FA3D8" stroke-width="11" stroke-linecap="round"/><line x1="0" x2="0" y1="58" y2="92" stroke="#3FC2A0" stroke-width="11" stroke-linecap="round"/><line x1="22" x2="22" y1="58" y2="84" stroke="#8DD44A" stroke-width="11" stroke-linecap="round"/><path d="M0,-46 L34.5,46 L0,18.4 L-34.5,46 Z" fill="#FFFFFF"/></g></svg>
+        <svg class="app-icon app-icon-40" width="40" height="40" viewBox="0 0 180 180" role="img" aria-label="Wind Watch app icon"><rect width="180" height="180" rx="40" fill="#0B0E12"/><g transform="translate(116.8,102.2) rotate(103)"><line x1="-16" x2="-16" y1="62" y2="86" stroke="#4FA3D8" stroke-width="18" stroke-linecap="round"/><line x1="16" x2="16" y1="62" y2="92" stroke="#8DD44A" stroke-width="18" stroke-linecap="round"/><path d="M0,-50 L37.5,50 L0,20.0 L-37.5,50 Z" fill="#FFFFFF"/></g></svg>
+        <div class="app-card-text">
+          <div class="app-card-title">Wind Watch for iPhone and Apple Watch</div>
+          <div class="app-card-body">The same forecast, on your wrist: the next 12 hours as a watch-face complication, the now readout a glance away, up to 12 saved spots. Free.</div>
+          <a class="app-card-url" href="https://apps.apple.com/us/app/wind-watch-sailing/id6825620891" data-event="app_card_footer">windwatch.wilder-roses.com/ios</a>
+        </div>
+      </div>
+      <div class="app-card-art">
+        <figure class="app-card-fig app-card-comp">
+          <div class="comp-host" id="comp-host"></div>
+          <figcaption><span class="cap-wide">on the watch face</span><span class="cap-narrow">the rectangular complication, 12 hours</span></figcaption>
+        </figure>
+        <figure class="app-card-fig app-card-qr">
+          <svg class="qr" width="96" height="96" viewBox="0 0 33 33" shape-rendering="crispEdges" role="img" aria-label="QR code: https://windwatch.wilder-roses.com/ios"><rect width="33" height="33" rx="2.06" fill="#FFFFFF"/><path d="M2 2h7v1h-7zM11 2h1v1h-1zM14 2h2v1h-2zM18 2h1v1h-1zM20 2h3v1h-3zM24 2h7v1h-7zM2 3h1v1h-1zM8 3h1v1h-1zM11 3h1v1h-1zM14 3h5v1h-5zM24 3h1v1h-1zM30 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM8 4h1v1h-1zM10 4h1v1h-1zM12 4h2v1h-2zM16 4h2v1h-2zM22 4h1v1h-1zM24 4h1v1h-1zM26 4h3v1h-3zM30 4h1v1h-1zM2 5h1v1h-1zM4 5h3v1h-3zM8 5h1v1h-1zM10 5h1v1h-1zM12 5h2v1h-2zM15 5h2v1h-2zM19 5h1v1h-1zM24 5h1v1h-1zM26 5h3v1h-3zM30 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h2v1h-2zM16 6h1v1h-1zM18 6h1v1h-1zM21 6h2v1h-2zM24 6h1v1h-1zM26 6h3v1h-3zM30 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM10 7h2v1h-2zM13 7h1v1h-1zM15 7h1v1h-1zM17 7h4v1h-4zM24 7h1v1h-1zM30 7h1v1h-1zM2 8h7v1h-7zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h7v1h-7zM10 9h2v1h-2zM13 9h2v1h-2zM16 9h1v1h-1zM18 9h1v1h-1zM20 9h1v1h-1zM22 9h1v1h-1zM2 10h1v1h-1zM4 10h5v1h-5zM11 10h1v1h-1zM19 10h3v1h-3zM24 10h5v1h-5zM2 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h2v1h-2zM12 11h3v1h-3zM19 11h4v1h-4zM24 11h3v1h-3zM30 11h1v1h-1zM2 12h1v1h-1zM6 12h1v1h-1zM8 12h3v1h-3zM13 12h2v1h-2zM17 12h2v1h-2zM22 12h1v1h-1zM26 12h1v1h-1zM3 13h3v1h-3zM7 13h1v1h-1zM11 13h1v1h-1zM14 13h1v1h-1zM17 13h2v1h-2zM24 13h4v1h-4zM29 13h1v1h-1zM2 14h2v1h-2zM5 14h2v1h-2zM8 14h1v1h-1zM11 14h1v1h-1zM13 14h2v1h-2zM19 14h1v1h-1zM21 14h1v1h-1zM27 14h2v1h-2zM2 15h3v1h-3zM6 15h1v1h-1zM9 15h1v1h-1zM11 15h1v1h-1zM15 15h1v1h-1zM18 15h1v1h-1zM21 15h6v1h-6zM30 15h1v1h-1zM3 16h1v1h-1zM6 16h6v1h-6zM14 16h7v1h-7zM22 16h2v1h-2zM27 16h2v1h-2zM2 17h2v1h-2zM5 17h3v1h-3zM10 17h6v1h-6zM18 17h1v1h-1zM20 17h3v1h-3zM25 17h1v1h-1zM29 17h1v1h-1zM4 18h1v1h-1zM8 18h1v1h-1zM10 18h1v1h-1zM13 18h2v1h-2zM16 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM27 18h2v1h-2zM2 19h2v1h-2zM5 19h1v1h-1zM11 19h1v1h-1zM14 19h1v1h-1zM18 19h5v1h-5zM24 19h3v1h-3zM28 19h1v1h-1zM30 19h1v1h-1zM2 20h1v1h-1zM6 20h3v1h-3zM10 20h2v1h-2zM13 20h2v1h-2zM17 20h3v1h-3zM25 20h2v1h-2zM28 20h1v1h-1zM2 21h1v1h-1zM5 21h2v1h-2zM9 21h1v1h-1zM11 21h1v1h-1zM13 21h1v1h-1zM16 21h1v1h-1zM21 21h3v1h-3zM29 21h1v1h-1zM2 22h1v1h-1zM6 22h1v1h-1zM8 22h2v1h-2zM11 22h4v1h-4zM17 22h1v1h-1zM19 22h1v1h-1zM21 22h6v1h-6zM28 22h3v1h-3zM10 23h4v1h-4zM15 23h2v1h-2zM18 23h1v1h-1zM22 23h1v1h-1zM26 23h5v1h-5zM2 24h7v1h-7zM11 24h1v1h-1zM15 24h3v1h-3zM19 24h4v1h-4zM24 24h1v1h-1zM26 24h3v1h-3zM2 25h1v1h-1zM8 25h1v1h-1zM10 25h3v1h-3zM15 25h1v1h-1zM18 25h1v1h-1zM22 25h1v1h-1zM26 25h1v1h-1zM29 25h2v1h-2zM2 26h1v1h-1zM4 26h3v1h-3zM8 26h1v1h-1zM10 26h1v1h-1zM13 26h2v1h-2zM16 26h1v1h-1zM19 26h1v1h-1zM22 26h5v1h-5zM28 26h1v1h-1zM2 27h1v1h-1zM4 27h3v1h-3zM8 27h1v1h-1zM10 27h4v1h-4zM15 27h1v1h-1zM20 27h1v1h-1zM27 27h4v1h-4zM2 28h1v1h-1zM4 28h3v1h-3zM8 28h1v1h-1zM10 28h1v1h-1zM13 28h1v1h-1zM17 28h2v1h-2zM22 28h8v1h-8zM2 29h1v1h-1zM8 29h1v1h-1zM11 29h1v1h-1zM22 29h2v1h-2zM25 29h1v1h-1zM27 29h1v1h-1zM29 29h1v1h-1zM2 30h7v1h-7zM10 30h2v1h-2zM13 30h1v1h-1zM17 30h3v1h-3zM21 30h1v1h-1zM24 30h5v1h-5z" fill="#0B0E12"/></svg>
+          <figcaption>scan on your iPhone</figcaption>
+        </figure>
+      </div>
+      <div class="app-card-store">
+        <a class="store-btn" href="https://apps.apple.com/us/app/wind-watch-sailing/id6825620891" data-event="app_card_footer"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 L8 10.5 M4.5 7 L8 10.5 L11.5 7 M2.5 13.5 L13.5 13.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Get it on the App Store</a>
+      </div>
+    </section>
 
     <footer class="footer">
       <span id="attribution">Wind Watch · weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km</span>

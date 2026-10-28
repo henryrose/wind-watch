@@ -135,6 +135,21 @@ pre-merge tree is on branch `backup/pre-merge-915f458`. Version stays 1.0 (9); a
 | N3 | Geocoder once per pin: areasOfInterest → water → locality → sub-locality → admin area, rest as chips (≤ 4), 4 s timeout | done | build | iOS 26 uses `MKReverseGeocodingRequest` (name, city, region); iOS 18–25 `CLGeocoder` with the handoff's fields. An existing row's chips show its stored suggestion only (the other names aren't stored) |
 | N4 | Build 1.0 (9) | done | `./build.sh all`: 147 Swift tests, zero warnings | supersedes build 8, which never uploaded |
 
+## Web → iOS app awareness (docs/design/web-app-awareness, 2026-10-28)
+
+Built §1.1–1.4, §2 and §4 in `web/`: Smart App Banner meta, header link, footer card (live complication drawing + QR
+on desktop, store pill on phone), the iOS non-Safari strip (30-day dismissal), GA4 events, `web/_redirects` for `/ios`.
+Tests in `web/test/awareness.test.js`.
+
+Adapted: the handoff says `windwatch.app`; the site is `windwatch.wilder-roses.com`, so the QR, the typed URL and
+`app-argument` use that domain. Open decisions §5 taken at the drawn defaults: QR on desktop, 30-day dismissal.
+
+Not built:
+- §1.5 outing card and `app_card_outing`: there is no `/o/<id>` page or text2sail in this repo.
+- §3 universal links (AASA + app handling): the web has no `/l/*` or `/o/*` routes, and the app would need an
+  Associated Domains entitlement and a new App Store build. Until then every app link goes to the App Store page,
+  which shows **Open** when the app is installed.
+
 ## Needs the other machine (from plan §7)
 
 | Item | Status | Where verified |

@@ -157,6 +157,7 @@ body {
 }
 .wordmark-watch { font-weight: 500; color: var(--ink-secondary); }
 .brand-tagline { font-size: 12px; color: var(--ink-disabled); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand-right { display: inline-flex; align-items: center; gap: 16px; min-width: 0; }
 
 /* --- Header + hero cluster (HANDOFF §9, §8.1) ----------------------------- */
 .header {
@@ -529,6 +530,82 @@ td.temp { color: var(--ink-body); font-weight: 600; }
 .footer a:hover { color: var(--ink-primary); }
 .footer .trying { display: inline-flex; align-items: center; gap: 8px; }
 
+/* --- App awareness (docs/design/web-app-awareness/HANDOFF.md) ------------- */
+/* Header link (§1.2): beside the tagline on desktop, replaces it < 600 px. */
+.app-link { font-size: 12px; font-weight: 600; color: var(--link); text-decoration: none; white-space: nowrap; }
+.app-link:hover { color: var(--ink-primary); }
+
+/* Our strip (§1.4): iOS non-Safari only; collapses to 0 over 200 ms on ✕. */
+.app-strip { overflow: hidden; transition: height 200ms ease, margin-bottom 200ms ease, opacity 200ms ease; }
+.app-strip-inner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px 10px 12px;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+.app-strip-icon { flex: none; display: block; }
+.app-strip-text { flex: 1; min-width: 0; font-size: 14px; line-height: 18px; font-weight: 600; }
+.app-strip-sub { font-weight: 500; color: var(--ink-secondary); }
+.app-strip-get {
+  flex: none; font-size: 14px; font-weight: 700; white-space: nowrap; text-decoration: none;
+  color: var(--ink-primary); background: var(--hairline); padding: 6px 12px; border-radius: 999px;
+}
+.app-strip-close {
+  flex: none; width: 32px; height: 32px; margin-right: -4px; padding: 0; border: 0;
+  background: transparent; color: var(--ink-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+@media (prefers-reduced-motion: reduce) { .app-strip { transition: none; } }
+
+/* Persistent card above the footer (§1.3). Desktop: one wrapping row. */
+.app-card {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 24px;
+  padding: 20px 24px;
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+.app-card-head { display: contents; }
+.app-icon { flex: none; display: block; }
+.app-icon-40 { display: none; }
+.app-card-text { display: flex; flex-direction: column; gap: 6px; flex: 1 1 260px; min-width: 0; }
+.app-card-title { font-size: 17px; line-height: 22px; font-weight: 700; }
+.app-card-body { font-size: 14px; line-height: 19px; color: var(--ink-secondary); }
+.app-card-url { margin-top: 4px; font-size: 13px; color: var(--ink-secondary); text-decoration: none; }
+.app-card-url:hover { color: var(--ink-primary); }
+.app-card-art { display: flex; align-items: center; gap: 22px; }
+.app-card-fig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.app-card-fig figcaption { font-size: 11px; line-height: 14px; color: var(--ink-disabled); }
+.app-card .cap-narrow { display: none; }
+.qr { display: block; }
+.app-card-store { display: none; justify-content: center; margin-top: 2px; }
+.store-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--ink-primary); color: var(--ground);
+  font-size: 15px; font-weight: 700; white-space: nowrap; text-decoration: none;
+}
+
+/* The complication drawing (§2): black plate, always the dark ramp. */
+.comp-host { min-height: 64px; }
+.comp-mini {
+  position: relative; overflow: hidden;
+  background: #000000; border-radius: 10px; color: #FFFFFF;
+  display: flex; flex-direction: column;
+}
+.cm-row {
+  height: 28px; flex: none; padding: 0 8px; box-sizing: border-box;
+  display: flex; align-items: baseline; padding-top: 6px; white-space: nowrap;
+  font-family: var(--font-text); font-variant-numeric: tabular-nums;
+}
+.cm-kn { font-family: var(--font-num); font-size: 20px; line-height: 16px; font-weight: 800; }
+.cm-kn.cm-dash { color: #9AA4B1; font-weight: 400; }
+.cm-g { font-family: var(--font-num); font-size: 10px; font-weight: 700; opacity: 0.9; margin-left: 2px; }
+.cm-arrow { margin-left: 6px; align-self: center; position: relative; top: 1px; }
+.cm-from { font-size: 9px; font-weight: 600; margin-left: 3px; }
+.cm-asof { margin-left: auto; padding-left: 8px; font-size: 10px; font-weight: 500; color: #9AA4B1; }
+.cm-bars { display: block; flex: none; }
+
 /* --- Trust-state treatments (HANDOFF §3) ---------------------------------- */
 .state-old .num,
 .state-old .hero-kn,
@@ -546,6 +623,9 @@ td.temp { color: var(--ink-body); font-weight: 600; }
 .state-old .chip-peak .dot,
 .state-old .hero-dir svg,
 .state-horizon .chart,
+.state-old .comp-mini .cm-bars,
+.state-old .comp-mini .cm-row,
+.state-horizon .comp-mini .cm-bars,
 .state-horizon .chip { filter: saturate(0.35); opacity: 0.7; }
 
 /* --- Breakpoints ---------------------------------------------------------- */
@@ -560,6 +640,20 @@ td.temp { color: var(--ink-body); font-weight: 600; }
   .brand-tile { width: 24px; height: 24px; }
   .wordmark { font-size: 22px; }
   .brand-place { display: none; }  /* Brand-InSitu phone: "HRRR wind" only */
+  .brand-tagline { display: none; }  /* app link replaces the tagline (§1.2) */
+  .app-card { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 12px; padding: 16px; }
+  .app-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .app-icon-48 { display: none; }
+  .app-icon-40 { display: block; }
+  .app-card-text { display: contents; }
+  .app-card-title { flex: 1 1 0; min-width: 0; font-size: 16px; line-height: 21px; }
+  .app-card-body { flex: 1 0 100%; font-size: 13px; line-height: 18px; }
+  .app-card-url, .app-card-qr, .app-card .cap-wide { display: none; }
+  .app-card .cap-narrow { display: inline; }
+  .app-card-art { display: block; }
+  .app-card-comp, .comp-host { width: 100%; }
+  .comp-host { min-height: 76px; }
+  .app-card-store { display: flex; }
   .page { padding: 24px var(--gutter) 32px; gap: 16px; }
   h1 { font-size: 28px; line-height: 34px; }
   .trust { font-size: 13px; line-height: 18px; }

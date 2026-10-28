@@ -39,6 +39,7 @@ import {
   tzAbbrev,
 } from './lib/derive.js';
 import { CACHE_KEY, parseRecord, recordAfterCheck, serializeRecord } from './lib/cache.js';
+import { STRIP_KEY, compMiniHtml, shouldShowStrip } from './lib/awareness.js';
 
 const CHECK_MS = 10 * MINUTE_MS;
 const KITE = 'M0,-0.5 L0.38,0.5 L0,0.2 L-0.38,0.5 Z';
@@ -579,6 +580,72 @@ function buildHero(forecast, now, range) {
   };
 }
 
+// --- App awareness (docs/design/web-app-awareness/HANDOFF.md) -------------
+
+// The footer card's complication drawing, from the same forecast and clock as
+// the chart. Desktop 172×64; phone fills the card width at 76 high.
+const comp = { forecast: null, now: null, width: 0 };
+function drawComp() {
+  const host = $('comp-host');
+  const compact = window.innerWidth <= COMPACT_MAX;
+  const W = compact ? Math.floor(host.clientWidth) : 172;
+  if (W <= 0) return;
+  comp.width = W;
+  host.innerHTML = compMiniHtml(comp.forecast, comp.now, compact ? { W, H: 76 } : { W: 172, H: 64 });
+}
+function renderComp(forecast, now) {
+  comp.forecast = forecast;
+  comp.now = now;
+  drawComp();
+}
+
+// §4: three events (+ strip dismiss). gtag is absent when blocked; never throw.
+function track(name) {
+  try {
+    if (typeof window.gtag === 'function') window.gtag('event', name, { transport_type: 'beacon' });
+  } catch { /* analytics is best-effort */ }
+}
+
+let awarenessInstalled = false;
+function installAwareness() {
+  if (awarenessInstalled) return;
+  awarenessInstalled = true;
+
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('[data-event]');
+    if (a) track(a.dataset.event);
+  });
+
+  // Redraw the phone-width drawing when the card width changes.
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      const host = $('comp-host');
+      if (window.innerWidth <= COMPACT_MAX && Math.floor(host.clientWidth) !== comp.width) drawComp();
+    }).observe($('comp-host'));
+  }
+
+  // §1.4 strip: iOS non-Safari only, 30 days after a dismissal. Decided once per load.
+  let dismissedAt = null;
+  try { dismissedAt = localStorage.getItem(STRIP_KEY); } catch { /* private mode */ }
+  const show = shouldShowStrip({ ua: navigator.userAgent, maxTouchPoints: navigator.maxTouchPoints || 0, dismissedAt });
+  if (!show && new URLSearchParams(location.search).get('strip') !== '1') return;
+  const strip = $('app-strip');
+  strip.classList.remove('hidden');
+  $('app-strip-close').addEventListener('click', () => {
+    try { localStorage.setItem(STRIP_KEY, String(Date.now())); } catch { /* still hide it */ }
+    track('app_strip_dismiss');
+    const gap = parseFloat(getComputedStyle($('page')).rowGap) || 0;
+    strip.style.height = `${strip.offsetHeight}px`;
+    void strip.offsetHeight; // commit the start height before animating
+    strip.style.height = '0px';
+    strip.style.marginBottom = `${-gap}px`;
+    strip.style.opacity = '0';
+    const done = () => strip.remove();
+    strip.addEventListener('transitionend', (ev) => { if (ev.propertyName === 'height') done(); });
+    setTimeout(done, 400);
+  }, { once: true });
+}
+
 // --- Render --------------------------------------------------------------
 
 const layoutKey = () => `${window.innerWidth >= WIDE_MIN ? 'wide' : 'narrow'}/${window.innerWidth <= COMPACT_MAX ? 'compact' : 'full'}`;
@@ -605,6 +672,7 @@ function render(ctx, opts) {
     $('unit-ctl').classList.add('hidden');
     $('footer-right').innerHTML = `<span class="trying"><span class="ring" aria-hidden="true"></span>trying…</span>`;
     chartState.layout = null;
+    renderComp(null, now);
     return;
   }
 
@@ -657,6 +725,7 @@ function render(ctx, opts) {
 
   $('attribution').innerHTML = `Wind Watch · weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo.com</a> · HRRR 3 km · times in ${esc(tzAbbrev(forecast.start, tz))}`;
   $('footer-right').textContent = '';
+  renderComp(forecast, now);
 }
 
 // --- Boot ------------------------------------------------------------------
@@ -781,6 +850,7 @@ async function bootLive(opts, base) {
 function main() {
   const opts = readOptions();
   loadPrefs(opts);
+  installAwareness();
   // ?fixture=1 forces fixture mode (the reference payload) whatever config.js says.
   const base = new URLSearchParams(location.search).get('fixture') === '1' ? '' : apiBase();
   return base ? bootLive(opts, base) : bootFixture(opts);
